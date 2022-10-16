@@ -20,20 +20,22 @@ def invert_solution(s):
 
 
 def get_scramble():
-    return gen_premove(28, 25)
+    return gen_premove(20, 20)
 
 
 def get_bld_scramble():
     return scrambler333.get_3BLD_scramble()
 
 
-def gen_premove(pre_move_len=3, min_len=1):
+def gen_premove(min_len=1, max_len=3):
     faces = ['U', 'L', 'F', 'R', 'B', 'D']
     directions = ["", "'", "2"]
     turns = []
-    if pre_move_len < 1:
-        raise ValueError("pre_move_len must be greater than 0")
-    scram_len = random.randint(min_len, pre_move_len)
+    if max_len < 1:
+        raise ValueError("max_len must be greater than 0")
+    if min_len > max_len:
+        raise ValueError("min_len cannot be greater than max len")
+    scram_len = random.randint(min_len, max_len)
     opp = {'U': 'D', 'D': 'U',
            'F': 'B', 'B': 'F',
            'L': 'R', 'R': 'L',

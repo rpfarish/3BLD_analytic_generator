@@ -1,4 +1,5 @@
 import random
+import time
 from collections import deque
 
 import kociemba
@@ -587,7 +588,16 @@ class Cube:
         if scramble is None:
             scramble = " ".join(self.scramble)
         cube = Cube(scramble)
+        print("--------______---------")
+        print('Now reducing scramble')
+        start = time.time()
+
         reduced_scramble = cube.get_solution(max_depth=min(len(scramble.split()), 20))
+        end = time.time()
+        print(f'Time: {end - start:.3f}')
+        print("--------______---------")
+        print('Done')
+
         # print(len(scramble.split()), len(reduced_scramble.split()))
         return cube.invert_solution(reduced_scramble)
 
@@ -620,7 +630,7 @@ class Cube:
         no_repeat = True
         # I don't recommend going above 2 else it will take forever
         while len(algs_to_drill) >= frequency:
-            scramble = get_scrambles.gen_premove(28, min_len=25)
+            scramble = get_scrambles.gen_premove(20, 25)
             cube = Cube(scramble, can_parity_swap=True, ls=self.ls)
             edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
             no_cycle_break_edge_memo = set()
@@ -696,6 +706,9 @@ class Cube:
         # generate inverse target groups
         # specify buffer
         return {target + i for i in target_list}
+
+    def get_target_scramble(self):
+        pass
 
     def drill_corner_sticker(self, sticker_to_drill, single_cycle=True, return_list=False,
                              cycles_to_exclude: set = None):
@@ -774,7 +787,6 @@ class Cube:
         #     return scrambles
         # todo fix buffer thing
         algs_to_drill = self.generate_drill_list('c', letter_scheme, "U", sticker_to_drill)
-        number = 0
 
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         # print(type(alg_freq_dist))
@@ -782,7 +794,10 @@ class Cube:
         count = 2
         inc_amt = 2
         while True:
+            self.get_target_scramble()
+            # print("getting scramble", getting_scramble_depth)
             scramble = get_scrambles.get_scramble()
+
             cube = Cube(scramble, ls=letter_scheme)
             corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
             no_cycle_break_corner_memo = set()
@@ -822,16 +837,15 @@ class Cube:
                     count += inc_amt
                 else:
                     continue
-
                 # print(alg_to_drill)
                 # print(alg_freq_dist, sep="")
                 # print(corner_memo)
                 # print(no_cycle_break_corner_memo)
-                print(self.reduce_scramble(scramble))
+                # print("reducing scramble")
+                print(scramble, end="")
+                # print(self.reduce_scramble(scramble))
                 input()
 
-            if count > 2:
-                return
 
     def drill_edge_buffer(self, edge_buffer: str):
         # todo add edge flips

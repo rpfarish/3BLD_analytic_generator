@@ -60,10 +60,16 @@ import dlin
 scramble = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
 scramble = "U F2 U L2 F2 D' F2 D' L2 D' F2 U' R' D' B' D2 R' D' R B U'"
 
+def get_input(options):
+    while True:
+        i = input(options)
+        if i.isdigit():
+            return int(i)
 last_args = ""
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
-while not (mode := input(options)).lower().startswith("q"):
-    mode = int(mode)
+while True:
+    mode = get_input(options)
+    args = ""
     if mode == 1:
         scramble = input("please enter the scramble: ")
         if args == "!" or args == "!r":
