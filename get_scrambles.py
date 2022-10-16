@@ -1,7 +1,5 @@
 import random
 
-from pyTwistyScrambler import scrambler333
-
 
 def invert_solution(s):
     if not s:
@@ -21,10 +19,6 @@ def invert_solution(s):
 
 def get_scramble():
     return gen_premove(20, 20)
-
-
-def get_bld_scramble():
-    return scrambler333.get_3BLD_scramble()
 
 
 def gen_premove(min_len=1, max_len=3):
