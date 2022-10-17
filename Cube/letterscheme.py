@@ -177,6 +177,7 @@ class PieceId:
 class LetterScheme:
 
     def __init__(self, ltr_scheme=None, use_default=False):
+        self.is_default = use_default
         if ltr_scheme is None:
             ltr_scheme = letter_scheme
         self.scheme = {}

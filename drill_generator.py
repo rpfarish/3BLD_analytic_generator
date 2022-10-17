@@ -432,6 +432,7 @@ def main():
         "D' R2 U' R2' U R2 D R2' U' R2 U R2'", "D' R2' U' R2 D' R2' D R2 U R2' D' R2 D2",
         "U R2' D' R2 U' R2' U R2 D R2' U' R2", "R2 U' R2' U R2 D' R2' U' R2 U R2' D",
     ]
+    # all ltct UU with some ltct UD
     algs = [
         "U R U R2' D' R U R' D R2 U2' R'",
         "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",

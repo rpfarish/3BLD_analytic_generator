@@ -5,7 +5,7 @@ from collections import deque
 import kociemba
 
 import get_scrambles
-from Cube.letterscheme import letter_scheme, LetterScheme
+from Cube.letterscheme import LetterScheme
 from comms import COMMS
 
 DEBUG = True
@@ -567,7 +567,6 @@ class Cube:
             buffer = COMMS[str(edge_buffer)]
             comm = buffer[a][b]
             self.scramble_cube(comm)
-
         sol = kociemba.solve(self.get_faces_colors())
         return sol
 
@@ -687,7 +686,7 @@ class Cube:
         # pick what letter scheme to use
         # how to separate c from e
         # just doing corners first
-        all_targets = LetterScheme(use_default=False).get_edges()
+        all_targets = ltr_scheme.get_corners()
         self.remove_piece(all_targets, buffer, ltr_scheme)
 
         # random_list = []
@@ -707,8 +706,44 @@ class Cube:
         # specify buffer
         return {target + i for i in target_list}
 
-    def get_target_scramble(self):
-        pass
+    def get_target_scramble(self, algs_to_drill):
+        # print("getting scramble", getting_scramble_depth)
+        scramble = get_scrambles.get_scramble()
+
+        cube = Cube(scramble, ls=self.ls)
+        corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
+        no_cycle_break_corner_memo = set()
+
+        # if just the first target of the memo is the target eg: L then cycle break, this is bad
+
+        corner_buffers = cube.corner_memo_buffers
+        for pair in corner_memo:
+            if len(pair) == 4 or len(pair) == 2:
+                pair_len_half = len(pair) // 2
+                a = pair[:pair_len_half]
+                b = pair[pair_len_half:]
+                # print(pair, pair_len_half, a, b)
+            else:
+                a = pair
+                b = ''
+            if a in corner_buffers or b in corner_buffers:
+                break
+            no_cycle_break_corner_memo.add(pair)
+
+        alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
+
+        # if all are same value inc count by 2
+        # determine if max min deviation is more than ±1
+        # find max
+        # find min
+        # find difference
+
+        if algs_to_drill.intersection(no_cycle_break_corner_memo):
+            return scramble, alg_to_drill.pop()
+        else:
+            return self.get_target_scramble(algs_to_drill)
+
+    # print(max(alg_freq_dist.values()),  min(alg_freq_dist.values()), max(alg_freq_dist.values())-min(alg_freq_dist.values()))
 
     def drill_corner_sticker(self, sticker_to_drill, single_cycle=True, return_list=False,
                              cycles_to_exclude: set = None):
@@ -786,7 +821,7 @@ class Cube:
         # if return_list:
         #     return scrambles
         # todo fix buffer thing
-        algs_to_drill = self.generate_drill_list('c', letter_scheme, "U", sticker_to_drill)
+        algs_to_drill = self.generate_drill_list('c', self.ls, self.default_corner_buffer, sticker_to_drill)
 
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         # print(type(alg_freq_dist))
@@ -794,58 +829,22 @@ class Cube:
         count = 2
         inc_amt = 2
         while True:
-            self.get_target_scramble()
-            # print("getting scramble", getting_scramble_depth)
-            scramble = get_scrambles.get_scramble()
-
-            cube = Cube(scramble, ls=letter_scheme)
-            corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
-            no_cycle_break_corner_memo = set()
-
-            # if just the first target of the memo is the target eg: L then cycle break, this is bad
-
-            corner_buffers = cube.corner_memo_buffers
-            for pair in corner_memo:
-                if len(pair) == 4 or len(pair) == 2:
-                    pair_len_half = len(pair) // 2
-                    a = pair[:pair_len_half]
-                    b = pair[pair_len_half:]
-                    # print(pair, pair_len_half, a, b)
-                else:
-                    a = pair
-                    b = ''
-                if a in corner_buffers or b in corner_buffers:
-                    break
-                no_cycle_break_corner_memo.add(pair)
-
-            alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
-
-            # if all are same value inc count by 2
-            # determine if max min deviation is more than ±1
-            # find max
-            # find min
-            # find difference
-
-            if algs_to_drill.intersection(no_cycle_break_corner_memo):
-                # print(max(alg_freq_dist.values()),  min(alg_freq_dist.values()), max(alg_freq_dist.values())-min(alg_freq_dist.values()))
-
-                alg_to_drill = alg_to_drill.pop()
-                # check if freq is < count and if so continue
-                if alg_freq_dist[alg_to_drill] < count:
-                    alg_freq_dist[alg_to_drill] += 1
-                elif len(set(alg_freq_dist.values())) == 1:
-                    count += inc_amt
-                else:
-                    continue
-                # print(alg_to_drill)
-                # print(alg_freq_dist, sep="")
-                # print(corner_memo)
-                # print(no_cycle_break_corner_memo)
-                # print("reducing scramble")
-                print(scramble, end="")
-                # print(self.reduce_scramble(scramble))
-                input()
-
+            scramble, alg_to_drill = self.get_target_scramble(algs_to_drill)
+            # check if freq is < count and if so continue
+            if alg_freq_dist[alg_to_drill] < count:
+                alg_freq_dist[alg_to_drill] += 1
+            elif len(set(alg_freq_dist.values())) == 1:
+                count += inc_amt
+            else:
+                continue
+            # print(alg_to_drill)
+            print(alg_freq_dist, sep="")
+            # print(corner_memo)
+            # print(no_cycle_break_corner_memo)
+            # print("reducing scramble")
+            print(scramble, end="")
+            # print(self.reduce_scramble(scramble))
+            input()
 
     def drill_edge_buffer(self, edge_buffer: str):
         # todo add edge flips
@@ -855,6 +854,7 @@ class Cube:
         while len(exclude_from_memo) < 360:
             print(f'Num: {num}/72', len(exclude_from_memo))
             memo = self.generate_random_edge_memo(edge_buffer, exclude_from_memo)
+            print(memo)
             for i in memo:
                 exclude_from_memo.add(i)
             num += 1
@@ -870,15 +870,23 @@ class Cube:
 
         edges = self.remove_irrelevant_edge_buffers(edges, edge_buffer)
 
-        while edges:
-            print(edges)
-
+        while len(edges) > 2:
             edge, edge2 = random.sample(list(edges), k=2)
+            if edge == self.adj_edges[edge2]:
+                continue
+            memo.append(edge)
+            memo.append(edge2)
+            del edges[edge]
+            del edges[self.adj_edges[edge]]
+            del edges[edge2]
+            del edges[self.adj_edges[edge2]]
+            # check edge and edge 2 are not adj
+            # add to list
 
         if len(memo) % 2 == 1:
             memo.pop()
 
-        self.scramble_edges_from_memo(memo, str(edge_buffer))
+        print(self.scramble_edges_from_memo(memo, str(edge_buffer)))
         return self.format_edge_memo(memo)
 
     def get_faces_colors(self):
@@ -897,9 +905,10 @@ if __name__ == "__main__":
     s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
     s = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
     s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
-    c = Cube("", ls=letter_scheme)
+    c = Cube("", ls=None)
     print(c.adj_corners)
     c.display_cube()
     # todo adapt for different versions of FDR ie FRD
-    c.drill_corner_sticker('FDR')
-    # c.drill_edge_sticker("UL")
+    # c.drill_corner_sticker('FDR')
+    # todo letter scheme for below is a dependency for working
+    c.drill_edge_buffer("DF")

@@ -1,7 +1,11 @@
 import json
 from pprint import pprint
 
+import dlin
+
+import drill_generator
 from Cube import Cube
+from Cube.letterscheme import LetterScheme
 from solution import Solution
 
 print("Please select an option")
@@ -42,7 +46,9 @@ def drill_sticker(piece_type, sticker, buffer=None, exclude=None):
                                                            cycles_to_exclude=cycles_to_exclude)
         print(sticker_scrambles)
     elif piece_type == 'c':
-        ls = letter_scheme if len(sticker) == 1 else None
+        print(len(sticker), len(sticker) == 1, sticker)
+        ls = letter_scheme if len(sticker) == 1 else LetterScheme(use_default=True)
+        print('ls', ls)
         cycles_to_exclude = {sticker + piece for piece in exclude}
         sticker_scrambles = Cube(ls=ls).drill_corner_sticker(sticker, return_list=False,
                                                              cycles_to_exclude=cycles_to_exclude)
@@ -55,16 +61,17 @@ def drill_buffer(piece_type, buffer=None):
     pass
 
 
-import dlin
-
 scramble = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
 scramble = "U F2 U L2 F2 D' F2 D' L2 D' F2 U' R' D' B' D2 R' D' R B U'"
+
 
 def get_input(options):
     while True:
         i = input(options)
         if i.isdigit():
             return int(i)
+
+
 last_args = ""
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
 while True:
@@ -83,14 +90,14 @@ while True:
             continue
         memo_cube(scramble, letter_scheme, buffers)
         last_args = scramble
-
         c = dlin.trace(scramble)
         pprint(c)
     elif mode == 2:
-        piece_type = input("e for edges or c for corners: ")
-        drill_list(piece_type)
+        mode = get_input('1 for ltct')
+        if mode == 1:
+            drill_generator.main()
     elif mode == 3:
-        piece_type = input("e for edges or c for corners: ")
+        piece_type = input("e for edges or c for corners: ").lower()
         args = input("sticker to drill (letter scheme or e.g. UR) (put to exclude after (must be same type)): ")
         if args == "!" or args == "!r":
             args = last_args
