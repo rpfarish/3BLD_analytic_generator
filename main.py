@@ -46,9 +46,7 @@ def drill_sticker(piece_type, sticker, buffer=None, exclude=None):
                                                            cycles_to_exclude=cycles_to_exclude)
         print(sticker_scrambles)
     elif piece_type == 'c':
-        print(len(sticker), len(sticker) == 1, sticker)
         ls = letter_scheme if len(sticker) == 1 else LetterScheme(use_default=True)
-        print('ls', ls)
         cycles_to_exclude = {sticker + piece for piece in exclude}
         sticker_scrambles = Cube(ls=ls).drill_corner_sticker(sticker, return_list=False,
                                                              cycles_to_exclude=cycles_to_exclude)

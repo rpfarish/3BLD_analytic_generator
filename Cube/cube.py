@@ -834,11 +834,12 @@ class Cube:
             if alg_freq_dist[alg_to_drill] < count:
                 alg_freq_dist[alg_to_drill] += 1
             elif len(set(alg_freq_dist.values())) == 1:
+                print("Increasing count")
                 count += inc_amt
             else:
                 continue
             # print(alg_to_drill)
-            print(alg_freq_dist, sep="")
+            # print(alg_freq_dist, sep="")
             # print(corner_memo)
             # print(no_cycle_break_corner_memo)
             # print("reducing scramble")
