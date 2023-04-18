@@ -17,11 +17,13 @@ def invert_solution(s):
     return " ".join(inverse)
 
 
-def get_scramble():
-    return gen_premove(20, 20)
+def get_scramble(requires_parity=False):
+    if requires_parity:
+        pass
+    return gen_premove(20, 21, requires_parity=requires_parity)
 
 
-def gen_premove(min_len=1, max_len=3):
+def gen_premove(min_len=1, max_len=3, requires_parity=False):
     faces = ['U', 'L', 'F', 'R', 'B', 'D']
     directions = ["", "'", "2"]
     turns = []
@@ -49,11 +51,22 @@ def gen_premove(min_len=1, max_len=3):
         scramble.append(turn + direction)
         turns.append(turn)
 
-    return " ".join(scramble)
+    joined_scramble = " ".join(scramble)
+
+    has_parity = (len(scramble) - joined_scramble.count('2')) % 2 == 1
+
+    if not requires_parity:
+        return joined_scramble
+
+    if requires_parity and not has_parity:
+        return gen_premove(min_len=min_len, max_len=max_len, requires_parity=requires_parity)
+    if requires_parity and has_parity:
+        return joined_scramble
 
 
 if __name__ == "__main__":
-    for i in range(100):
-        print(gen_premove(3))
+    print(get_scramble(requires_parity=True))
+    # for i in range(100):
+    #     print(gen_premove(3))
 
     # print(get_bld_scramble())

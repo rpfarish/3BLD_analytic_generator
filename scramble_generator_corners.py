@@ -48,7 +48,7 @@ sticker_to_drill = "L"
 
 algs_to_drill = generate_drill_list('c', letter_scheme, "U", sticker_to_drill)
 number = 0
-
+algs_to_drill = {"NS"}
 alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
 print(type(alg_freq_dist))
 print('Running...')
@@ -96,9 +96,9 @@ while True:
         else:
             continue
 
-        print(alg_to_drill)
-        print(alg_freq_dist, sep="")
-        print(corner_memo)
-        print(no_cycle_break_corner_memo)
+        # print(alg_to_drill)
+        # print(alg_freq_dist, sep="")
+        # print(corner_memo)
+        # print(no_cycle_break_corner_memo)
         print(Cube().reduce_scramble(scramble))
         input()

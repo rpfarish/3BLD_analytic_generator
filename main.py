@@ -5,6 +5,7 @@ import dlin
 
 import drill_generator
 from Cube import Cube
+from Cube.drill import Drill
 from Cube.letterscheme import LetterScheme
 from solution import Solution
 
@@ -56,7 +57,8 @@ def drill_sticker(piece_type, sticker, buffer=None, exclude=None):
 
 
 def drill_buffer(piece_type, buffer=None):
-    pass
+    if piece_type == 'e':
+        Drill().drill_edge_buffer(edge_buffer=buffer)
 
 
 scramble = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
@@ -66,17 +68,23 @@ scramble = "U F2 U L2 F2 D' F2 D' L2 D' F2 U' R' D' B' D2 R' D' R B U'"
 def get_input(options):
     while True:
         i = input(options)
+        if i == '!r':
+            return '!r'
         if i.isdigit():
             return int(i)
 
 
 last_args = ""
+last_mode = 1
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
 while True:
     mode = get_input(options)
     args = ""
+    if mode == '!r':
+        mode = last_mode
     if mode == 1:
-        scramble = input("please enter the scramble: ")
+        last_mode = 1
+
         if args == "!" or args == "!r":
             scramble = last_args
             print(last_args)
@@ -84,6 +92,8 @@ while True:
             with open("scramble.txt") as f:
                 scramble = f.readline().rstrip('\n').strip()
                 print(scramble)
+        else:
+            scramble = input("please enter the scramble: ")
         if scramble == "":
             continue
         memo_cube(scramble, letter_scheme, buffers)
@@ -91,10 +101,12 @@ while True:
         c = dlin.trace(scramble)
         pprint(c)
     elif mode == 2:
-        mode = get_input('1 for ltct')
-        if mode == 1:
-            drill_generator.main()
+        last_mode = 2
+        mode = get_input('1 for ltct, 2 for 3 twists2'
+                         '2')
+        drill_generator.main(mode)
     elif mode == 3:
+        last_mode = 3
         piece_type = input("e for edges or c for corners: ").lower()
         args = input("sticker to drill (letter scheme or e.g. UR) (put to exclude after (must be same type)): ")
         if args == "!" or args == "!r":
@@ -106,6 +118,7 @@ while True:
         last_args = args
 
     elif mode == 4:
+        last_mode = 4
         piece_type = input("e for edges or c for corners: ")
         buffer = input("choose which buffer you want to drill put it in your letter scheme or like UR or UBL: ")
         drill_buffer(piece_type, buffer.upper())

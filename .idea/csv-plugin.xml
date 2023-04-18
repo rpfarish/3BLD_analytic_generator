@@ -17,7 +17,21 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\UF.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
         <entry key="\UFR.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\UL.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

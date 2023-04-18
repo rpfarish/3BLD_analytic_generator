@@ -33,11 +33,13 @@ all_edges = {
     'DF', 'DR', 'DB', 'DL',
 }
 
-sticker_to_drill = "FL"
+sticker_to_drill = "DF"
 adj = sticker_to_drill[::-1]
 all_edges.remove(sticker_to_drill)
 all_edges.remove(adj)
 algs_to_drill = {sticker_to_drill + i for i in all_edges}
+# algs_to_drill = {''}
+print(algs_to_drill)
 # algs_to_drill = algs_to_drill.union({"UBDF", "URRD", "ULLD"})
 # print(algs_to_drill)
 number = 0
@@ -49,8 +51,8 @@ no_cycle_break_edge_memo = set()
 strict = True
 no_repeat = True
 # I don't recommend going above 2 else it will take forever
-while len(algs_to_drill) > frequency:
-    scramble = get_scrambles.gen_premove(28, min_len=25)
+while len(algs_to_drill) >= frequency:
+    scramble = get_scrambles.gen_premove(min_len=17, max_len=20)
     cube = Cube(scramble, can_parity_swap=True)
     edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
     last_added_pair = ''
@@ -86,7 +88,7 @@ while len(algs_to_drill) > frequency:
 
         if response == 'r':
             pass
-        elif no_repeat:
+        elif no_repeat or False:
             algs_to_drill = algs_to_drill.difference(algs_in_scramble)
 
         print()

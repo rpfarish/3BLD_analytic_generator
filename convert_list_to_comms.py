@@ -3,7 +3,6 @@ from pprint import pprint
 
 # for i in a.split('\n'):
 # print(i.split(','), "\n\n")
-from Cube import Cube
 from expand_comm import expand_comm
 
 
@@ -26,8 +25,8 @@ def convert(comms, buffer):
 
 comms = {}
 
-buffers = ['UFR', 'UBR', 'UBL']
-
+# buffers = ['UFR', 'UBR', 'UBL']
+buffers = ['RDF']
 for buffer in buffers:
     convert(comms, buffer)
 

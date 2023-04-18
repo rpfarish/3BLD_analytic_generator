@@ -340,7 +340,7 @@ def cancel(pre_move, solution):
 # if full cancel return removed full cancel and recurse
 
 
-def main():
+def main(mode):
     twists = {
         "CW": {
             "UBL": "R U R D R' D' R D R' U' R D' R' D R D' R2",
@@ -365,7 +365,7 @@ def main():
     a = list(combinations(twists["CW"].values(), r=2))
     b = list(combinations(twists["CCW"].values(), r=2))
     t = a + b
-    # algs = [a + " " + b for (a, b) in t]
+    t = [a + " " + b for (a, b) in t]
     #
     algs_help_num = 0
     algs_help = []
@@ -433,54 +433,58 @@ def main():
         "U R2' D' R2 U' R2' U R2 D R2' U' R2", "R2 U' R2' U R2 D' R2' U' R2 U R2' D",
     ]
     # all ltct UU with some ltct UD
-    algs = [
-        "U R U R2' D' R U R' D R2 U2' R'",
-        "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",
-        "U' R' U2 R U R2' D' R U R' D R2 U2'",
-        "U R U R' U R2 D R' U' R D' R' U' R'",
-        "R' D R' U R D' R' U R2 U' R2' U' R2 U'",
-        "U R' D' R U R' D R2 U R' U2 R U R' U'",
-        "R2 U R' D' R U R' D R' U' R2 U' R2' U'",
-        "D R2' U' R U R U' R D' U R U' R' U",
-        "U R' D' R U' R' D R U2 R U R' U2 R U R' U'",
-        "U' R' U2 R U R2' F' R U R U' R' F R U'",
-        "U' f R' F' R U2 R U2' R' U2 S'",
-        "U R' U R U R' U' R' D' R U' R' D R2",
-        "U' R2 D R' U' R D' R' U' R' U R U R' U2",
-        "U R U R' U2 L U' R U L' U R'",
-        "U2' R' U2 L U' R U L' U R' U R U'",
-        "R' U' R U D' R U' R U R U' R2' D U",
-        "U R U R' U' R U R2' D' R U2 R' D R2 U2' R' U",
-        "U' R' U' R U R' U' R2 D R' U R D' R' U2 R' U R U'",
-        "U R D R' U R D' R2' U R U2 R' U R U'",
-        "R D R' U R D' R2' U R U R' U2' R",
-        "D U R2 D' R U R' D R2 U R' U2 R D'",
-        "U' R D R' U' R D' R2' U R U' R' U' R U R' U' R",
-        "U2 R' U' R2 D R' U' R D' R2' U2' R U",
-        "R U R D R' U R D' R2' U' R U' R' U'",
-        "U' R U' R' U R U' R' U' R U R2' D' R U' R' D R",
-        "U R U' R' U2 R U' R2' D' R U' R' D R U'",
-        "R U2 R' U' R2 D R' U' R D' R2' U'",
-        "D' U R2 D' R U R' D R2 U R' U2 R D",
-        "R2' D' R U R' D R U R U' R' U' R U'",
-        "U R' F' R U R' U' R' F R2 U' R' U2 R U",
-        "R U R' U' R U R2' D' R U' R' D R U2 R U' R' U2",
-        "U R U2' R' U' F' R U R' U' R' F R2 U' R'",
-        "U' R U R' U' R' U R' U' D R' U R D' R",
-        "U R U' R' U2 R U' R' U2 R' D' R U R' D R U'",
-        "U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U",
-        "D' U' R2 U R' U' R' U R' U' D R' U R",
-        "U2 R U' R' U' R U R D R' U R D' R2' U",
-        "U' R' U L' U R2 U R2' U R2 U2' R' L",
-        "U2 R2 D' r U2 r' D R U2 R U'",
-        "U' L' U' L U' R U' L' U R' U2' L",
-        "D R' U2 R U' R2 D' R U' R' D R2 U' D'",
-        "D U R' U' R U2 R' U' R2 D R' U' R D' R' U' D'",
-        "R' U2 R U' R2 D' R U' R' D R2 U'",
-        "U R' U' R U2 R' U' R2 D R' U' R D' R' U'",
-        "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
-        "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D",
-    ]
+
+    if mode == 1:
+        algs = [
+            "U R U R2' D' R U R' D R2 U2' R'",
+            "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",
+            "U' R' U2 R U R2' D' R U R' D R2 U2'",
+            "U R U R' U R2 D R' U' R D' R' U' R'",
+            "R' D R' U R D' R' U R2 U' R2' U' R2 U'",
+            "U R' D' R U R' D R2 U R' U2 R U R' U'",
+            "R2 U R' D' R U R' D R' U' R2 U' R2' U'",
+            "D R2' U' R U R U' R D' U R U' R' U",
+            "U R' D' R U' R' D R U2 R U R' U2 R U R' U'",
+            "U' R' U2 R U R2' F' R U R U' R' F R U'",
+            "U' f R' F' R U2 R U2' R' U2 S'",
+            "U R' U R U R' U' R' D' R U' R' D R2",
+            "U' R2 D R' U' R D' R' U' R' U R U R' U2",
+            "U R U R' U2 L U' R U L' U R'",
+            "U2' R' U2 L U' R U L' U R' U R U'",
+            "R' U' R U D' R U' R U R U' R2' D U",
+            "U R U R' U' R U R2' D' R U2 R' D R2 U2' R' U",
+            "U' R' U' R U R' U' R2 D R' U R D' R' U2 R' U R U'",
+            "U R D R' U R D' R2' U R U2 R' U R U'",
+            "R D R' U R D' R2' U R U R' U2' R",
+            "D U R2 D' R U R' D R2 U R' U2 R D'",
+            "U' R D R' U' R D' R2' U R U' R' U' R U R' U' R",
+            "U2 R' U' R2 D R' U' R D' R2' U2' R U",
+            "R U R D R' U R D' R2' U' R U' R' U'",
+            "U' R U' R' U R U' R' U' R U R2' D' R U' R' D R",
+            "U R U' R' U2 R U' R2' D' R U' R' D R U'",
+            "R U2 R' U' R2 D R' U' R D' R2' U'",
+            "D' U R2 D' R U R' D R2 U R' U2 R D",
+            "R2' D' R U R' D R U R U' R' U' R U'",
+            "U R' F' R U R' U' R' F R2 U' R' U2 R U",
+            "R U R' U' R U R2' D' R U' R' D R U2 R U' R' U2",
+            "U R U2' R' U' F' R U R' U' R' F R2 U' R'",
+            "U' R U R' U' R' U R' U' D R' U R D' R",
+            "U R U' R' U2 R U' R' U2 R' D' R U R' D R U'",
+            "U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U",
+            "D' U' R2 U R' U' R' U R' U' D R' U R",
+            "U2 R U' R' U' R U R D R' U R D' R2' U",
+            "U' R' U L' U R2 U R2' U R2 U2' R' L",
+            "U2 R2 D' r U2 r' D R U2 R U'",
+            "U' L' U' L U' R U' L' U R' U2' L",
+            "D R' U2 R U' R2 D' R U' R' D R2 U' D'",
+            "D U R' U' R U2 R' U' R2 D R' U' R D' R' U' D'",
+            "R' U2 R U' R2 D' R U' R' D R2 U'",
+            "U R' U' R U2 R' U' R2 D R' U' R D' R' U'",
+            "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
+            "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D",
+        ]
+    elif mode == 2:
+        algs = t
 
     print(len(algs), "len of algs")
     last_solution = None
