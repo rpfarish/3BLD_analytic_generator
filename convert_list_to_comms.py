@@ -26,7 +26,7 @@ def convert(comms, buffer):
 comms = {}
 
 # buffers = ['UFR', 'UBR', 'UBL']
-buffers = ['RDF']
+buffers = ['UR']
 for buffer in buffers:
     convert(comms, buffer)
 
