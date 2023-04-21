@@ -195,26 +195,41 @@ class Drill:
             input()
 
     # memo
-    def drill_edge_buffer(self, edge_buffer: str, exclude_from_memo=None):
+    def drill_edge_buffer(self, edge_buffer: str, exclude_from_memo=None, return_list=False, translate_memo=False):
         # todo add edge flips ahahahahahahahaha
-
+        scrams = {}
         total_cases = self.total_cases_per_buffer[edge_buffer]
         max_number_of_times = total_cases // self.max_cycles_per_buffer[edge_buffer]
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
         num = 1
-
-        while num <= max_number_of_times:
-            print(f'Num: {num}/{max_number_of_times}')
+        # print(total_cases)
+        while len(exclude_from_memo) < total_cases:
+            # while num <= max_number_of_times:
             scramble, memo = self.generate_random_edge_memo(edge_buffer, exclude_from_memo)
+            if translate_memo:
+                memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
             # yield scramble
-            input()
-            print(memo)
+            if not return_list:
+                print(f'Num: {num}/{max_number_of_times}')
+
+                input()
+                print(memo)
+
+            comms = []
             for pair in memo.split():
                 exclude_from_memo.add(pair)
                 a, b = pair[:2], pair[2:]
-                print(COMMS[edge_buffer][a][b])
+                comm = COMMS[edge_buffer][a][b]
+                comms.append(comm)
+                # print(comm)
+
+            scrams[num] = [scramble, memo, comms]
+
             num += 1
-            input()
+
+            if not return_list:
+                input()
+        return scrams
 
     def drill_corner_buffer(self, corner_buffer: str):
         total_cases = self.total_cases_per_buffer[corner_buffer]
@@ -353,6 +368,8 @@ class Drill:
         all_edges.remove(sticker_to_drill)
         all_edges.remove(adj)
         algs_to_drill = {sticker_to_drill + i for i in all_edges}
+        algs_to_drill = {'DFUR'}
+
         print("algs to drill", algs_to_drill)
         number = 0
 
@@ -363,7 +380,6 @@ class Drill:
             frequency = 1
         else:
             frequency = int(input("Enter freq (recommended less than 3): "))
-
         no_repeat = True
         # I don't recommend going above 2 else it will take forever
         while len(algs_to_drill) >= frequency:
@@ -477,51 +493,20 @@ if __name__ == "__main__":
     # memo = drill.generate_random_edge_memo("UF", translate_memo=True)
 
     # print(memo)
-    exclude = {'LFFD', 'DFBL', 'RDUL', 'DRDL', 'RFFD', 'LFLU', 'LDBL', 'RDRU', 'RUBD', 'FLRF', 'BLRB', 'LFBL', 'DLBD',
-               'DRUL', 'URDB', 'DLLF', 'FLBD', 'LDRU', 'RUBL', 'DLRD', 'DBDF', 'DLFL', 'LFRF', 'BRUR', 'DLBL', 'FDRU',
-               'ULDL', 'LDFL', 'LDRB', 'DFDR', 'FDLU', 'BRBD', 'DLUR', 'FDDB', 'RDLB', 'BRDF', 'ULRF', 'URFD', 'LDUL',
-               'RBFD', 'DLDR', 'FRLB', 'DLDF', 'LFUL', 'DFUR', 'LBFD', 'BDRF', 'RBBL', 'RBLF', 'FLLD', 'DBRF', 'RBDR',
-               'FRUL', 'BRDB', 'LULF', 'URLB', 'DRLB', 'DRRF', 'DRDF', 'LFFR', 'DFLF', 'BDFD', 'RUDB', 'RBLD', 'DRFD',
-               'LURB', 'LURU', 'DRDB', 'BRFD', 'LFDR', 'LDFD', 'DRFR', 'LBUL', 'URRD', 'DBRB', 'URUL', 'FLBR', 'RULF',
-               'LBDB', 'DBUR', 'RULB', 'BDRD', 'DRBL', 'ULLF', 'BRDL', 'BLBR', 'FLRU', 'LUFD', 'DBRD', 'RFBD', 'BDDF',
-               'DBFD', 'LDDR', 'DBFR', 'FLFR', 'DBLB', 'BLFL', 'RBFR', 'RDLU', 'FLDB', 'BLDR', 'LDFR', 'ULDR', 'RBDB',
-               'LDBD', 'RBRD', 'RDDB', 'RUFL', 'RFDL', 'DFLU', 'ULBL', 'BLFD', 'FDRD', 'BRDR', 'RDFR', 'LURF', 'RFUL',
-               'FLUR', 'LFUR', 'BDFR', 'RBUL', 'DRFL', 'FDDL', 'DBFL', 'FDFL', 'BLDB', 'RBRU', 'DFLD', 'ULDF', 'BLUL',
-               'RFLB', 'URDL', 'DBDL', 'RDDL', 'RUDF', 'DLDB', 'LUFL', 'BRFL', 'URFR', 'RFFL', 'BLDL', 'DLLB', 'DLRF',
-               'RFUR', 'BRRF', 'LFLB', 'URBD', 'RBBD', 'LFRD', 'BDLF', 'LBRD', 'LBBD', 'DFRD', 'BDRB', 'ULRU', 'FRLD',
-               'ULLB', 'FRDF', 'FRLU', 'FRBD', 'RUDR', 'FRFL', 'ULFD', 'LDLU', 'LUUR', 'DFUL', 'ULDB', 'FDBR', 'RDFL',
-               'RURB', 'RFLD', 'LDLB', 'RFLU', 'BDDR', 'DBLD', 'FDUL', 'LUBL', 'BDLB', 'BDBL', 'RBLB', 'RBLU', 'FDRB',
-               'BDRU', 'RDFD', 'BLUR', 'BLLU', 'LBLU', 'FRDB', 'RDBD', 'LFRU', 'FLDF', 'LFRB', 'DBBR', 'DRLD', 'URRB',
-               'FRLF', 'BLDF', 'FDRF', 'FLUL', 'LDDF', 'RDBR', 'FRDR', 'FRFD', 'LFDF', 'URRF', 'FLRD', 'BRRU', 'LUDL',
-               'LDUR', 'FDFR', 'DRRU', 'BLBD', 'FRRB', 'BDUR', 'LBLF', 'LBRB', 'RBDL', 'LULB', 'URLF', 'DRRB', 'URBL',
-               'LFDL', 'LBDL', 'LBUR', 'RUDL', 'LUDF', 'LUBR', 'FRBR', 'RFDR', 'RUBR', 'FRUR', 'ULFR', 'BRLD', 'ULRB',
-               'DFLB', 'BRLB', 'ULBR', 'BRFR', 'URDF', 'RDUR', 'RDRF', 'FLDR', 'LDLF', 'FRDL'}
-    exclude.update({'DBRU', 'FDDR', 'LFBR', 'ULLD', 'RFBL'})
-    exclude.update(
-        {'DFDL', 'BDUL', 'DRLF', 'BLRU', 'RFRB', 'RFLF', 'BLLD', 'DRLU', 'DFBD', 'URBR', 'URDR', 'DLUL', 'BRBL', 'LFBD',
-         'RFDF', 'ULRD', 'URFL', 'FDBD', 'LBLD', 'RBRF', 'RDRB', 'FLLB', 'URLU', 'DFFR', 'BDLD', 'LFDB', 'LBRF', 'BRUL',
-         'RDDF', 'DLRU', 'RFRU', 'ULFL', 'LDRD', 'DFDB', 'LBBR'})
-    exclude.update(
-        {'LUFR', 'FDLF', 'LBRU', 'BRRD', 'LDDB', 'DLRB', 'LBFR', 'DRUR', 'DBLU', 'DFFL', 'FLLU', 'DFRF', 'BLRD', 'URLD',
-         'BDBR', 'DRBD', 'RULU', 'LBFL', 'RBDF', 'LDRF', 'LULD', 'RFDB', 'FLFD', 'LBDR', 'RBUR'})
-
-    exclude.update(
-        {'FRBL', 'DFRB', 'LURD', 'BDFL', 'RULD', 'RDLF', 'DLBR', 'LUDB', 'LBDF', 'FRRU', 'BDLU', 'RUFD', 'LDBR', 'FRRD',
-         'FLBL', 'RUFR', 'BLLF', 'DBDR', 'DFBR', 'DLLU'})
-    exclude.update({'ULUR', 'DLFD', 'RFRD', 'BRLF', 'DBBL', 'RBFL', 'RURF', 'FDLD', 'DBUL', 'RDBL'})
-    print(len(exclude))
-    drill.drill_edge_buffer("UB", exclude_from_memo=exclude)
+    drill.drill_edge_buffer("UB", exclude_from_memo=set(), return_list=False)
+    # drill.drill_edge_sticker("DF")
     # buffer = "UFR"
     # result = ''
     # print(result)
     # drill.drill_corner_buffer(buffer)
     # # max_num = drill.max_cycles_per_buffer
     # # print(max_num)
-    from itertools import permutations
 
     a = {'UR': 'RU', 'UL': 'LU', 'LU': 'UL', 'LF': 'FL', 'LD': 'DL', 'LB': 'BL', 'FR': 'RF', 'FD': 'DF', 'FL': 'LF',
          'RU': 'UR', 'RB': 'BR', 'RD': 'DR', 'RF': 'FR', 'BL': 'LB', 'BD': 'DB', 'BR': 'RB', 'DF': 'FD', 'DR': 'RD',
          'DB': 'BD', 'DL': 'LD'}
 
-    print(len(list(permutations(a, 2))))
-    print(permutations(a, 2))
+    # print(len(list(permutations(a, 2))))
+    # print(permutations(a, 2))
+    # UB 2:08:00.00
+    # UB   53:00.00

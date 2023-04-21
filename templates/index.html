@@ -13,8 +13,9 @@
 <body>
 
 <div>
-    <!--    <form method="post" role="form">-->
-    <!--    <button class="btn btn-primary" name = "submit" id = "submit">submit</button>-->
+    <form>
+        <!--    <form method="post" role="form">-->
+        <!--    <button class="btn btn-primary" name = "submit" id = "submit">submit</button>-->
     </form>
 
 
@@ -23,25 +24,28 @@
 <div class="scramblediv">
     <div class="scramble">
         <form action="#" method="GET">
-            <div class="scramble"> {{ scramble }}</div>
-            <!--    <p> <input type="text" name="nm">Name</p>-->
+            <div class="scramble"> {{ scrambles }}</div>
+            <!--                <p> <input type="text" name="edge">Name</p>-->
+            <p>Edge Buffer {{ edgebuffer }}</p>
+
+            <select class="buffer" id="edgebuffer" name="edgebuffer">
+                <option value="None">None</option>
+                <option selected="selected" value="UF">UF</option>
+                <option value="UB">UB</option>
+                <option value="UR">UR</option>
+                <option value="UL">UL</option>
+                <option value="FR">FR</option>
+                <option value="FL">FL</option>
+                <option value="DF">DF</option>
+                <option value="DB">DB</option>
+                <option value="DR">DR</option>
+                <option value="DL">DL</option>
+            </select>
             <p><input type="submit" value="submit"></p>
         </form>
     </div>
     <span class="last" id="last" onclick="">Last</span>
-    <select class="buffer" id="edgebuffer" name="edgebuffer">
-        <option value="None">None</option>
-        <option selected="selected" value="UF">UF</option>
-        <option value="UB">UB</option>
-        <option value="UR">UR</option>
-        <option value="UL">UL</option>
-        <option value="FR">FR</option>
-        <option value="FL">FL</option>
-        <option value="DF">DF</option>
-        <option value="DB">DB</option>
-        <option value="DR">DR</option>
-        <option value="DL">DL</option>
-    </select>
+
     <select class="buffer" id="cornerbuffer" name="cornerbuffer">
         <option value="None">None</option>
         <option selected="selected" value="UFR">UFR</option>
@@ -79,5 +83,12 @@
     </ul>
     <span class="confirm" id="confirm">Confirm Buffers</span>
 </div>
+<script>
+    function fn() {
+    console.log("i guess this is working");
+    }
+
+</script>
+<div><input onclick="fn" type="button"></div>
 </body>
 </html>

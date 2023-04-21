@@ -1,8 +1,7 @@
 from flask import Flask
-from flask import render_template, request, url_for, redirect
+from flask import render_template, request, redirect
 
 from Cube.drill import Drill
-from get_scrambles import get_scramble
 from views import views
 
 app = Flask(__name__)
@@ -10,24 +9,32 @@ app.register_blueprint(views, url_prefix="/")
 
 
 @app.route("/", methods=['POST', 'GET'])
-def scramble():
-    if request.method == "POST":
-        scram = get_scramble()
-        return redirect(url_for("scramble", scramble=get_scramble()))
+def scramble(edgebuffer="UF"):
+    print("edge buffer", edgebuffer)
+    if request.method == "GET":
+
+        return redirect(f"drilledgebuffer/{edgebuffer}")
+        # return render_template("index.html", edgebuffer=edgebuffer)
     else:
-        return render_template("index.html", scramble=get_scramble())
+        return render_template("index.html", scrambles="Scramble")
 
 
 @app.route("/drilledgebuffer/<edgebuffer>", methods=['POST', 'GET'])
-def drilledgebuffer(edge_buffer):
-    drill = Drill()
+def drilledgebuffer(edgebuffer):
+    print("edge buffer here", edgebuffer)
+    args = request.args
+    eb = args.get("edgebuffer")
+    if eb is not None:
+        edgebuffer = eb
 
+    print(eb)
     if request.method == "GET":
-        scram = get_scramble()
-        return redirect(url_for("scramble", scramble=get_scramble()))
-    else:
-        return render_template("index.html", scramble=get_scramble())
-
+        scrambles = Drill().drill_edge_buffer(edge_buffer=edgebuffer, return_list=True)
+        return render_template("index.html", scrambles=scrambles, edgebuffer=edgebuffer)
+    scrambles = Drill().drill_edge_buffer(edge_buffer=edgebuffer, return_list=True)
+    return render_template("index.html", scrambles=scrambles, edgebuffer=edgebuffer)
+    # else:
+    #     return render_template("index.html", scrambles="Scramble")
 
 #
 # @app.route("/login", methods=['POST', 'GET'])
