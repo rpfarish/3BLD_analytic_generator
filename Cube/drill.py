@@ -211,7 +211,7 @@ class Drill:
             # yield scramble
             if not return_list:
                 print(f'Num: {num}/{max_number_of_times}')
-
+                print(scramble, end="")
                 input()
                 print(memo)
 
@@ -221,7 +221,8 @@ class Drill:
                 a, b = pair[:2], pair[2:]
                 comm = COMMS[edge_buffer][a][b]
                 comms.append(comm)
-                # print(comm)
+                if not return_list:
+                    print(comm)
 
             scrams[num] = [scramble, memo, comms]
 
@@ -295,7 +296,6 @@ class Drill:
 
         # get scramble
         scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
-        print(scramble)
 
         if translate_memo:
             memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
