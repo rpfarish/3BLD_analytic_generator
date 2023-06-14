@@ -3,7 +3,7 @@ import time
 
 import get_scrambles
 from Cube import Cube
-from Cube.letterscheme import LetterScheme
+from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
 from comms import COMMS
 
@@ -195,7 +195,8 @@ class Drill:
             input()
 
     # memo
-    def drill_edge_buffer(self, edge_buffer: str, exclude_from_memo=None, return_list=False, translate_memo=False):
+    def drill_edge_buffer(self, edge_buffer: str, exclude_from_memo=None, return_list=False, translate_memo=False,
+                          drill_list=None):
         # todo add edge flips ahahahahahahahaha
         scrams = {}
         total_cases = self.total_cases_per_buffer[edge_buffer]
@@ -230,25 +231,62 @@ class Drill:
 
             if not return_list:
                 input()
+        print("Finished")
         return scrams
 
-    def drill_corner_buffer(self, corner_buffer: str):
+    def drill_corner_buffer(self, corner_buffer: str, exclude_from_memo=None, return_list=False, translate_memo=False):
+        # total_cases = self.total_cases_per_buffer[corner_buffer]
+        # max_number_of_times = total_cases // self.max_cycles_per_buffer[corner_buffer]
+        # exclude_from_memo = set()
+        # num = 1
+        #
+        # while num <= max_number_of_times:
+        #     print(f'Num: {num}/{max_number_of_times}')
+        #
+        #     memo = self.generate_random_corner_memo(corner_buffer, exclude_from_memo)
+        #
+        #     print("memo", memo)
+        #     for pair in memo.split():
+        #         exclude_from_memo.add(pair)
+        #     num += 1
+        #     print("exclude from memo", exclude_from_memo)
+        #     input()
+        # todo add edge flips ahahahahahahahaha
+        scrams = {}
         total_cases = self.total_cases_per_buffer[corner_buffer]
         max_number_of_times = total_cases // self.max_cycles_per_buffer[corner_buffer]
-        exclude_from_memo = set()
+        exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
         num = 1
+        # print(total_cases)
+        while len(exclude_from_memo) < total_cases:
+            # while num <= max_number_of_times:
+            scramble, memo = self.generate_random_corner_memo(corner_buffer, exclude_from_memo)
+            if translate_memo:
+                memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
+            # yield scramble
+            if not return_list:
+                print(f'Num: {num}/{max_number_of_times}')
+                print(scramble, end="")
+                input()
+                print(memo)
 
-        while num <= max_number_of_times:
-            print(f'Num: {num}/{max_number_of_times}')
-
-            memo = self.generate_random_corner_memo(corner_buffer, exclude_from_memo)
-
-            print("memo", memo)
+            comms = []
             for pair in memo.split():
                 exclude_from_memo.add(pair)
+                a, b = pair[:3], pair[3:]
+                comm = COMMS[corner_buffer][a][b]
+                comms.append(comm)
+                if not return_list:
+                    print(comm)
+
+            scrams[num] = [scramble, memo, comms]
+
             num += 1
-            print("exclude from memo", exclude_from_memo)
-            input()
+
+            if not return_list:
+                input()
+        print("Finished")
+        return scrams
 
     # memo
     def generate_random_edge_memo(self, edge_buffer=None, exclude_from_memo=None, translate_memo=False):
@@ -312,31 +350,37 @@ class Drill:
         corners = self.cube_memo.adj_corners.copy()
 
         corners = self.cube_memo.remove_irrelevant_corner_buffers(corners, corner_buffer)
-        print(list(corners))
+
         while len(corners) > 5:
+            # print("Corners:", corners)
+            # print("Corners list:", list(corners))
+
             # gen random pair
             corner, corner2 = random.sample(list(corners), k=2)
+            # print("selected corners 1 and 2:", corner, corner2)
             # check if pair is both on the same piece
             # check corner and corner 2 are not adj
             # print(corners)
             # print(corner, corner2, exclude_from_memo)
-            if corner == self.cube_memo.adj_corners[corner2] or corner + corner2 in exclude_from_memo:
+            adj3, adj4 = self.cube_memo.adj_corners[corner2]
+            if corner == adj3 or corner == adj4 or corner + corner2 in exclude_from_memo:
                 continue
 
             memo.append(corner)
             memo.append(corner2)
-
+            # print("Memo", memo)
             corners.pop(corner)
+            corners.pop(corner2)
             # print(self.cube_memo.adj_corners[corner])
-            # adj1, adj2 = self.cube_memo.adj_corners[corner]
-            #
-            # corners.pop(adj1)
-            # corners.pop(adj2)
+            adj1, adj2 = self.cube_memo.adj_corners[corner]
+            # print(adj1, adj2)
+            corners.pop(adj1)
+            corners.pop(adj2)
             #
             # adj3, adj4 = self.cube_memo.adj_corners[corner2]
             #
-            # corners.pop(adj3, "This is not supposed to happen lol")
-            # corners.pop(adj4)
+            corners.pop(adj3, "This is not supposed to happen lol")
+            corners.pop(adj4)
 
         if len(memo) % 2 == 1:
             memo.pop()
@@ -348,13 +392,13 @@ class Drill:
         if translate_memo:
             memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
 
-        return self.cube_memo.format_corner_memo(memo)
+        return scramble, self.cube_memo.format_corner_memo(memo)
 
     # memo
-    def drill_edge_sticker(self, sticker_to_drill, single_cycle=True, return_list=False, cycles_to_exclude: set = None):
+    def drill_edge_sticker(self, sticker_to_drill, single_cycle=True, return_list=False, cycles_to_exclude: set = None,
+                           invert=False, algs: set = None, no_repeat=True):
         from solution import Solution
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
-
         # todo support starting from any buffer
         # support default certain alternate pseudo edge swaps depending on last corner target
         scrambles = []
@@ -367,12 +411,18 @@ class Drill:
         adj = self.cube_memo.adj_edges[sticker_to_drill]
         all_edges.remove(sticker_to_drill)
         all_edges.remove(adj)
-        algs_to_drill = {sticker_to_drill + i for i in all_edges}
-        algs_to_drill = {'DFUR'}
+        if algs is not None:
+            algs_to_drill = algs
+        elif not invert:
+            algs_to_drill = {sticker_to_drill + i for i in all_edges}
+        else:
+            algs_to_drill = {i + sticker_to_drill for i in all_edges}
+        # todo optionally inject list of algs to drill
+        # algs_to_drill = {'DBDR'}
 
         print("algs to drill", algs_to_drill)
         number = 0
-
+        max_wait_time = 20
         if cycles_to_exclude is not None:
             algs_to_drill = algs_to_drill.difference(cycles_to_exclude)
 
@@ -380,10 +430,12 @@ class Drill:
             frequency = 1
         else:
             frequency = int(input("Enter freq (recommended less than 3): "))
-        no_repeat = True
+        from time import time
         # I don't recommend going above 2 else it will take forever
+        start = time()
         while len(algs_to_drill) >= frequency:
-            scramble = get_scrambles.gen_premove(20, 25)
+            # scramble = get_scrambles.gen_premove(20, 25)
+            scramble = get_scrambles.gen_premove(10, 15)
             cube = Memo(scramble, can_parity_swap=True, ls=self.cube_memo.ls)
             edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
             no_cycle_break_edge_memo = set()
@@ -398,7 +450,11 @@ class Drill:
                     break
                 last_added_pair = pair
                 no_cycle_break_edge_memo.add(pair)
-
+            end = time()
+            if (end - start) > max_wait_time:
+                print(f"dropping the frequency from {frequency} to {frequency - 1}")
+                frequency -= 1
+                start = time()
             # avoid missing a cycle due to breaking into a flipped edge
             if last_added_pair in algs_to_drill and (len(cube.flipped_edges) // 2) % 2 == 1:
                 continue
@@ -406,7 +462,8 @@ class Drill:
             algs_in_scramble = algs_to_drill.intersection(no_cycle_break_edge_memo)
             if len(algs_in_scramble) >= frequency:
                 if not return_list:
-                    print("Scramble:", scramble)
+                    number += 1
+                    print(number, len(algs_to_drill), "Scramble:", scramble)
                     # todo make it so if you're no_repeat then allow to repeat the letter pairs
                     response = input('Enter "r" to repeat letter pairs: ')
                     if response == 'm':
@@ -417,9 +474,12 @@ class Drill:
                     if response != 'r' and no_repeat:
                         algs_to_drill = algs_to_drill.difference(algs_in_scramble)
                     print()
+                    start = time()
                 else:
                     algs_to_drill = algs_to_drill.difference(algs_in_scramble)
                 scrambles.append(scramble)
+        if algs_to_drill:
+            print(algs_to_drill)
         if return_list:
             return scrambles
 
@@ -493,12 +553,28 @@ if __name__ == "__main__":
     # memo = drill.generate_random_edge_memo("UF", translate_memo=True)
 
     # print(memo)
-    drill.drill_edge_buffer("UB", exclude_from_memo=set(), return_list=False)
-    # drill.drill_edge_sticker("DF")
+    # drill.drill_edge_buffer("UB", exclude_from_memo=set(), return_list=False)
+    # drill.drill_edge_sticker("DB", invert=True)  # todo rename invert
+    # algs = {'BDLF', 'RBUL', 'RDRF', 'BULF', 'BDFD', 'FLFR', 'BRLF', 'DLRF', 'UBBL', 'RULD',
+    #         'BUUR', 'RFUL', 'FLLD', 'URRF', 'LDLB', 'UBFD', 'RUDL', 'RFBL', 'LDBU', 'ULFL',
+    #         }
+    algs = convert_letterpairs(
+        [
+            "LG", "BP", "AI", "SO", "HG", "GL", "ZX", "XV", "NX", "VW", "OG", "XS", "CB",
+            "SR", "GW", "IZ", "PS", "DB", "NJ", "CZ", "FW", "GT", "OJ"
+        ]
+    )
+    # "OJ",
+
+    print(len(algs))
+
     # buffer = "UFR"
     # result = ''
     # print(result)
-    # drill.drill_corner_buffer(buffer)
+    drill.drill_corner_buffer('UFR')
+    drill.drill_edge_buffer("UL")
+    # drill.drill_edge_sticker("DB", algs=algs, single_cycle=False)
+
     # # max_num = drill.max_cycles_per_buffer
     # # print(max_num)
 
@@ -510,3 +586,75 @@ if __name__ == "__main__":
     # print(permutations(a, 2))
     # UB 2:08:00.00
     # UB   53:00.00
+    # UL 1:40.59.77
+
+# UL: ON GH OJ OR JN NO XI HJ IT HI WV LJ IH HS TV PR
+
+# NL ?
+# TV last U last move R U R U' R' U' R' U' R U
+# RP L u L' OR U'
+# FW l u' L
+# VT no AUF
+# NF u' R' U' R
+# SO r' might be better than MUD
+# RJ U' L' U L'
+# CV R2 U'
+# GN U' F R'
+# CS l' M' RH
+# VW R2 U'
+# PH u'
+# LJ U' L
+# JL U' R'
+# JH u R2'
+# IF M' U2
+# LH U' LH regrip
+# TI F' R
+# FT U'
+# IS U2
+# SI U2
+# TH U
+# XV S L2' S' L2
+# TP U'
+
+
+"ON",
+"GH",
+"OJ",
+"OR",
+"JN",
+"NO",
+"XI",
+"HJ",
+"IT",
+"HI",
+"WV",
+"LJ",
+"IH",
+"HS",
+"TV",
+"PR ",
+"NL",
+"TV",
+"RP",
+"FW",
+"VT",
+"NF",
+"SO",
+"RJ",
+"CV",
+"GN",
+"CS",
+"VW",
+"PH",
+"LJ",
+"JL",
+"JH",
+"IF",
+"LH",
+"TI",
+"FT",
+"IS",
+"SI",
+"TH",
+"XV",
+"TP",

@@ -43,8 +43,8 @@ def drill_sticker(piece_type, sticker, buffer=None, exclude=None):
         print(len(sticker), len(sticker) == 1, sticker)
         ls = letter_scheme if len(sticker) == 1 else None
         cycles_to_exclude = {sticker + piece for piece in exclude}
-        sticker_scrambles = Cube(ls=ls).drill_edge_sticker(sticker, return_list=False,
-                                                           cycles_to_exclude=cycles_to_exclude)
+        sticker_scrambles = Drill().drill_edge_sticker(sticker_to_drill=sticker, return_list=False,
+                                                       cycles_to_exclude=cycles_to_exclude)
         print(sticker_scrambles)
     elif piece_type == 'c':
         ls = letter_scheme if len(sticker) == 1 else LetterScheme(use_default=True)
