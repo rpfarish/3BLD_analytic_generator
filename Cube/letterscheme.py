@@ -258,9 +258,89 @@ class LetterScheme:
         return [str(x) for x in self.scheme.values() if x.type == 'e']
 
 
+def convert_letterpairs(to_convert, display=False):
+    s = dict(
+        UB='A',
+        UR='B',
+        UF='U',
+        UL='D',
+
+        # L Face
+        LU='E',
+        LF='F',
+        LD='G',
+        LB='H',
+
+        # F Face
+        FU='K',
+        FR='J',
+        FD='I',
+        FL='L',
+
+        # R Face
+        RU='M',
+        RB='N',
+        RD='O',
+        RF='P',
+
+        # B Face
+        BU='Z',
+        BL='R',
+        BD='S',
+        BR='T',
+
+        # D Face
+        DF='C',
+        DR='V',
+        DB='W',
+        DL='X', )
+    # for i, j in s.items():
+    #     print(f"{j} = '{i}',")
+    convert_table = dict(A='UB',
+                         B='UR',
+                         U='UF',
+                         D='UL',
+                         E='LU',
+                         F='LF',
+                         G='LD',
+                         H='LB',
+                         K='FU',
+                         J='FR',
+                         I='FD',
+                         L='FL',
+                         M='RU',
+                         N='RB',
+                         O='RD',
+                         P='RF',
+                         Z='BU',
+                         R='BL',
+                         S='BD',
+                         T='BR',
+                         C='DF',
+                         V='DR',
+                         W='DB',
+                         X='DL', )
+    converted = set()
+    for i in to_convert:
+        a, b = i
+        if display:
+            print(f"'{convert_table[a]}{convert_table[b]}',")
+        converted.add(f"{convert_table[a]}{convert_table[b]}")
+    return converted
+
+
 if __name__ == '__main__':
     scheme = LetterScheme(use_default=False)
     from pprint import pprint
 
     pprint(scheme)
+
     # print(scheme.BD)
+
+    # convert_letterpairs(["SF", "ND", "OP", "ZF", "SI", "LJ", "TF", "XP", "AR", "MG",
+    #             "ZB", "PD", "LG", "BP", "GH", "AI", "MX", "PR", "GZ", "DL"])
+    convert_letterpairs(
+        ["TF", "XP", "PD", "LG", "BP", "AI", "GZ", "DL", "CG", "DF", "LT", "SO", "SV", "TP", "HG", "FR", "GL", "ZX",
+         "OJ", "XV", "AS", "JV", "NX", "VW", "RP", "OG", "ZM", "LP", "XS", "CB", "SR", "GW", "IZ", "PS", "DB", "NJ",
+         "CZ", "FW", ]
+    )
