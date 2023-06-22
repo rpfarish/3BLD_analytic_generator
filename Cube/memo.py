@@ -1,20 +1,21 @@
-import json
 import random
 
 import kociemba
 
 from Cube import Cube
 
-with open(r"C:\Users\rpfar\PycharmProjects\letter_pair_finder\settings.json") as f:
-    settings = json.loads(f.read())
-    letterscheme_names = settings['letter_scheme']
-
 
 class Memo(Cube):
     def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls=None, buffers=None):
         super().__init__(s=scramble, can_parity_swap=can_parity_swap, auto_scramble=auto_scramble, ls=ls,
                          buffers=buffers)
-        self.letterscheme_names = letterscheme_names
+        #
+        # with open("../settings.json") as f:
+        #     settings = json.loads(f.read())
+        #     letterscheme_names = settings['letter_scheme']
+        # print("letterscheme", self.ls)
+        # self.letterscheme_names = letterscheme_names
+        # print("letterscheme names", self.letterscheme_names)
 
     # memo
     def get_new_corner_buffer(self, avail_moves):
@@ -148,6 +149,7 @@ class Memo(Cube):
 
     # memo
     def remove_irrelevant_edge_buffers(self, edges, edge_buffer):
+        edges = edges.copy()
         edge_buffer_order = self.edge_buffer_order.copy()
         for buff in edge_buffer_order:
             edges.pop(buff)

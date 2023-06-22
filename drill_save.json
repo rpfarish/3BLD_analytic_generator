@@ -1,0 +1,11 @@
+{
+  "description": "Saves states of drilling buffers",
+  "UL": [],
+  "UB": [],
+  "DL": [
+    "BRBL",
+    "LBBR",
+    "RBLB",
+    "BLRB"
+  ]
+}

@@ -3036,7 +3036,7 @@ COMMS = {
             "UBL": "U R D' R' U R D R' U' U'",
             "UBR": "R D' R' U2 R D R' U2",
             "FDR": "R U' R D' R' U' R D R' U U R'",
-            "FDL": "",
+            "FDL": "U' D2 R U R' D' R U' R' D' U",
             "RUB": "U R R D' R' U R D R' U' R' U'",
             "RDB": "R U D' R' U R D' D' R' U' R D' U' R'",
             "RDF": "D2 U' R U R' D2 R U' R' U",
@@ -3939,7 +3939,7 @@ COMMS.update({
                     'FDR': "R U' R D' R' U2 R D R' U2 U R'",
                     'FUL': "U R U R' U' R D' R' U R D U' R' U'",
                     'FUR': '',
-                    'LDF': "D' L U R' U L' U' R U' D",
+                    'LDF': "D' L U R' U' L' U R U' D",
                     'LUF': "U' R2 D' R' U2 R D R' U2 R R2 U",
                     'RDB': "R D' R' U R D2 R' U' R D2 D R'",
                     'RDF': "D' R' U R D2 R' U' R D2 D",
@@ -4092,7 +4092,7 @@ COMMS.update({
                     'BDR': "D U R D' R' U R D R' U' U' D'",
                     'BUR': '',
                     'DBL': "U' R' D' R D R U' R' D' R U R' R' D R U",
-                    'DBR': "R D' U U R' D R U' R' D' R U' D R'",
+                    'DBR': "R D' U2 R' D R U R' D' R U D R'",
                     'DFL': "U R D R2' U R D' R' U' R D R' R2 D' R' U'",
                     'DFR': "R' U D R D' R' U R D R' U' D' U' R",
                     'FDL': "D U2 R' D' R U R' D R U' U2 D'",
@@ -9198,6 +9198,8 @@ COMMS.update({'DF': {'BD': {'BL': "M2 U' L U M' U' L' U M M2",
 if __name__ == '__main__':
     from Cube.memo import Memo
 
+    print(COMMS['UFL']['LDB']['FDL'])
+    quit()
     # pprint.pprint(COMMS['UF']['DF']['FR'])
     buffer = "DF"
 

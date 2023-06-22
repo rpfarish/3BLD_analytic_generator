@@ -6,7 +6,7 @@ UL,,,,,,,,,,,,,,,,,,,,,,
 LU,,,,,,,,,,,,,,,,,,,,,,
 LF,,,,,,,"[S' R' S , l]","[R : [E' R E , l2']]",,,,,"[R' : [S' , R' F2 R]]","[L S L : [E' , L2']]",,"[L2 : [F2' , L' S L]]",,"[L : [E' L' E , r2']]",,"[R' , S l S']",,"[R' S' R : [E , R2']]"
 LD,,,,,,"[l , S' R' S]",,"[l' , S' R' S]",,,"[u' R' : [S' , R2]]",,"[L F' L' U L' : [E , L2]]","[S L : [E' , L2']]",,"[R2 E' R : [S' , R2']]",,"[S R' : [S , R2]]",,"[E' l' E , R]",,
-LB,,,,,,"[R : [E R' E' , l2']]","[S' R' S , l']",,,,"[F2' , L' S L]",,"[R' S' R , B2]","[L' S L : [E' , L2']]",,,,"[l' : [E' l' E , R2]]",,,,"[R' S' R' : [E' , R2]]"
+LB,,,,,,"[R : [E R' E' , l2']]","[S' R' S , l']",,,,"[F2' , L' S L]",,"[R' S' R , B2]","[L' S L : [E' , L2']]",,,,"[l' : [E' l' E , R2]]",,"[R' , S l' S']",,"[R' S' R' : [E' , R2]]"
 FU,,,,,,,,,,,,,,,,,,,,,,
 FD,,,,,,,,,,,,,,,,,,,,,,
 FL,,,,,,,"[u' R : [S' , R2']]","[L' S L , F2']",,,,,"[F2 , R S' R']","[u L : [S , L2']]",,"[E' , L2']",,"[R2' , E]",,"[R U R' U' R : [E , R2']]",,"[L' U' L U L : [E' , L2']]"
@@ -21,16 +21,3 @@ DF,,,,,,,,,,,,,,,,,,,,,,
 DR,,,,,,"[S l S' , R']","[R , E' l' E]","[S l' S' , R']",,,"[R U R' U' R' : [E , R2]]",,"[R' : [U' R U , S]]",,,"[R U R' U' R : [E' , R2']]",,"[u2' L : [S , L2']]",,,,"[L F2' L' : [S , L2]]"
 DB,,,,,,,,,,,,,,,,,,,,,,
 DL,,,,,,"[R' S' R' : [E , R2]]",,"[R' S' R : [E' , R2']]",,,"[L' U' L U L' : [E' , L2]]",,"[R U : [R F R' , S']]","[S , L' F2 L]",,"[L U' L' U L' : [E' , L2]]",,"[R : [S' , R2']]",,"[L F2' L : [S , L2']]",,
-,,,,,,4,3,4,,,0,,0,0,,0,,2,,3,,0
-,80 Comms,,,,,,,,,,,,,,,,,,,,,
-16,Weird Comms,,,,,FN R2' F2,GH S' R' S l' S' l E R,HF R. double E,,,LT R2',,NH R',,,"RO R u' R': R' E R, U",,,,,,
-,,,,,,FR L S L F2',GH 2nd S' rh m push,HG (LHi Push RH E m pull) LHi RHi,,,,,NO R S U',,,,,,,,,
-,,,,,,FT double E',GF (S'R'S) R  (ERE') R',"         ins, imii",,,,,NV R' U' R U S U' R' U S' R,,,,,,,,,
-,,,,,,FV S to FG without last S,        ins     int  unins,HN B2 R',,,,,"R2 U': R' U R, E",R' U' R U S U' R' U S' R,,,,,,,,
-,,,,,,,                        DR-LF,HT double E',,,,,NV inv is R2 u',,,,,,,,,
-,,,,,,,GL u' R,HV RHi LHm RHm LHi,,,,,NX R U to UF:OX,,,,,,,,,
-,,,,,,,GN L F' L' to UF: XT,HV S 2Es S,,,,,,,,,,,,,,
-,,,,,,,GO S 5mvr,"[R u R': [U', R' E R]]",,,,,,,,,,,,,,
-,,,,,,,GR R2' E' 5mvr  S RHi,,,,,,,,,,,,,,,
-,,,,,,,GV R E' R' to GF last move E,,,,,,,,,,,,,,,
-,,,,,,,GT S R 4mvr,,,,,,,,,,,,,,,

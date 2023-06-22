@@ -1,10 +1,10 @@
-from Cube.cube import Cube
+from Cube.memo import Memo
 
 
 class Solution:
 
     def __init__(self, scramble, letter_scheme=None, buffers=None):
-        self.cube = Cube(scramble, auto_scramble=False, can_parity_swap=True, ls=letter_scheme, buffers=buffers)
+        self.cube = Memo(scramble, auto_scramble=False, can_parity_swap=True, ls=letter_scheme, buffers=buffers)
         self.scramble = scramble
         self.parity = self.cube.has_parity
         self.cube.scramble_cube(self.scramble)
@@ -131,8 +131,28 @@ class Solution:
         print("Twisted Corners:", self.cube.twisted_corners)
         print("Alg count:", solution['number_of_algs'])
         corner_memo = solution['corners']
-        print(corner_memo)
         # when cube is memoed, the state of the memo should be saved when the buffer is first hit
         no_cycle_break_corner_memo = set()
         corner_buffers = solution['corner_buffers']
         print(corner_buffers)
+
+
+# R U' D2 F2 L' B D R2 F B2 L2 U R2 B2 D2 F2 D' L2 D2 R2 F2 L B'
+
+def calc_corner_alg_count() -> int:
+    pass
+
+
+def calc_edge_alg_count() -> int:
+    # number and length of 00
+    # number and length of 01
+    # number and length of 11
+    pass
+
+
+def calc_alg_count(dlin_memo):
+    # do twists and flips later
+    corner_alg_count = calc_corner_alg_count()
+    edge_alg_count = calc_edge_alg_count()
+    alg_count = corner_alg_count + edge_alg_count
+    return alg_count

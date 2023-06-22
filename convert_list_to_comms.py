@@ -9,7 +9,7 @@ from expand_comm import expand_comm
 def convert(comms, buffer):
     comms[buffer] = {}
 
-    with open(f'{buffer}.csv', newline='') as csvfile:
+    with open(f'comms/max_comms/{buffer}.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             second_target = row["1st Target:"]
@@ -26,8 +26,14 @@ def convert(comms, buffer):
 comms = {}
 
 # buffers = ['UFR', 'UBR', 'UBL']
-buffers = ['DF']
+buffers = [
+    'UF', 'UB', 'UR', 'UL', 'DF', 'DB', 'FR', 'FL', 'DR', 'DL',
+    'UFR', 'UBR', 'UBL', 'UFL', 'RDF', 'RDB'
+]
 for buffer in buffers:
     convert(comms, buffer)
 
-pprint(comms)
+pprint(comms, sort_dicts=False)
+with open(f"max_comms.py", "w+") as f:
+    f.write("MAX_COMMS = ")
+    pprint(comms, f, sort_dicts=False)

@@ -54,7 +54,7 @@ class Cube:
             self.default_corner_buffer = ls['UFR']
 
         self.edge_memo_buffers = set()
-        self.corner_memo_buffers = {UFR, RUF, FUR}
+        self.corner_memo_buffers = set()  # {UFR, RUF, FUR}
 
         self.corner_cycle_break_order = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
         self.edge_cycle_break_order = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]

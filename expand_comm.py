@@ -12,6 +12,8 @@ def expand_comm(comm):
 
         elif "*" in comm:
             a = "".join([i for i in comm if i not in ["(", ")", "2", "*"]])
+        else:
+            raise ValueError("Comm improperly formatted", comm)
 
     elif comm.count(":") == 1:
         split_comm = comm.split(":")
@@ -22,6 +24,8 @@ def expand_comm(comm):
 
         elif "*" in comm:
             a = "".join([i for i in ab if i not in ["(", ")", "2", "*"]])
+        else:
+            raise ValueError("Comm improperly formatted", comm)
     else:
         raise ValueError("comm wierd length", comm)
 
@@ -29,7 +33,8 @@ def expand_comm(comm):
         exp_comm = c + a + b + " " + invert_solution(a) + " " + invert_solution(b) + " " + invert_solution(c)
     elif "*" in comm and "," not in comm:
         exp_comm = c + a + a + invert_solution(c)
-
+    else:
+        raise ValueError("Comm improperly formatted", comm)
     return " ".join(exp_comm.split())
 
 
