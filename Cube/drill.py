@@ -7,7 +7,6 @@ import get_scrambles
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
-from comms import COMMS
 from max_comms import MAX_COMMS
 
 
@@ -304,7 +303,7 @@ class Drill:
                                                                    piece_type="corners", return_type='list'))):
                 exclude_from_memo.add(pair)
                 a, b = pair[:3], pair[3:]
-                comm = COMMS[corner_buffer][a][b]
+                comm = MAX_COMMS[corner_buffer][a][b]
                 comms.append(comm)
                 if not return_list:
                     print(f"{pair_letters}:", comm)
@@ -503,6 +502,23 @@ class Drill:
         second = random.choice(target_list)
         return first + second
 
+    def get_all_buffer_targets(self, buffer, piece_type='is this really needed idk'):
+        if piece_type == 'corners':
+            corner_buffer = buffer
+            corners = self.cube_memo.remove_irrelevant_corner_buffers(self.cube_memo.adj_corners.copy(), corner_buffer)
+            all_corners = set(i + j for i, j in itertools.permutations(corners, 2) if
+                              i != self.cube_memo.adj_corners[j][0] and i != self.cube_memo.adj_corners[j][1])
+            return all_corners
+        elif piece_type == 'edges':
+            edge_buffer = buffer
+            edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
+
+            all_edges = set(i + j for i, j in itertools.permutations(edges, 2) if
+                            i != self.cube_memo.adj_edges[j])
+            return all_edges
+        else:
+            raise Exception('put "corners" or "edges" in params pls')
+
     def drill_ltct(self, algs=""):
         # we are now going to pretent that we know what we are dioing
         algs_done = set()
@@ -528,7 +544,7 @@ class Drill:
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
     drill = Drill()
-
+    print(convert_letterpairs(drill.get_all_buffer_targets("UFL", 'corners'), 'loc_to_letters', 'corners'))
     # drill.drill_edge_sticker(sticker_to_drill="FD", single_cycle=True, return_list=False,
     #                          cycles_to_exclude=
     #                          {'FDRB', 'FDDB', 'FDDL', 'FDFR', 'FDLF', 'FDBR', 'FDBL', 'FDBU', 'FDRU', 'FDLU', 'FDUL',

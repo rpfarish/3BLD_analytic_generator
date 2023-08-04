@@ -52,5 +52,27 @@
   "buffers": {
     "edge_buffer": "UF",
     "corner_buffer": "UFR"
+  },
+  "buffer_order": {
+    "edges": [
+      "UF",
+      "UB",
+      "UR",
+      "UL",
+      "DF",
+      "DB",
+      "FR",
+      "FL",
+      "DR",
+      "DL"
+    ],
+    "corners": [
+      "UFR",
+      "UBR",
+      "UBL",
+      "UFL",
+      "RDF",
+      "RDB"
+    ]
   }
 }

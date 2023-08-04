@@ -1,4 +1,4 @@
-1st Target:,UBL (A),UBR (B),UFR,LUB (J),LDF (G),LDB (H),FUR,FDR (K),FDL (L),RUF,RUB,RDB (O),RDF (P),BUR,BUL (M),BDL (S),BDR (T),DFL (C),DFR (V),DBR (W),DBL (Z)
+1st Target:,UBL,UBR,UFR,LUB,LDF,LDB,FUR,FDR,FDL,RUF,RUB,RDB,RDF,BUR,BUL,BDL,BDR,DFL,DFR,DBR,DBL
 UBL,,,,,"[U2 : [R' D R , U]]","[U : [R D' R' , U]]",,"[D' U2 : [R' D R , U]]","[D U2 : [R' D' R , U]]",,,"[U : [R D R' , U]]","[U2 : [R' D' R , U]]",,,"[D' U : [R D R' , U]]","[D U : [R D' R' , U]]","[U R D R2' : [U , R D' R']]","[R' U D : [R D' R' , U]]","[R D' U2 : [R' D R , U]]","[U' R' D' R : [D , R U' R']]"
 UBR,,,,,,,,,,,,,,,,,,,,,
 UFR,,,,,,,,,,,,,,,,,,,,,

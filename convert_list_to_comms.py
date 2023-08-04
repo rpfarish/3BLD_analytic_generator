@@ -6,34 +6,52 @@ from pprint import pprint
 from expand_comm import expand_comm
 
 
-def convert(comms, buffer):
-    comms[buffer] = {}
+def _convert(buffer):
+    comms = {}
 
     with open(f'comms/max_comms/{buffer}.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            second_target = row["1st Target:"]
+            second_target = row['1st Target:']
+            if len(second_target) > 3:
+                raise ValueError(buffer, second_target, "second_target is too long")
+
             for first_target in row:
-                if row == '' or second_target == first_target or first_target == "1st Target:":
+                if row == '' or second_target == first_target or first_target == "1st Target:" or first_target is None:
                     continue
+                if len(first_target) > 3:
+                    raise ValueError(buffer, first_target, "first_target is too long")
+
                 comm = expand_comm(row[first_target])
-                if comms[buffer].get(first_target, None) is None:
-                    comms[buffer][first_target] = {second_target: comm}
+                if comms.get(first_target, None) is None:
+                    comms[first_target] = {second_target: comm}
                 else:
-                    comms[buffer][first_target][second_target] = comm
+                    comms[first_target][second_target] = comm
+    return comms
 
 
-comms = {}
+def update_comm_list(file="max_comms.py", buffers=None):
+    if buffers is None:
+        buffers = [
+            'UF', 'UB', 'UR', 'UL',
+            'DF', 'DB',
+            'FR', 'FL',
+            'DR', 'DL',
+            'UFR', 'UBR', 'UBL', 'UFL',
+            'RDF', 'RDB'
+        ]
+    elif len(buffers) != 18:
+        raise ValueError("Please include all of the buffers in settings.json")
 
-# buffers = ['UFR', 'UBR', 'UBL']
-buffers = [
-    'UF', 'UB', 'UR', 'UL', 'DF', 'DB', 'FR', 'FL', 'DR', 'DL',
-    'UFR', 'UBR', 'UBL', 'UFL', 'RDF', 'RDB'
-]
-for buffer in buffers:
-    convert(comms, buffer)
+    comms = {}
+    for buffer in buffers:
+        comms[buffer] = _convert(buffer)
 
-pprint(comms, sort_dicts=False)
-with open(f"max_comms.py", "w+") as f:
-    f.write("MAX_COMMS = ")
-    pprint(comms, f, sort_dicts=False)
+    pprint(comms, sort_dicts=False)
+    with open(f"{file}.py", "w+") as f:
+        f.write(f"{file.upper()} = ")
+        pprint(comms, f, sort_dicts=False)
+
+
+if __name__ == '__main__':
+    update_comm_list()

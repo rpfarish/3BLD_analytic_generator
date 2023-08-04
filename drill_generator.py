@@ -1,5 +1,6 @@
 import random
 from collections import deque
+from itertools import combinations
 
 import kociemba
 
@@ -361,12 +362,7 @@ def main(mode):
             "DBL": "R D' R' U' R D R' D' R D R' U R D' R' D",
         }
     }
-    from itertools import combinations
-    a = list(combinations(twists["CW"].values(), r=2))
-    b = list(combinations(twists["CCW"].values(), r=2))
-    t = a + b
-    t = [a + " " + b for (a, b) in t]
-    #
+
     algs_help_num = 0
     algs_help = []
     # algs = [
@@ -434,7 +430,7 @@ def main(mode):
     ]
     # all ltct UU with some ltct UD
 
-    if mode == 1:
+    if mode == "1":
         algs = [
             "U R U R2' D' R U R' D R2 U2' R'",
             "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",
@@ -483,12 +479,25 @@ def main(mode):
             "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
             "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D",
         ]
-    elif mode == 2:
-        algs = t
+
+    elif mode == "2":
+        cw_twists = twists["CW"].values()
+        ccw_twists = twists["CCW"].values()
+        cw = list(combinations(cw_twists, r=2))
+        ccw = list(combinations(ccw_twists, r=2))
+        algs = [a + " " + b for (a, b) in cw + ccw]
+
+    elif mode == "3":
+        cw_twists = twists["CW"].values()
+        ccw_twists = twists["CCW"].values()
+        cw = list(combinations(cw_twists, r=3))
+        ccw = list(combinations(ccw_twists, r=3))
+        algs = [a + " " + b + " " + c for (a, b, c) in cw + ccw]
 
     print(len(algs), "len of algs")
     last_solution = None
     no_repeat = True
+    num = 1
     # TODO support wide moves
     while True:
         if not algs:
@@ -514,7 +523,8 @@ def main(mode):
         if len(solution.split()) > 25:
             if DEBUG:
                 print(f"Long solution {len(solution.split())}:")
-                print(solution)
+                print(f"Num {num}/{len(algs)}:", solution)
+                num += 1
             continue
 
         if no_repeat:

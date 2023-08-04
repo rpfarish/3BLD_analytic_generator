@@ -1,4 +1,5 @@
 import json
+import time
 from pprint import pprint
 
 import dlin
@@ -7,6 +8,7 @@ import drill_generator
 from Cube import Cube
 from Cube.drill import Drill
 from Cube.letterscheme import LetterScheme
+from convert_list_to_comms import update_comm_list
 from eli_comms import ELI_COMMS
 from max_comms import MAX_COMMS
 from solution import Solution
@@ -150,8 +152,6 @@ def get_comm(args):
     max_list = True
     eli_list = True
     # if '-b' not in args:
-    buffer, *cycles = args
-
     if '-e' in args:
         args.remove('-e')
         eli_list = True
@@ -159,10 +159,13 @@ def get_comm(args):
 
     elif '-m' in args:
         args.remove('-m')
+        print(args)
         eli_list = False
         max_list = True
 
+    buffer, *cycles = args
     buffer = buffer.upper()
+    print(args)
 
     # Name person, comm name: comm notation, expanded comm?
     # prob comm lists should be json lol
@@ -199,8 +202,26 @@ with open("settings.json") as f:
     settings = json.loads(f.read())
     letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
     buffers = settings['buffers']
+    buffer_order = settings['buffer_order']
 
 print(intro)
+
+start_time = time.time()
+# # Create drill file for comm trainer
+#
+# for buffer in buffer_order['corners']:
+#     with open(r"C:\Users\rpfar\Documents\jashaszun-3style-tester\jashaszun-3style-tester-0980b6fbd87e\Comms\Floating Corners{}.txt".format(buffer), 'w') as f:
+#         all_corners = convert_letterpairs(Drill().get_all_buffer_targets(buffer, 'corners'), 'loc_to_letters', 'corners')
+#         all_corners = [corner + "=\n" for corner in all_corners]
+#         corner_str = "".join(all_corners)
+#         f.writelines(all_corners)
+# for buffer in buffer_order['edges']:
+#     with open(r"C:\Users\rpfar\Documents\jashaszun-3style-tester\jashaszun-3style-tester-0980b6fbd87e\Comms\Floating Edges\{}.txt".format(buffer), 'w') as f:
+#         all_edges = convert_letterpairs(Drill().get_all_buffer_targets(buffer, 'edges'), 'loc_to_letters', 'edges')
+#         all_edges = [edge + "=\n" for edge in all_edges]
+#         edge_str = "".join(all_edges)
+#         f.writelines(all_edges)
+
 
 while True:
     response = input("(3bld) ").split()
@@ -240,10 +261,12 @@ while True:
 
     # (a/algs, type)
     elif mode == "a" or mode == "algs":
-        last_mode = mode
-        # mode = get_input('1 for ltct, 2 for 3 twists2'
-        #                  '2')
-        drill_generator.main(mode)
+        print(args)
+        if not args:
+            print('1 for ltct, 2 for 3 twists')
+        last_mode = args[0]
+
+        drill_generator.main(args[0])
 
 
     # do these two auto convert
@@ -332,5 +355,17 @@ while True:
 
             get_comm(args)
 
+    elif mode == 'reload':
+
+        with open("settings.json") as f:
+            settings = json.loads(f.read())
+            letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
+            buffers = settings['buffers']
+            buffer_order = settings['buffer_order']
+            all_buffers_order = buffer_order['edges'] + buffer_order['corners']
+        update_comm_list(buffers=all_buffers_order)
+
+    elif mode == 'timeup':
+        print(time.time() - start_time)
     else:
         print("that option is not recognised")
