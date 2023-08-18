@@ -5,6 +5,7 @@ from pprint import pprint
 import dlin
 
 import drill_generator
+import get_scrambles
 from Cube import Cube
 from Cube.drill import Drill
 from Cube.letterscheme import LetterScheme
@@ -367,5 +368,18 @@ while True:
 
     elif mode == 'timeup':
         print(time.time() - start_time)
+
+    elif mode == 'alger':
+        alg_count = int(args.pop())
+        print(alg_count)
+        while True:
+            cur_alg_count = 0
+            while cur_alg_count != alg_count:
+                scram = get_scrambles.get_scramble()
+                cur_alg_count = Solution(scramble=scram).count_number_of_algs()
+            else:
+                print(scram)
+            input()
+
     else:
         print("that option is not recognised")
