@@ -1,6 +1,7 @@
 import json
 from collections import deque
 
+import dlin
 import kociemba
 
 from Cube.letterscheme import LetterScheme
@@ -419,7 +420,7 @@ class Cube:
             comm = buffer[a][b]
             self.scramble_cube(comm)
 
-        return kociemba.solve(self.get_faces_colors())
+        return kociemba.solve(self.get_faces_colors(), max_depth=17)
 
     def scramble_corners_from_memo(self, memo, corner_buffer=None):
         corner_buffer = self.default_corner_buffer if corner_buffer is None else corner_buffer
@@ -448,6 +449,8 @@ class Cube:
             cube_string += face
         return cube_string
 
+    def get_dlin_trace(self):
+        return dlin.trace(" ".join(self.scramble))
 
 if __name__ == "__main__":
     with open("../settings.json") as f:

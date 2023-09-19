@@ -3,6 +3,7 @@ import time
 from pprint import pprint
 
 import dlin
+import kociemba
 
 import drill_generator
 import get_scrambles
@@ -180,7 +181,7 @@ def get_comm(args):
         if max_list:
             print(f"Max {let1 + let2}:", MAX_COMMS[buffer][a][b])
         if eli_list:
-            print(f"Eli {let1 + let2}:", ELI_COMMS[buffer][a][b])
+            print(f"Eli {let1 + let2}:", ELI_COMMS.get(buffer, {}).get(a, {}).get(b, "Not listed"))
 
         # should it show just the expanded ver or the comm notation?
     return buffer
@@ -380,6 +381,58 @@ while True:
             else:
                 print(scram)
             input()
+
+    elif "drillUB" == mode:
+
+        buffer = args.pop()
+        solved_cube = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+        while True:
+            scram = get_scrambles.gen_premove(15, 20)
+            if len(scram.split()) > 20:
+                continue
+            cube_has_parity = Cube(scram).has_parity
+            if cube_has_parity:
+                scram = "R U2 R' U' R U' R' U' " + scram
+            cube = Cube(scram)
+            cube_trace = cube.get_dlin_trace()
+            print(cube_trace)
+            for edge in cube_trace["edge"]:
+
+                if edge['type'] == "cycle" and edge["buffer"] == buffer and edge['orientation'] == 0 and edge[
+                    'parity'] == 0:
+                    scram = kociemba.solve(solved_cube, cube.get_faces_colors(), max_depth=20)
+                    print(scram)
+                    input()
+
+            # continue
+            # cur_alg_count = Solution(scramble=scram).count_number_of_algs()
+        else:
+            print(scram)
+        input()
+
+    elif "cbuff" == mode:
+        buffer = args.pop()
+        while True:
+            cycle_breaks = True
+            drill = Drill()
+            scram = drill.drill_edge_buffer_cycle_breaks(buffer)
+            # todo what if buffer is solved lol
+            cube = Cube(scram, can_parity_swap=False)
+            if buffer in cube.solved_edges or len(cube.solved_edges) >= 4:
+                continue
+            cube_trace = cube.get_dlin_trace()
+            for edge in cube_trace["edge"]:
+
+                if edge['type'] == "cycle" and edge["buffer"] == buffer and edge['orientation'] == 0 and edge[
+                    'parity'] == 0:
+                    cycle_breaks = False
+                    break
+            else:
+                cycle_breaks = True
+
+            if cycle_breaks:
+                print(scram)
+                input()
 
     else:
         print("that option is not recognised")

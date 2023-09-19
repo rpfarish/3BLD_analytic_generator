@@ -430,6 +430,75 @@ def main(mode):
     ]
     # all ltct UU with some ltct UD
 
+    two_flips = {
+        "[U , R' E2 R2 E' R']": "U R' E2 R2 E' R' U' R E R2' E2' R",
+        "[U' : [S , R' F' R]] [U2' , M']": "U' S R' F' R S' R' F R U' M' U2 M",
+        "[U' , L E2' L2' E L]": "U' L E2' L2' E L U L' E' L2 E2 L'",
+        "[L' E2' L , U'] [U' , L E' L']": "L' E2' L U' L' E2 L2 E' L' U L E L'",
+        "[R E2 R' , U] [U , R' E R]": "R E2 R' U R E2' R2' E R U' R' E' R",
+        "[R' E2 R , U] [U , R E' R']": "R' E2 R U R' E2' R2 E' R' U' R E R'",
+        "[L E2' L' , U'] [U' , L' E L]": "L E2' L' U' L E2 L2' E L U L' E' L",
+        "[M' , U2] [U : [S , R' F' R]]": "M' U2 M U' S R' F' R S' R' F R U'",
+        "[U' : [R E R' , U2]] [U : [S , R2']]": "U' R E R' U2 R E' R' S R2' S' R2 U'",
+        "[M U' : [S , R' F' R]] [M , U2]": "M U' S R' F' R S' R' F R U' M' U2'",
+        "[U : [L' E' L , U2']] [U' : [S' , L2]]": "U L' E' L U2' L' E L S' L2 S L2' U",
+        "[R' E2 R2 E' R' , U']": "R' E2 R2 E' R' U' R E R2' E2' R U",
+        "[S , R' F' R] [U' : [M' , U2]]": "S R' F' R S' R' F R U' M' U2 M U'",
+        "[U R : [U' , R' E' R2 E2 R']]": "U R U' R' E' R2 E2 R' U R E2' R2' E U'",
+        "[U , R' E R] [R E2 R' , U]": "U R' E R U' R' E' R2 E2 R' U R E2' R' U'",
+        "[R E' R2' : [F2 , R S' R']] [R : [E' , R2']]": "R E' R2' F2 R S' R' F2' R S R' E R",
+        "[U : [L' E L , U]] [U2 : [L E2' L' , U']]": "U L' E L U L' E' L2 E2' L' U' L E2 L' U'",
+        "[U' : [M' , U2]] [S , R' F' R]": "U' M' U2 M U' S R' F' R S' R' F R",
+        "[R' F' R , S'] [S' U' : [M' , U2]]": "R' F' R S' R' F R U' M' U2 M U' S",
+        "[U' M U' : [S , R' F' R]] [U' : [M , U2]]": "U' M U' S R' F' R S' R' F R U' M' U'",
+        "[R2' , S'] [S' : [U2 , R E R']]": "R2' S' R2 U2 R E R' U2' R E' R' S",
+        "[L E2' L2' E L , U]": "L E2' L2' E L U L' E' L2 E2 L' U'",
+        "[L E' L' , U] [U , L' E2' L]": "L E' L' U L E L2' E2' L U' L' E2 L",
+        "[R' E R , U'] [U' , R E2 R']": "R' E R U' R' E' R2 E2 R' U R E2' R'",
+        "[R E' R' , U'] [U' , R' E2 R]": "R E' R' U' R E R2' E2 R U R' E2' R",
+        "[L' E L , U] [U , L E2' L']": "L' E L U L' E' L2 E2' L' U' L E2 L'",
+        "[U2 , M'] [U' : [S , R' F' R]]": "U2 M' U2' M U' S R' F' R S' R' F R U",
+        "[U : [R E R' , U2]] [U' : [S , R2']]": "U R E R' U2 R E' R' S R2' S' R2 U",
+        "[U2 M U' : [S , R' F' R]] [U2 , M]": "U2 M U' S R' F' R S' R' F R U' M'",
+        "[U' : [L' E' L , U2']] [U : [S' , L2']]": "U' L' E' L U2' L' E L S' L2' S L2 U'",
+        "[U' , L E' L'] [L' E2' L , U']": "U' L E' L' U L E L2' E2' L U' L' E2 L U",
+        "[U' : [R' E R , U']] [U2' : [R E2 R' , U]]": "U' R' E R U' R' E' R2 E2 R' U R E2' R' U",
+        "[U' : [R E' R' , U']] [U2' : [R' E2 R , U]]": "U' R E' R' U' R E R2' E2 R U R' E2' R U",
+        "[L' E L2 : [F2' , L' S L]] [L' : [E , L2]]": "L' E L2 F2' L' S L F2 L' S' L E' L'",
+        "[U : [M' , U2']] [S' , L F L']": "U M' U2' M U S' L F L' S L F' L'",
+        "[S , R2'] [U2 , R E R']": "S R2' S' R2 U2 R E R' U2' R E' R'",
+        "[U M U' : [S , R' F' R]] [U : [M , U2']]": "U M U' S R' F' R S' R' F R U' M' U",
+        "[L F L' , S] [S U : [M' , U2']]": "L F L' S L F' L' U M' U2' M U S'",
+        "[R S R' F2 : [R2 , E]] [R S R' , F2]": "R S R' F2 R2 E R2' E' R S' R' F2'",
+        "[R2 , E'] [E' : [F2 , R S' R']]": "R2 E' R2' F2 R S' R' F2' R S R' E",
+        "[R2 , E] [R S' R' , F2]": "R2 E R2' E' R S' R' F2 R S R' F2'",
+        "[R U' : [M' , U2]] [R S R' , F']": "R U' M' U2 M U' S R' F' R S' R' F",
+        "[S L : [E' , L2']] [r , E' L' E]": "S L E' L2' E L S' r E' L' E r' E' L E",
+        "[M : [L' E2' L , U']] [M : [U' , L E' L']]": "M L' E2' L U' L' E2 L2 E' L' U L E L' M'",
+        "[L : [E' , L2']] [L F2' L' , S]": "L E' L2' E L2 F2' L' S L F2 L' S'",
+        "[L2' , E'] [L' S L , F2']": "L2' E' L2 E L' S L F2' L' S' L F2",
+        "[E , R2] [F2 , R S' R']": "E R2 E' R2' F2 R S' R' F2' R S R'",
+        "[M' : [R' E R , U']] [M' : [U' , R E2 R']]": "M' R' E R U' R' E' R2 E2 R' U R E2' R' M",
+        "[R' : [E , R2]] [R' F2 R , S']": "R' E R2 E' R2' F2 R S' R' F2' R S",
+        "[M : [R E2 R' , U]] [M : [U , R' E R]]": "M R E2 R' U R E2' R2' E R U' R' E' R M'",
+        "[S' R' : [E , R2]] [l' , E R E']": "S' R' E R2 E' R' S l' E R E' l E R' E'",
+        "[R2' , E'] [E' R' : [S' , R' F2 R]]": "R2' E' R S' R' F2 R S R' F2' R2 E",
+        "[r : [E' , R' U' R]] [M' : [U' , R' E2 R]]": "r E' R' U' R E R' U R r' M' U' R' E2 R U R' E2' R M",
+        "[l : [S , R2']] [l U2 l' , S']": "l S R2' S' R2 U2 l' S' l U2' l' S",
+        "[r' : [E2 , R U R']] [M : [U , R E' R']]": "r' E2 R U R' E2' R U' R' r M U R E' R' U' R E R' M'",
+        "[S' R : [E' , R2']] [l , E' R' E]": "S' R E' R2' E R S l E' R' E l' E' R E",
+        "[R' U' : [M' , U2]] [R' : [S , R' F' R]]": "R' U' M' U2 M U' S R' F' R S' R' F R2",
+        "[S L' : [E , L2]] [r' , E L E']": "S L' E L2 E' L' S' r' E L E' r E L' E'",
+        "[l : [E2' , L' U' L]] [M : [U' , L' E L]]": "l E2' L' U' L E2 L' U L l' M U' L' E L U L' E' L M'",
+        "[r' : [S' , L2]] [r' U2' r , S]": "r' S' L2 S L2' U2' r S r' U2 r S'",
+        "[S , R F' R'] [S' , R' F' R]": "S R F' R' S' R F R' S' R' F' R S R' F R",
+        "[M2 U' : [S , R' F' R]] [M2 : [U2 , M']]": "M2 U' S R' F' R S' R' F R U' M' U2' M'",
+        "[S' , L' F L] [S , L F L']": "S' L' F L S L' F' L S L F L' S' L F' L'",
+        "[S2' , r' U' r] [r' : [U' , L' E L]]": "S2' r' U' r S2 r' L' E L U L' E' L r",
+        "[U' : [R2' , S']] [R F R' , S']": "U' R2' S' R2 S U R F R' S' R F' R' S",
+        "[S2 , l U l'] [l : [U , R E' R']]": "S2 l U l' S2' l R E' R' U' R E R' l'",
+    }
+
     if mode == "1":
         algs = [
             "U R U R2' D' R U R' D R2 U2' R'",
@@ -494,6 +563,9 @@ def main(mode):
         ccw = list(combinations(ccw_twists, r=3))
         algs = [a + " " + b + " " + c for (a, b, c) in cw + ccw]
 
+    elif mode == "4":
+        algs = list(two_flips.values())
+        random.shuffle(algs)
     print(len(algs), "len of algs")
     last_solution = None
     no_repeat = True
@@ -512,7 +584,7 @@ def main(mode):
         cube = ColoredCube(alg_with_post_move)
         if DEBUG: print("kociemba solving...")
 
-        k_sol = kociemba.solve(cube.get_faces_colors())
+        k_sol = kociemba.solve(cube.get_faces_colors(), max_depth=16)
 
         if DEBUG:
             print("//", post_move, "||", k_sol)
@@ -532,7 +604,7 @@ def main(mode):
 
         if DEBUG: print("at input...")
         if last_solution != solution:
-            print(solution.strip())
+            print(num, solution.strip())
             last_solution = solution
             response = input("")
             if response == 'quit':

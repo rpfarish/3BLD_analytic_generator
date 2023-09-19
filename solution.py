@@ -1,3 +1,5 @@
+import dlin
+
 from Cube.memo import Memo
 
 
@@ -92,12 +94,29 @@ class Solution:
         if self.can_float_edges:
             return 'floating edge memo'
 
-    def count_number_of_algs(self) -> int:
-        number_of_floats = 0
+    def count_sandwich_floats(self):
+        dlin_trace = dlin.trace(scramble=self.scramble)
+        float_count = 0
+        for buffer_trace in dlin_trace['corner'] + dlin_trace['edge']:
+            can_float = buffer_trace['orientation'] == 0 and buffer_trace['parity'] == 0 and buffer_trace[
+                'type'] == 'cycle' and buffer_trace['buffer'] not in ['UFR', 'UF']
+            # todo fix this 'UFR' to self.corner_buffer etc
+            if can_float:
+                float_count += 1
 
-        num = len(self.edges) + len(self.corners) + self.number_of_edge_flips + self.number_of_corner_twists
-        num -= number_of_floats
-        return num
+        return float_count
+
+    def count_number_of_algs(self) -> int:
+        number_of_floats = self.count_sandwich_floats()
+
+        twists_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
+        print(self.edges, len(self.edges), self.corners, len(self.corners), self.number_of_edge_flips,
+              self.number_of_corner_twists, number_of_floats)
+        num_of_algs = len(self.edges) + len(
+            self.corners) + self.number_of_edge_flips // 2 + \
+                      twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2)
+        num_of_algs -= number_of_floats
+        return num_of_algs
 
     def get_solution(self):
         solution = {
@@ -156,3 +175,8 @@ def calc_alg_count(dlin_memo):
     edge_alg_count = calc_edge_alg_count()
     alg_count = corner_alg_count + edge_alg_count
     return alg_count
+
+
+if __name__ == "__main__":
+    s = Solution("D F' D2 L2 R' D2 F2 R' L F B R L' F' D U2 B F2 U' R")
+    print(s.count_number_of_algs())

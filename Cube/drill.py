@@ -3,10 +3,13 @@ import json
 import random
 import time
 
+import kociemba
+
 import get_scrambles
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
+from comms import COMMS
 from max_comms import MAX_COMMS
 
 
@@ -196,6 +199,25 @@ class Drill:
             # print(self.reduce_scramble(scramble))
             input()
 
+    def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
+        edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
+        all_edges = [i + j for i, j in itertools.permutations(edges, 2) if
+                     i != self.cube_memo.adj_edges[j]]
+        all_edges += all_edges
+        random.shuffle(all_edges)
+
+        rand_edges = random.choices(all_edges, k=len(all_edges) // 2)
+        cube = Cube()
+        for pair in rand_edges:
+            a, b = pair[:len(pair) // 2], pair[len(pair) // 2:]
+            buffer = COMMS[str(edge_buffer)]
+            comm = buffer[a][b]
+            cube.scramble_cube(comm)
+
+        scram = kociemba.solve(cube.get_faces_colors(), max_depth=19)
+
+        return scram
+
     # memo
     def drill_edge_buffer(self, edge_buffer: str, exclude_from_memo=None, return_list=False, translate_memo=False,
                           drill_set: set | None = None):
@@ -282,13 +304,13 @@ class Drill:
 
             scramble, memo = self.generate_random_corner_memo(all_corners, corner_buffer, exclude_from_memo)
 
-            if translate_memo:
-                print("Memo:", ', '.join(
-                    list(convert_letterpairs(memo.split(), direction="loc_to_letter", piece_type="edges",
-                                             return_type='list')))
-                      )
-                # this is the proper way to do this
-                # memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
+            # if translate_memo:
+            #     print("Memo:", ', '.join(
+            #         list(convert_letterpairs(memo.split(), direction="loc_to_letter", piece_type="edges",
+            #                                  return_type='list')))
+            #           )
+            # this is the proper way to do this
+            # memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
 
             if not return_list:
                 print(f'Num: {num}/{max_number_of_times}')
@@ -544,6 +566,10 @@ class Drill:
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
     drill = Drill()
+
+    s = drill.drill_edge_buffer_cycle_breaks("UB")
+    print(s)
+    quit()
     print(convert_letterpairs(drill.get_all_buffer_targets("UFL", 'corners'), 'loc_to_letters', 'corners'))
     # drill.drill_edge_sticker(sticker_to_drill="FD", single_cycle=True, return_list=False,
     #                          cycles_to_exclude=
@@ -696,3 +722,34 @@ WE U'D'
 # DL
 # NR R' E' R E R S' R' S
 # RN S' R S R' E' R' E R  you can also do it with wide Rs
+
+
+# DL 1:42.84
+# DL 1:00.83
+# DL 1:05.94
+# DL   59.09
+# DL   51.51 did i actually do all the cases tho
+# DL   51.79
+# DL   50.30
+# DL   47.76
+# DL   47.82
+# DL   43.70 (5.46 per case)
+
+
+# DR 7:36
+# DR 6:54.06
+# DR 5:08.67
+# DR 3:37.48
+# DR 4:08.39
+# DR 3:07.88
+# DR 3:45.56
+# DR 2:44.34
+# DR 3:04.97
+# DR 2:43.51
+# DR 2:43.14
+# DR 2:23.99 5.999583333333333
+# DR 2:24.63
+
+# DB 35:46.151
+
+# 2 flips 1824.52 33:24.52
