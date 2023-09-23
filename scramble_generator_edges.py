@@ -1,5 +1,5 @@
 import get_scrambles
-from Cube.cube import Cube
+from Cube.memo import Memo
 from solution import Solution
 
 
@@ -48,12 +48,13 @@ print("This program generates scrambles that contain certain letter pairs")
 frequency = int(input("Enter freq (recommended less than 3): "))
 no_cycle_break_edge_memo = set()
 # print('Running...')
+algs_to_drill = {"LFFD"}
 strict = True
 no_repeat = True
 # I don't recommend going above 2 else it will take forever
 while len(algs_to_drill) >= frequency:
     scramble = get_scrambles.gen_premove(min_len=17, max_len=20)
-    cube = Cube(scramble, can_parity_swap=True)
+    cube = Memo(scramble, can_parity_swap=True)
     edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
     last_added_pair = ''
     # print(scramble)

@@ -420,7 +420,7 @@ class Cube:
             comm = buffer[a][b]
             self.scramble_cube(comm)
 
-        return kociemba.solve(self.get_faces_colors(), max_depth=17)
+        return kociemba.solve(self.get_faces_colors(), max_depth=20)
 
     def scramble_corners_from_memo(self, memo, corner_buffer=None):
         corner_buffer = self.default_corner_buffer if corner_buffer is None else corner_buffer

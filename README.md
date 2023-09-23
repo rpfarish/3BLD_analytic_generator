@@ -11,6 +11,7 @@ Please note that the letters on the buffers are not important, but each of them 
 ## Features:
 
 ### Memo the cube
+Syntax: memo [scramble]
 
 - to memorize the cube with these specific qualities: intelligent cycle breaking, memoing with alternate pseudoswaps,
   identifying: 2-flips, 2-twists, 3-twists, parity + twist, identifying floats, and trying to grade each of these
@@ -36,3 +37,48 @@ Please note that the letters on the buffers are not important, but each of them 
 Most of this stuff is still wip.
 
 # 3BLD_analytic_generator
+
+Note: Please put all piece names in Singmaster notation e.g. UR or RDB exept for when specifying args for drill sticker
+
+## CMD Commands List:
+
+### Memo: `memo [scramble] [-l filename] [-s filename]`
+
+#### Options:
+
+- `-l filename`  loads scrambles from FILENAME text file
+- `-s filename` saves SCRAMBLE to FILENAME text file
+
+### HELP: `help [name]`
+
+### Letter Scheme: `ls [-d] [-l]`
+
+#### Options:
+
+- `-d` dumps the current loaded letter scheme for the standard Singmaster notation
+- `-l` loads the letter scheme from settings.json
+
+### Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
+
+#### Options:
+
+- `-l <filename>` loads the current buffer drill file from json to allow multiple concurrent buffer drill sessions (
+  Note: if you start a new session without -l it will erase the existing save file)
+- `-r` randomly generates cycles with no limit on repeating pairs
+
+### Quit: `quit`
+
+### Comm: `comm [buffer] [pair | pairs...]`
+
+#### Options:
+
+- `-r` rapid mode allows you to enter many pairs in and keep the buffer selected for each query
+- `-b` selects a new buffer while in rapid mode
+
+### Reload: `reload`
+
+### Time up: `timeup`
+
+### Alger: `alger [alg count]`
+
+### Cycle Break Float: `float [buffer]`
