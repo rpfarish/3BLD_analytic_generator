@@ -638,24 +638,17 @@
     "BUDF"
   ],
   "RDB": [
-    "FDLLDB",
-    "DFLDBL",
-    "LDFDBL",
-    "LDBDFL",
-    "DFLLDB",
-    "LDFBDL",
-    "FDLDBL",
-    "FDLBDL",
-    "BDLFDL",
-    "BDLLDF",
-    "LDBLDF",
-    "DBLDFL",
     "BDLDFL",
-    "DBLFDL",
-    "DBLLDF",
-    "DFLBDL",
+    "DFLDBL",
+    "FDLLDB",
     "LDFLDB",
-    "LDBFDL"
+    "DBLLDF",
+    "DFLLDB",
+    "DBLFDL",
+    "BDLFDL",
+    "LDBFDL",
+    "BDLLDF",
+    "DFLBDL"
   ],
   "UFL": [
     "FDRBDR",

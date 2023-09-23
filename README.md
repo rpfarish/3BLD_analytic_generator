@@ -82,3 +82,9 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB exept for
 ### Alger: `alger [alg count]`
 
 ### Cycle Break Float: `float [buffer]`
+
+### Twists: `twist [twist type]`
+
+#### Options:
+
+- `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist

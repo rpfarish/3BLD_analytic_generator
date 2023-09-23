@@ -566,10 +566,25 @@ def main(mode):
     elif mode == "4":
         algs = list(two_flips.values())
         random.shuffle(algs)
+    elif mode == "5":
+        cw_twists = twists["CW"].values()
+        ccw_twists = twists["CCW"].values()
+
+        two_twists = []
+        for cw_twist in cw_twists:
+            for ccw_twist in ccw_twists:
+                if not Cube(cw_twist + " " + ccw_twist).is_solved():
+                    two_twists.append(cw_twist + " " + ccw_twist)
+
+        q = len(two_twists)
+        print(q)
+        algs = two_twists
+
     print(len(algs), "len of algs")
     last_solution = None
     no_repeat = True
     num = 1
+    len_algs = len(algs)
     # TODO support wide moves
     while True:
         if not algs:
@@ -592,23 +607,24 @@ def main(mode):
             print("canceling")
 
         solution = cancel(post_move, k_sol)
+
         if len(solution.split()) > 25:
             if DEBUG:
                 print(f"Long solution {len(solution.split())}:")
-                print(f"Num {num}/{len(algs)}:", solution)
-                num += 1
-            continue
+                continue
 
         if no_repeat:
             algs.remove(alg)
 
         if DEBUG: print("at input...")
         if last_solution != solution:
-            print(num, solution.strip())
+            # print(f"Num {num}/{len_algs}:", solution)
+            print(f"//", solution)
+            num += 1
             last_solution = solution
             response = input("")
             if response == 'quit':
-                quit()
+                return
             elif response.startswith('a'):
                 print("Alg:", a, '\n')
                 algs_help_num += 1

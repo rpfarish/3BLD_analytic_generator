@@ -280,168 +280,182 @@ while True:
         args = last_args
         # todo set this
 
-    if mode == 'h' or mode == 'help':
-        if not args:
-            print("Provides helpful information about commands")
-            continue
-        get_help(args)
+    match mode:
+        case 'h' | 'help':
+            if not args:
+                print("Provides helpful information about commands")
+                continue
+            get_help(args)
 
-    elif mode == "m" or mode == "memo":
-        if not args:
-            print(memo_cube.__doc__)
-            continue
+        case "m" | "memo":
+            if not args:
+                print(memo_cube.__doc__)
+                continue
 
-        memo_cube(args, letter_scheme)
+            memo_cube(args, letter_scheme)
 
-    elif mode == "ls" or mode == "letterscheme":
-        if not args:
-            print(set_letter_scheme.__doc__)
-            continue
+        case "ls" | "letterscheme":
+            if not args:
+                print(set_letter_scheme.__doc__)
+                continue
 
-        set_letter_scheme(args, letter_scheme, settings)
+            set_letter_scheme(args, letter_scheme, settings)
 
-    # only ones left
-    elif mode == "a" or mode == "algs":
-        print(args)
-        if not args:
-            print('1 for ltct, 2 for 3 twists', '3 for floating 3 twists  ', '4 for 2 flips')
-        last_mode = args[0]
+        # only ones left
+        case "a" | "algs":
+            if not args:
+                print('1 for ltct, 2 for 3 twists,', '3 for floating 3 twists,', '4 for 2 flips')
+                continue
+            last_mode = args[0]
 
-        drill_generator.main(args[0])
+            drill_generator.main(args[0])
 
+        # do these two auto convert
+        # only ones left
+        # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>, -i=<cycles to only include(secondsticker)>)
+        case "s" | "sticker":
+            # todo make this for floating too  ... hahahahaa
 
-    # do these two auto convert
-    # only ones left
-    # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>, -i=<cycles to only include(secondsticker)>)
-    elif mode == "s" or mode == "sticker":
-        # todo make this for floating too  ... hahahahaa
+            sticker, *exclude = args
+            drill_sticker(sticker, exclude=exclude)
+            last_args = args
 
-        sticker, *exclude = args
-        drill_sticker(sticker, exclude=exclude)
-        last_args = args
-
-    # todo add auto save and load for drilling buffer like a global save file, start and continue later
-    # input buffer in loc but still display letter pairs with scheme?
-    # (b/buffer, <buffer name>, optional -l=(load from file) optional <filename>)
-    # the save file and the saved algs to drill are different so idk
-    elif mode == "b" or mode == 'buff' or mode == "buffer":
-        last_mode = mode
-        last_args = args
-        # buffer name must be location name not letterscheme
-        # todo what if I wanted to use this like eil's trainer
-        if not args:
-            print("Syntax: <buffer> [-l --Load]")
-            continue
-        buffer, *args = args
-        buffer = buffer.upper()
-        filename = "drill_save.json"
-        drill_set = None
-        random_pairs = False
-        if '-r' in args:
-            random_pairs = True
-        elif '-l' not in args:
-            with open(f"{filename}", "r+") as f:
-                drill_list = json.load(f)
-                buffer_drill_list = drill_list.get(buffer, [])
-                if len(buffer_drill_list) > 0:
-                    print("Buffer drill file is not empty for that buffer")
-                    print(len(buffer_drill_list), "comms remaining")
-                    print("Continuing will result the rewriting of the buffer drill file")
-                    response = input("Are you sure you want to continue y/n?: ").lower()
-                    if response not in ['y', 'yes']:
-                        print("Aborting...")
-                        continue
-
-        elif '-l' in args:
-            if len(args) > 1:
-                filename = args.find('-l') + 1
-
-            # load file
-            print("Loading drill_save.json")
-            with open(f"{filename}", "r+") as f:
-                drill_list = json.load(f)
-                buffer_drill_list = drill_list.get(buffer)
-                if buffer_drill_list is None or not buffer_drill_list:
-                    print("Savefile empty for that buffer")
-                    print(f"Adding {buffer} to savefile")
-                    drill_list[buffer] = []
-                    f.close()
-            with open(f"{filename}", "w") as f:
-                json.dump(drill_list, f, indent=4)
-                f.close()
-            drill_set = set(drill_list[buffer])
-        else:
+        # todo add auto save and load for drilling buffer like a global save file, start and continue later
+        # input buffer in loc but still display letter pairs with scheme?
+        # (b/buffer, <buffer name>, optional -l=(load from file) optional <filename>)
+        # the save file and the saved algs to drill are different so idk
+        case "b" | "buff" | "buffer":
+            last_mode = mode
+            last_args = args
+            # buffer name must be location name not letterscheme
+            # todo what if I wanted to use this like eil's trainer
+            if not args:
+                print("Syntax: <buffer> [-l --Load]")
+                continue
+            buffer, *args = args
+            buffer = buffer.upper()
+            filename = "drill_save.json"
             drill_set = None
+            random_pairs = False
+            if '-r' in args:
+                random_pairs = True
+            elif '-l' not in args:
+                with open(f"{filename}", "r+") as f:
+                    drill_list = json.load(f)
+                    buffer_drill_list = drill_list.get(buffer, [])
+                    if len(buffer_drill_list) > 0:
+                        print("Buffer drill file is not empty for that buffer")
+                        print(len(buffer_drill_list), "comms remaining")
+                        print("Continuing will result the rewriting of the buffer drill file")
+                        response = input("Are you sure you want to continue y/n?: ").lower()
+                        if response not in ['y', 'yes']:
+                            print("Aborting...")
+                            continue
 
-        # to load 1. Buffer 2. Remaining cycles
-        piece_type = 'c' if len(buffer) == 3 else 'e'
-        drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs)
+            elif '-l' in args:
+                if len(args) > 1:
+                    filename = args.find('-l') + 1
 
-    elif mode == 'q' or mode == 'quit' or mode == 'exit':
-        quit()
-
-    elif mode == "c" or mode == 'comm':
-        # defaults to using max's list
-        # rapid mode and change buffer
-
-        if not args:
-            print("e.g. comm UF AB -e")
-            continue
-
-        rapid_mode = False
-        if '-r' in args:
-            rapid_mode = True
-            args.remove('-r')
-
-        buffer = get_comm(args)
-
-        while rapid_mode:
-            args = input("(rapid) ").split()
-            if 'quit' in args or 'exit' in args:
-                break
-
-            if '-b' in args:
-                buffer = args[args.index('-b') + 1]
-                args.remove('-b')
+                # load file
+                print("Loading drill_save.json")
+                with open(f"{filename}", "r+") as f:
+                    drill_list = json.load(f)
+                    buffer_drill_list = drill_list.get(buffer)
+                    if buffer_drill_list is None or not buffer_drill_list:
+                        print("Savefile empty for that buffer")
+                        print(f"Adding {buffer} to savefile")
+                        drill_list[buffer] = []
+                        f.close()
+                with open(f"{filename}", "w") as f:
+                    json.dump(drill_list, f, indent=4)
+                    f.close()
+                drill_set = set(drill_list[buffer])
             else:
-                args = [buffer] + args
+                drill_set = None
 
-            get_comm(args)
+            # to load 1. Buffer 2. Remaining cycles
+            piece_type = 'c' if len(buffer) == 3 else 'e'
+            drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs)
 
-    elif mode == 'reload':
+        case 'q' | 'quit' | 'exit':
+            quit()
 
-        with open("settings.json") as f:
-            settings = json.loads(f.read())
-            letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
-            buffers = settings['buffers']
-            buffer_order = settings['buffer_order']
-            all_buffers_order = buffer_order['edges'] + buffer_order['corners']
-        update_comm_list(buffers=all_buffers_order)
+        case "c" | 'comm':
+            # defaults to using max's list
+            # rapid mode and change buffer
 
-    elif mode == 'timeup' or mode == 't':
-        print(time.time() - start_time)
+            if not args:
+                print("e.g. comm UF AB -e")
+                continue
 
-    elif mode == 'alger':
-        if not args:
-            print(alger.__doc__)
-            continue
-        alg_count = int(args.pop())
-        alger(alg_count)
+            rapid_mode = False
+            if '-r' in args:
+                rapid_mode = True
+                args.remove('-r')
 
-    # todo add quit to all funcs
-    # todo rename to something better
-    # todo put this stuff into a function to run
-    # cycle breaks all edge buffers
+            buffer = get_comm(args)
 
-    # todo add more params
-    elif "f" == mode or "float" == mode:
-        if not args:
-            print(cycle_break_float.__doc__)
-            continue
+            while rapid_mode:
+                args = input("(rapid) ").split()
+                if 'quit' in args or 'exit' in args:
+                    break
 
-        buffer = args.pop()
-        cycle_break_float(buffer)
+                if '-b' in args:
+                    buffer = args[args.index('-b') + 1]
+                    args.remove('-b')
+                else:
+                    args = [buffer] + args
 
-    else:
-        print("that option is not recognised")
+                get_comm(args)
+
+        case 'reload':
+
+            with open("settings.json") as f:
+                settings = json.loads(f.read())
+                letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
+                buffers = settings['buffers']
+                buffer_order = settings['buffer_order']
+                all_buffers_order = buffer_order['edges'] + buffer_order['corners']
+            update_comm_list(buffers=all_buffers_order)
+
+        case 'timeup' | 'time':
+            print(time.time() - start_time)
+
+        case 'alger':
+            if not args:
+                print(alger.__doc__)
+                continue
+            alg_count = int(args.pop())
+            alger(alg_count)
+
+        # todo add quit to all funcs
+        # todo rename to something better
+        # todo put this stuff into a function to run
+        # cycle breaks all edge buffers
+
+        # todo add more params
+        case "f" | "float":
+            if not args:
+                print(cycle_break_float.__doc__)
+                continue
+
+            buffer = args.pop()
+            cycle_break_float(buffer)
+
+        case "t":
+            if not args:
+                print("Drills twists")
+                continue
+
+            match args[0]:
+                case ["2f" | "2"]:
+                    print("This is not yet supported")
+                    drill_generator.main("5")
+                case "3":
+                    drill_generator.main("2")
+                case "3f":
+                    drill_generator.main("3")
+        case _:
+            print("that option is not recognised")
+    # todo convert main if elif branch to match case
 # todo fix inconsistent usage of "" and ''
