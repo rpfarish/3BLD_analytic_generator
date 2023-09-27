@@ -1,6 +1,6 @@
 """Finds letter pairs from cube scrambles"""
 
-from Cube.cube import Cube
+from Cube.memo import Memo
 
 from solution import Solution
 
@@ -18,7 +18,7 @@ def main():
             print("Solve Number:", number)
             number += 1
             scramble = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
-            cube = Cube(scramble, can_parity_swap=True)
+            cube = Memo(scramble, can_parity_swap=True)
             s = Solution(scramble, )
             solution = s.get_solution()
 
@@ -57,6 +57,7 @@ def main():
             print("corner memo before cycle breaks", no_cycle_break_corner_memo)
             print("\n")
             break
+
 
 # make ui
 # todo finish importing database letter pairs

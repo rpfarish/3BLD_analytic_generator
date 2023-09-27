@@ -95,7 +95,7 @@ def main():
             can_insert = click[0] or keys[pygame.K_RETURN] or keys[pygame.K_KP_ENTER]
             inserted = bfs_b.call_func(insert_pair, can_insert, 'edges_cycle_averages', a, b)
             r = get_all('edges_cycle_averages')
-
+            print(inserted)
             # todo add to api
             if r is not None and a in dict(r):
                 label = main_font.render(f"'{input_box1.text}' is in the database!!", True, (255, 255, 255))

@@ -5,6 +5,7 @@ def expand_comm(comm):
     if not comm or "," not in comm and "*" not in comm:
         return comm
     comm = "".join([i for i in comm if i not in ["[", "]"]])
+    b = ""
     if comm.count(":") == 0:
         c = ""
         if "," in comm:

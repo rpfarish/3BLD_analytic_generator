@@ -46,7 +46,7 @@ black = (0, 0, 0)
 class Button:
     """
     Creates responsive, interactive, versatile, and scalable buttons for pygame
-    :param win: pygame display window
+    :param win: display window
     :param color: color of the button in rgb
     :param x:  pixel coord pos (x location)
     :param y: pixel coord pos (y location)

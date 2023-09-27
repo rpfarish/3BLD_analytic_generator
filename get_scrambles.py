@@ -1,5 +1,6 @@
 import random
 
+
 # todo the things in here should be renamed and moved to different files
 
 def invert_solution(s):

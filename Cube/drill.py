@@ -32,12 +32,12 @@ class Drill:
         }
 
     # memo
-    def generate_drill_list(self, piece_type, ltr_scheme: LetterScheme, buffer, target):
+    def generate_drill_list(self, ltr_scheme: LetterScheme, buffer, target):
         # pick what letter scheme to use
         # how to separate c from e
         # just doing corners first
         all_targets = ltr_scheme.get_corners()
-        self.remove_piece(all_targets, buffer, ltr_scheme)
+        self.remove_piece(all_targets, buffer)
 
         # random_list = []
         # # generate random pair
@@ -47,7 +47,7 @@ class Drill:
 
         target_list = all_targets[:]
         # remove buffer stickers
-        self.remove_piece(target_list, target, ltr_scheme)
+        self.remove_piece(target_list, target)
 
         # generate random pairs
         # generate specific pairs
@@ -61,8 +61,8 @@ class Drill:
         # print("getting scramble", getting_scramble_depth)
         scramble = get_scrambles.get_scramble()
 
-        cube = Cube(scramble, ls=self.ls)
-        corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
+        cube = Memo(scramble, ls=self.cube_memo.ls)
+        corner_memo = self.cube_memo.format_corner_memo(cube.memo_corners()).split(' ')
         no_cycle_break_corner_memo = set()
 
         # if just the first target of the memo is the target eg: L then cycle break, this is bad
@@ -94,15 +94,13 @@ class Drill:
         else:
             return self.get_target_scramble(algs_to_drill)
 
-    # print(max(alg_freq_dist.values()),  min(alg_freq_dist.values()), max(alg_freq_dist.values())-min(alg_freq_dist.values()))
-
     # memo
-    def drill_corner_sticker(self, sticker_to_drill, single_cycle=True, return_list=False,
-                             cycles_to_exclude: set = None):
+    def drill_corner_sticker(self, sticker_to_drill):
         #             # todo make it so if you're no_repeat then allow to repeat the letter pairs
         #     return scrambles
         # todo fix buffer thing
-        algs_to_drill = self.generate_drill_list('c', self.ls, self.default_corner_buffer, sticker_to_drill)
+        algs_to_drill = self.generate_drill_list(self.cube_memo.ls, self.cube_memo.default_corner_buffer,
+                                                 sticker_to_drill)
 
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         # print(type(alg_freq_dist))
@@ -412,6 +410,7 @@ class Drill:
         print("algs to drill", algs_to_drill)
         number = 0
         max_wait_time = 20
+        len_algs_to_drill = len(algs_to_drill)
         if cycles_to_exclude is not None:
             algs_to_drill = algs_to_drill.difference(cycles_to_exclude)
 
@@ -451,7 +450,7 @@ class Drill:
             if len(algs_in_scramble) >= frequency:
                 if not return_list:
                     number += 1
-                    print(number, len(algs_to_drill), "Scramble:", scramble)
+                    print(f"Scramble {number}/{len_algs_to_drill}:", scramble)
                     # todo make it so if you're no_repeat then allow to repeat the letter pairs
                     response = input('Enter "r" to repeat letter pairs: ')
                     if response == 'm':
@@ -463,6 +462,8 @@ class Drill:
                         algs_to_drill = algs_to_drill.difference(algs_in_scramble)
                     print()
                     start = time.time()
+                    if response == 'q' or response == 'quit':
+                        return
                 else:
                     algs_to_drill = algs_to_drill.difference(algs_in_scramble)
                 scrambles.append(scramble)
@@ -472,10 +473,7 @@ class Drill:
             return scrambles
 
     # memo
-    def reduce_scramble(self, scramble=None, disp_time_taken=False):
-        if scramble is None:
-            scramble = " ".join(self.scramble)
-        cube = Cube(scramble)
+    def reduce_scramble(self, scramble, disp_time_taken=False):
         if disp_time_taken:
             print("--------______---------")
             print('Now reducing scramble')
@@ -490,10 +488,10 @@ class Drill:
             print('Done')
 
         # print(len(scramble.split()), len(reduced_scramble.split()))
-        return cube.invert_solution(reduced_scramble)
+        return self.cube_memo.invert_solution(reduced_scramble)
 
-    def remove_piece(self, target_list, piece, ltr_scheme):
-        piece_adj1, piece_adj2 = self.adj_corners[piece]
+    def remove_piece(self, target_list, piece):
+        piece_adj1, piece_adj2 = self.cube_memo.adj_corners[piece]
         target_list.remove(piece)
         target_list.remove(piece_adj1)
         target_list.remove(piece_adj2)
@@ -502,7 +500,7 @@ class Drill:
     # memo
     def generate_random_pair(self, target_list, ltr_scheme):
         first = random.choice(target_list)
-        self.remove_piece(target_list, first, ltr_scheme)
+        self.remove_piece(target_list, first)
         second = random.choice(target_list)
         return first + second
 
@@ -523,8 +521,9 @@ class Drill:
         else:
             raise Exception('put "corners" or "edges" in params pls')
 
-    def drill_ltct(self, algs=""):
+    def drill_ltct(self):
         # we are now going to pretent that we know what we are dioing
+        # todo this is where drill ltct goes
         algs_done = set()
         while True:
             while True:
@@ -587,12 +586,12 @@ if __name__ == "__main__":
     # # max_num = drill.max_cycles_per_buffer
     # # print(max_num)
 
-    a = {'UR': 'RU', 'UL': 'LU', 'LU': 'UL', 'LF': 'FL', 'LD': 'DL', 'LB': 'BL', 'FR': 'RF', 'FD': 'DF', 'FL': 'LF',
-         'RU': 'UR', 'RB': 'BR', 'RD': 'DR', 'RF': 'FR', 'BL': 'LB', 'BD': 'DB', 'BR': 'RB', 'DF': 'FD', 'DR': 'RD',
-         'DB': 'BD', 'DL': 'LD'}
+    algs = {'UR': 'RU', 'UL': 'LU', 'LU': 'UL', 'LF': 'FL', 'LD': 'DL', 'LB': 'BL', 'FR': 'RF', 'FD': 'DF', 'FL': 'LF',
+            'RU': 'UR', 'RB': 'BR', 'RD': 'DR', 'RF': 'FR', 'BL': 'LB', 'BD': 'DB', 'BR': 'RB', 'DF': 'FD', 'DR': 'RD',
+            'DB': 'BD', 'DL': 'LD'}
 
-    # print(len(list(permutations(a, 2))))
-    # print(permutations(a, 2))
+    # print(len(list(permutations(algs, 2))))
+    # print(permutations(algs, 2))
     # UB 2:08:00.00
     # UB   53:00.00
     # UL 1:40.59.77
@@ -623,51 +622,50 @@ if __name__ == "__main__":
 # SI U2
 # TH U
 # XV S L2' S' L2
-# TP U'
-
-
-"ON",
-"GH",
-"OJ",
-"OR",
-"JN",
-"NO",
-"XI",
-"HJ",
-"IT",
-"HI",
-"WV",
-"LJ",
-"IH",
-"HS",
-"TV",
-"PR ",
-"NL",
-"TV",
-"RP",
-"FW",
-"VT",
-"NF",
-"SO",
-"RJ",
-"CV",
-"GN",
-"CS",
-"VW",
-"PH",
-"LJ",
-"JL",
-"JH",
-"IF",
-"LH",
-"TI",
-"FT",
-"IS",
-"SI",
-"TH",
-"XV",
-"TP",
-
+# TP U' R'
+DL_comms = [
+    "ON",
+    "GH",
+    "OJ",
+    "OR",
+    "JN",
+    "NO",
+    "XI",
+    "HJ",
+    "IT",
+    "HI",
+    "WV",
+    "LJ",
+    "IH",
+    "HS",
+    "TV",
+    "PR ",
+    "NL",
+    "TV",
+    "RP",
+    "FW",
+    "VT",
+    "NF",
+    "SO",
+    "RJ",
+    "CV",
+    "GN",
+    "CS",
+    "VW",
+    "PH",
+    "LJ",
+    "JL",
+    "JH",
+    "IF",
+    "LH",
+    "TI",
+    "FT",
+    "IS",
+    "SI",
+    "TH",
+    "XV",
+    "TP",
+]
 # UBL
 """
 DK, LH, EZ, TC, DC, FW, VE, HL, CH, SE, EG, ZE, WP, EP, PS, SC
@@ -694,11 +692,11 @@ WE U'D'
 #
 # from itertools import permutations
 #
-# a = permutations(['C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'O', 'P', 'S', 'T', 'V', 'W', 'Z'], r=2)
-# a = list(a)
-# print(a)
-# print(len(a))
-# b = [i + j for i, j in a]
+# algs = permutations(['C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'O', 'P', 'S', 'T', 'V', 'W', 'Z'], r=2)
+# algs = list(algs)
+# print(algs)
+# print(len(algs))
+# b = [i + j for i, j in algs]
 # print(set(b))
 
 # DL

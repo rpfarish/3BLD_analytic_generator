@@ -3,10 +3,11 @@ import random
 import kociemba
 
 from Cube import Cube
+from Cube.letterscheme import LetterScheme
 
 
 class Memo(Cube):
-    def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls=None, buffers=None):
+    def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls: LetterScheme = None, buffers=None):
         super().__init__(s=scramble, can_parity_swap=can_parity_swap, auto_scramble=auto_scramble, ls=ls,
                          buffers=buffers)
         #
@@ -176,19 +177,19 @@ class Memo(Cube):
         return corners
 
     def translate_letter_scheme(self, memo, translate_type="name"):
-        """:translate_to_type name"""
+        """translate_to_type: name"""
         # todo add opp and loc
         if self.ls is None:
             return memo
         if translate_type == "name":
-            return [self.letterscheme_names[target] for target in memo]
+            return [self.ls[target] for target in memo]
         else:
             raise ValueError("translate_type is an invalid type")
 
 
 if __name__ == "__main__":
     cube = Cube()
-    scramble = "R"
-    memo_cube = Memo(scramble)
+    scram = "R"
+    memo_cube = Memo(scram)
     print(memo_cube.format_edge_memo(memo_cube.memo_edges()))
-    print(memo_cube.format_corner_memo(Memo(scramble).memo_corners()))
+    print(memo_cube.format_corner_memo(Memo(scram).memo_corners()))

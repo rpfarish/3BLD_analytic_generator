@@ -1,3 +1,4 @@
+import random
 import timeit
 
 setup = """import random
@@ -29,8 +30,6 @@ def valid(ar):
 
 a = timeit.timeit("gen_scramble()", number=1000000, setup=setup)
 
-import random
-
 faces = ['U', 'L', 'F', 'R', 'B', 'D']
 directions = ["", "'", "2"]
 
@@ -40,7 +39,7 @@ opp = {'U': 'D', 'D': 'U',
        }
 
 
-def c(pre_move_len=3):
+def c():
     turns = []
 
     scram_len = random.randint(25, 25)

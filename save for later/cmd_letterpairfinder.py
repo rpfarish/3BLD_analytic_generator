@@ -1,3 +1,11 @@
+import cmd
+from pprint import pprint
+
+import dlin
+
+from Cube.letterscheme import letter_scheme
+
+
 class LetterPairFinder(cmd.Cmd):
     intro = 'Welcome to the Letter Pair Finder. Type help or ? to list commands.'
     prompt = '(3bld) '
@@ -38,13 +46,19 @@ class LetterPairFinder(cmd.Cmd):
         else:
             pprint(self.memo(scramble))
 
-    def memo(self, scramble):
-        memo_cube(scramble, letter_scheme, buffers)
+    @staticmethod
+    def memo(scramble):
+        from main import memo_cube
+        memo_cube(scramble, letter_scheme)
         return dlin.trace(scramble)
 
-    def do_quit(self, _):
+    @staticmethod
+    def do_quit(_):
         quit()
 
-    def do_ls(self, args):
+    @staticmethod
+    def do_ls(args):
         if args:
             pass
+
+# LetterPairFinder().cmdloop()

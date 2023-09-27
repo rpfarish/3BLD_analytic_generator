@@ -287,8 +287,8 @@ class LetterScheme:
 
 def convert_letterpairs(to_convert, direction, piece_type=None, display=False, return_type='set'):
     """
-    :piece_type corner, edge
-    :direction letter_to_loc, loc_to_letter letter representation and location
+    piece_type: corner or edge
+    direction: letter_to_loc, loc_to_letter letter representation and location
     """
     # todo setting for letter scheme modular and global
     # add letterscheme as a param

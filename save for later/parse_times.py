@@ -49,8 +49,8 @@ for i in range(0, len(times), 4):
     if times[i].startswith("DNF"):
 
         group = [times[i].replace("DNF", f"DNF({round(float(memo) + float(execution), 2)})"), memo, execution]
-        print(
-            f"DNF({round(float(memo) + float(execution), 2)})")  # , times[i].replace("DNF", f"DNF({round(float(memo)+ float(execution), 2)})"))
+        # , times[i].replace("DNF", f"DNF({round(float(memo)+ float(execution), 2)})"))
+        print(f"DNF({round(float(memo) + float(execution), 2)})")
     else:
         group = [times[i], memo, execution]
         print(times[i].split(":")[0])  # , times[i])

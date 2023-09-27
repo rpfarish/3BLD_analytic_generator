@@ -20,7 +20,7 @@ def generate_random_pair(target_list, ltr_scheme):
     return first + second
 
 
-def generate_drill_list(piece_type, ltr_scheme: LetterScheme, buffer, target):
+def generate_drill_list(ltr_scheme: LetterScheme, buffer, target):
     # pick what letter scheme to use
     # how to separate c from e
     # just doing corners first
@@ -47,8 +47,9 @@ def generate_drill_list(piece_type, ltr_scheme: LetterScheme, buffer, target):
 
 sticker_to_drill = "L"
 
-algs_to_drill = generate_drill_list('c', letter_scheme, "U", sticker_to_drill)
+algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
 number = 0
+# fixme drill just one sticker with s XY -onlypairIwanttodrill
 algs_to_drill = {"NS"}
 alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
 print(type(alg_freq_dist))
@@ -86,7 +87,8 @@ while True:
     # find difference
 
     if algs_to_drill.intersection(no_cycle_break_corner_memo):
-        # print(max(alg_freq_dist.values()),  min(alg_freq_dist.values()), max(alg_freq_dist.values())-min(alg_freq_dist.values()))
+        # print(max(alg_freq_dist.values()),  min(alg_freq_dist.values()),
+        # max(alg_freq_dist.values())-min(alg_freq_dist.values()))
 
         alg_to_drill = alg_to_drill.pop()
         # check if freq is < count and if so continue

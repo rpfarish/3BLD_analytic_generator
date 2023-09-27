@@ -11,6 +11,7 @@ Please note that the letters on the buffers are not important, but each of them 
 ## Features:
 
 ### Memo the cube
+
 Syntax: memo [scramble]
 
 - to memorize the cube with these specific qualities: intelligent cycle breaking, memoing with alternate pseudoswaps,
@@ -38,53 +39,143 @@ Most of this stuff is still wip.
 
 # 3BLD_analytic_generator
 
-Note: Please put all piece names in Singmaster notation e.g. UR or RDB exept for when specifying args for drill sticker
+Note: Please put all piece names in Singmaster notation e.g. UR or RDB except for when specifying args for drill sticker
 
-## CMD Commands List:
+# CMD Commands List:
 
-### Memo: `memo [scramble] [-l filename] [-s filename]`
+## Memo: `memo [scramble] [-l filename] [-s filename]`
 
-#### Options:
+- **Description:** This command allows you to memo the cube and provides options for loading and saving scrambles. Note:
+  does not support
+  wide move scrambles
 
-- `-l filename`  loads scrambles from FILENAME text file
-- `-s filename` saves SCRAMBLE to FILENAME text file
+- **Options:**
+    - [scramble]: The scramble to memo.
+    - -l filename: Load scrambles from the FILENAME text file.
+    - -s filename: Save the SCRAMBLE to the FILENAME text file.
 
-### HELP: `help [name]`
+- **Usage Examples**:
+    - Memo the scramble
 
-### Letter Scheme: `ls [-d] [-l]`
+      ```
+      memo U B2 D L2 B2 D' L2 R2 D' R2 D' B D2 U F' L2 U R' D' L' U2
+      ```
 
-#### Options:
+    - Memo scramble(s) from text file
 
-- `-d` dumps the current loaded letter scheme for the standard Singmaster notation
-- `-l` loads the letter scheme from settings.json
+      ```
+        memo -l saved_scrambles.txt
+      ```
 
-### Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
+    - Memo the scramble and append it to the text file
 
-#### Options:
+       ```
+       memo -s new_scramble.txt
+       ```
 
-- `-l <filename>` loads the current buffer drill file from json to allow multiple concurrent buffer drill sessions (
-  Note: if you start a new session without -l it will erase the existing save file)
-- `-r` randomly generates cycles with no limit on repeating pairs
+## Letter Scheme: `ls [-d] [-l]`
 
-### Quit: `quit`
+- **Description:** Manage letter scheme options.
 
-### Comm: `comm [buffer] [pair | pairs...]`
+- **Options:**
+    - -d: Dumps the current loaded letter scheme for the standard Singmaster notation.
+    - -l: Loads the letter scheme from settings.json.
 
-#### Options:
+- **Usage Examples**:
+    - Dump the letter scheme
 
-- `-r` rapid mode allows you to enter many pairs in and keep the buffer selected for each query
-- `-b` selects a new buffer while in rapid mode
+      ```
+      ls dump
+      ```
+    - Load the letter scheme
 
-### Reload: `reload`
+      ```
+      ls -load
+      ```
 
-### Time up: `timeup`
+## HELP: `help`
 
-### Alger: `alger [alg count]`
+- **Description:** Provides list of commands
 
-### Cycle Break Float: `float [buffer]`
+## Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
 
-### Twists: `twist [twist type]`
+- **Description**: Drill buffer, specifying the buffer name, and handle options such as loading, random generation, and
+  more. Note: all buffers can be saved to the same file
 
-#### Options:
+- **Options:**
+    - -l <filename>: Load the current buffer drill file from JSON to allow multiple concurrent buffer drill sessions.
+      Note
+      that if you start a new session without -l, it will erase the existing save file.
+    - -r: Randomly generate cycles with no limit on repeating pairs.
+
+- **Example Usages**:
+
+    - Drill the "UF" buffer with random pair generation:
+
+      ```
+         buffer UF -r
+      ```
+
+    - Load a previously saved buffer drill file named "saved_buffer.json" and continue the session:
+
+      ```
+         buffer UR -l saved_buffer.json
+      ```
+
+    - Start a new buffer drill session for "UB" without loading a previous file:
+
+      ```
+         buffer UB
+      ```
+
+    - Load a previously saved default buffer drill file and continue the session
+
+      ```
+         buffer UB -l
+      ```
+
+These examples demonstrate how to use the buffer command with various options.
+
+## Quit: `quit`
+
+- **Description:** Exits the program when in the main terminal and quits the current operation when running a command
+
+## Comm: `comm [buffer] [pair | pairs...]`
+
+- **Description:** Retrieve and display commutators.
+- **Options:**
+    - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query.
+    - -b: Selects a new buffer while in rapid mode.
+
+- **Example Usages**:
+
+    - Display commutators for the buffer UF with pairs AB and CD:
+        ```
+        comm UF AB CD
+        ```
+
+    - Enter rapid mode for buffer UR:
+
+       ```
+       comm -r UR
+       ```
+
+    - Switch to buffer DR while in rapid mode:
+
+      ```
+      comm -b DR
+      ```
+
+## Reload: `reload`
+
+## Time up: `timeup`
+
+## Alger: `alger [alg count]`
+
+## Cycle Break Float: `float [buffer]`
+
+## Twists: `twist [twist type]`
+
+### Options:
 
 - `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist

@@ -5,6 +5,7 @@ from get_scrambles import get_scramble
 
 """For practicing edges only solves but with full scrambles"""
 
+
 def url_encode(s):
     """:s scramble"""
     s = s.split(' ')

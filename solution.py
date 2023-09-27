@@ -41,7 +41,7 @@ class Solution:
         """
         memo = self.edges
         buffers = self.edge_buffers
-        flips = self.number_of_edge_flips
+        # flips = self.number_of_edge_flips
         # print('buffers', buffers)
         for buffer in buffers:
 
@@ -112,9 +112,8 @@ class Solution:
         twists_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
         print(self.edges, len(self.edges), self.corners, len(self.corners), self.number_of_edge_flips,
               self.number_of_corner_twists, number_of_floats)
-        num_of_algs = len(self.edges) + len(
-            self.corners) + self.number_of_edge_flips // 2 + \
-                      twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2)
+        num_of_algs = (len(self.edges) + len(self.corners) + self.number_of_edge_flips // 2 +
+                       twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2))
         num_of_algs -= number_of_floats
         return num_of_algs
 
@@ -149,9 +148,9 @@ class Solution:
         print("Corners:", solution['corners'])
         print("Twisted Corners:", self.cube.twisted_corners)
         print("Alg count:", solution['number_of_algs'])
-        corner_memo = solution['corners']
+        # corner_memo = solution['corners']
         # when cube is memoed, the state of the memo should be saved when the buffer is first hit
-        no_cycle_break_corner_memo = set()
+        # no_cycle_break_corner_memo = set()
         corner_buffers = solution['corner_buffers']
         print(corner_buffers)
 
@@ -169,12 +168,13 @@ def calc_edge_alg_count() -> int:
     pass
 
 
-def calc_alg_count(dlin_memo):
-    # do twists and flips later
-    corner_alg_count = calc_corner_alg_count()
-    edge_alg_count = calc_edge_alg_count()
-    alg_count = corner_alg_count + edge_alg_count
-    return alg_count
+#
+# def calc_alg_count(dlin_memo):
+#     # do twists and flips later
+#     corner_alg_count = calc_corner_alg_count()
+#     edge_alg_count = calc_edge_alg_count()
+#     alg_count = corner_alg_count + edge_alg_count
+#     return alg_count
 
 
 if __name__ == "__main__":

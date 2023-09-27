@@ -18,7 +18,7 @@ def memo_cube(scramble):
     print("Alg count:", solution['number_of_algs'])
     corner_memo = solution['corners']
     print(corner_memo)
-    no_cycle_break_corner_memo = set()
+    # no_cycle_break_corner_memo = set()
     corner_buffers = solution['corner_buffers']
     print(corner_buffers)
 

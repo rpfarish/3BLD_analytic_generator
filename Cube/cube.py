@@ -16,7 +16,7 @@ class Cube:
 
         self.scramble = s.rstrip('\n').strip().split()
         self.has_parity = (len(self.scramble) - s.count('2')) % 2 == 1
-        self.kociemba_order = "URFDLB"
+        self.kociemba_order = 'URFDLB'
         self.faces = 'ULFRBD'
         use_default_letter_scheme = True if ls is None else False
         if type(ls) is LetterScheme:
@@ -77,7 +77,8 @@ class Cube:
         self.D_corners = deque([DFL, DFR, DBR, DBL])
 
         self.default_edges = self.U_edges + self.L_edges + self.F_edges + self.R_edges + self.B_edges + self.D_edges
-        self.default_corners = self.U_corners + self.L_corners + self.F_corners + self.R_corners + self.B_corners + self.D_corners
+        self.default_corners = (self.U_corners + self.L_corners + self.F_corners +
+                                self.R_corners + self.B_corners + self.D_corners)
 
         self.adj_edges = {
             self.U_edges[0]: self.B_edges[0],
@@ -452,20 +453,21 @@ class Cube:
     def get_dlin_trace(self):
         return dlin.trace(" ".join(self.scramble))
 
+
 if __name__ == "__main__":
     with open("../settings.json") as f:
         settings = json.loads(f.read())
         letter_scheme = settings['letter_scheme']
-        buffers = settings['buffers']
-    # s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
-    s = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
-    # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
-
-    print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    c = Cube("", ls=letter_scheme)
-    # print(c.adj_corners)
-    c.display_cube()
-    # # todo adapt for different versions of FDR ie FRD
-    # # c.drill_corner_sticker('FDR')
-    # # todo letter scheme for below is a dependency for working
-    # c.drill_edge_buffer("DF")
+    #     buffers = settings['buffers']
+    # # s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
+    # scram = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
+    # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
+    #
+    # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
+    cube = Cube("", ls=letter_scheme)
+    # # print(c.adj_corners)
+    # c.display_cube()
+    # # # todo adapt for different versions of FDR ie FRD
+    # # # c.drill_corner_sticker('FDR')
+    # # # todo letter scheme for below is a dependency for working
+    # # c.drill_edge_buffer("DF")

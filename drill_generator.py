@@ -1,6 +1,6 @@
 import random
 from collections import deque
-from itertools import combinations
+from itertools import combinations, product, chain
 
 import kociemba
 
@@ -88,8 +88,9 @@ EDGE_BUFFER = UF
 CORNER_BUFFER = UFR
 
 
+# noinspection PyMissingConstructor
 class ColoredCube(Cube):
-    def __init__(self, s="", letterscheme='kociemba'):
+    def __init__(self, s=""):
         self.scramble = s.rstrip('\n').strip().split(' ')[:]
         self.faces = "ULFRBD"
         self.kociemba_order = "URFDLB"
@@ -121,7 +122,8 @@ class ColoredCube(Cube):
         self.D_edges = deque([DF, DR, DB, DL])
 
         self.default_edges = self.U_edges + self.L_edges + self.F_edges + self.R_edges + self.B_edges + self.D_edges
-        self.default_corners = self.U_corners + self.L_corners + self.F_corners + self.R_corners + self.B_corners + self.D_corners
+        self.default_corners = (self.U_corners + self.L_corners + self.F_corners +
+                                self.R_corners + self.B_corners + self.D_corners)
         self.adj_edges = {
             UB: BU, UR: RU, UL: LU, FL: LF, DL: LD,
             BL: LB, FR: RF, BR: RB, DR: RD, DF: FD,
@@ -235,7 +237,6 @@ def invert_solution(s: str) -> str:
 def parallel_cancel(pre_move: list, solution: list):
     s = solution.copy()
     pre_move_len = len(pre_move)
-    solution_move_len = len(solution)
 
     solution = pre_move + solution
     # todo figure out why this is needed
@@ -404,7 +405,8 @@ def main(mode):
     #     "U' f R' F' R U2 R U2' R' U2 S'",
     #     "U R' U R U R' U' R' D' R U' R' D R2",
     # ]
-    # algs = ["U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U", "D R2' U' R U R U' R D' U R U' R' U", "U' R' U2 R U R2' F' R U R U' R' F R U'"]
+    # algs = ["U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U",
+    # "D R2' U' R U R U' R D' U R U' R' U", "U' R' U2 R U R2' F' R U R U' R' F R U'"]
     algs = [
         "D2 R2' D' R2 U R2' D R2 D' R2' U' R2 D'",
         "D R2' D' R2 U R2' D R2 D' R2 U' R2'",
@@ -570,17 +572,13 @@ def main(mode):
         cw_twists = twists["CW"].values()
         ccw_twists = twists["CCW"].values()
 
-        two_twists = []
-        for cw_twist in cw_twists:
-            for ccw_twist in ccw_twists:
-                if not Cube(cw_twist + " " + ccw_twist).is_solved():
-                    two_twists.append(cw_twist + " " + ccw_twist)
+        algs = []
+        for cw_twist, ccw_twist in product(cw_twists, ccw_twists):
+            if not Cube(cw_twist + " " + ccw_twist).is_solved():
+                algs.append(cw_twist + " " + ccw_twist)
 
-        q = len(two_twists)
-        print(q)
-        algs = two_twists
+        algs.extend(chain(cw_twists, ccw_twists))
 
-    print(len(algs), "len of algs")
     last_solution = None
     no_repeat = True
     num = 1
@@ -618,8 +616,7 @@ def main(mode):
 
         if DEBUG: print("at input...")
         if last_solution != solution:
-            # print(f"Num {num}/{len_algs}:", solution)
-            print(f"//", solution)
+            print(f"Num {num}/{len_algs}:", solution)
             num += 1
             last_solution = solution
             response = input("")
@@ -633,4 +630,4 @@ def main(mode):
 
 
 if __name__ == "__main__":
-    main()
+    main(mode=0)

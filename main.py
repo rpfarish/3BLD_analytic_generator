@@ -1,6 +1,7 @@
 import json
 import time
 from pprint import pprint
+from typing import List, Tuple
 
 import dlin
 
@@ -14,19 +15,14 @@ from eli_comms import ELI_COMMS
 from max_comms import MAX_COMMS
 from solution import Solution
 
+
 # todo settings with buffer order and alt pseudo swaps for each parity alg
-
-options = """
-1. Memo the cube (optional letter scheme)
-2. Drill list of algs
-3. Drill sticker
-4. Drill buffer
-"""
-
+# todo how to ingest a new comm sheet esp full floating
 
 def memo(scramble, letter_scheme):
     if not scramble:
         return
+    # todo cleanup memo output
     Solution(scramble, letter_scheme=letter_scheme).display()
     pprint(dlin.trace(scramble))
 
@@ -49,10 +45,10 @@ Aliases:
         with open(file_name) as f:
             for num, scram in enumerate(f.readlines(), 1):
                 print("Scramble number:", num)
-                pprint(memo(scram.strip("\n").strip(), letter_scheme))
+                pprint(memo(scram.strip("\n").strip().strip('"'), letter_scheme))
 
     elif '-s' in scramble:
-        scramble = scramble.split()
+        scramble = scramble.strip('"').split()
         f_index = scramble.index('-s')
         file_name = scramble[f_index + 1]
         scramble = scramble[:f_index]
@@ -60,31 +56,32 @@ Aliases:
         scramble = " ".join(scramble)
 
         with open(file_name, 'a+') as f:
-            f.write(scramble)
+            f.write(scramble.strip('"'))
             f.write("\n")
             f.close()
 
-    memo(scramble, letter_scheme)
+    memo(scramble.strip('"'), letter_scheme)
 
 
-def set_letter_scheme(args, letter_scheme, settings):
+def set_letter_scheme(args, letter_scheme) -> LetterScheme:
     """Letter Scheme: ls [-d] [-l]
 Options:
     -d dumps the current loaded letter scheme for the standard Singmaster notation
     -l loads the letter scheme from settings.json
 Aliases:
     letterscheme"""
-    if '-dump' in args:
+    if '-dump' in args or '-d' in args:
         pprint(letter_scheme.get_all_dict(), sort_dicts=False)
-        letter_scheme = LetterScheme(use_default=True)
-    if '-load' in args:
+        return LetterScheme(use_default=True)
+    if '-load' in args or '-l' in args:
         with open("settings.json") as f:
             settings = json.loads(f.read())
-            letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
-        pprint(letter_scheme.get_all_dict(), sort_dicts=False)
+            pprint(letter_scheme.get_all_dict(), sort_dicts=False)
+            return LetterScheme(ltr_scheme=settings['letter_scheme'])
 
 
 def drill_sticker(sticker, exclude=None):
+    """Drills a specific sticker from default buffers (UF/UFR)"""
     # todo specify some cycles you want to drill more than others
 
     piece_type = 'edge' if len(sticker) == 2 else 'corner'
@@ -95,17 +92,12 @@ def drill_sticker(sticker, exclude=None):
     if piece_type == 'edge':
         # todo fix so it can parse args properly
         cycles_to_exclude = {sticker + piece for piece in exclude}
-        sticker_scrambles = Drill().drill_edge_sticker(
+        Drill().drill_edge_sticker(
             sticker_to_drill=sticker, return_list=False, cycles_to_exclude=cycles_to_exclude
         )
-        print(sticker_scrambles)
-
     elif piece_type == 'corner':
         cycles_to_exclude = {sticker + piece for piece in exclude}
-        sticker_scrambles = Drill().drill_corner_sticker(
-            sticker_to_drill=sticker, return_list=False, cycles_to_exclude=cycles_to_exclude
-        )
-        print(sticker_scrambles)
+        Drill().drill_corner_sticker(sticker_to_drill=sticker)
     else:
         print("sorry not a valid piece type")
 
@@ -216,7 +208,6 @@ def get_comm(args):
 
     buffer, *cycles = args
     buffer = buffer.upper()
-    print(args)
 
     # Name person, comm name: comm notation, expanded comm?
     # prob comm lists should be json lol
@@ -225,7 +216,7 @@ def get_comm(args):
     for cycle in cycles:
         # do I check both? prob just the first one haha
         cycle = cycle.upper()
-        a, b = letter_scheme.convert_pair_to_pos(buffer, cycle)
+        a, b = LetterScheme().convert_pair_to_pos(buffer, cycle)
         let1, let2 = cycle
         if max_list:
             print(f"Max {let1 + let2}:", MAX_COMMS[buffer][a][b])
@@ -236,14 +227,48 @@ def get_comm(args):
     return buffer
 
 
-def get_help(args):
-    if len(args) == 1:
-        args = args[0]
-    print(f"Just enter '{args}' with no addtional arguments or parameters to see the help file")
+def drill_twists(twist_type):
+    """Drills twists: 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist"""
+    match twist_type:
+        case "2f" | "2":
+            drill_generator.main("5")
+        case "3":
+            drill_generator.main("2")
+        case "3f":
+            drill_generator.main("3")
+
+
+def get_help():
+    # print(f"Just enter '{args}' with no addtional arguments or parameters to see the help file")
+    print("Type 'name' to find out more about the function 'name'.")
+    docs = """
+h | help: Display help information for commands.
+m | memo: Memo the cube and handle options.
+ls | letterscheme: Manage letter scheme options.
+b | buff | buffer: Drill buffer and handle options.
+a | algs: Generate algorithm drills.
+s | sticker: Drill stickers from default buffers.
+q | quit | exit: Exit the program.
+c | comm: Retrieve and display commutators.
+reload: Reload settings and letter scheme.
+timeup | time: Display the elapsed time.
+alger: Generate a scramble with a specified number of algs.
+f | float: Provide scrambles with flips and cycle breaks.
+t: Drill twists: 2f, 3, or 3f.
+    """
+    print(docs)
     return
 
 
-# LetterPairFinder().cmdloop()
+def get_query() -> Tuple[str, List[str]]:
+    response = ""
+    while not response:
+        response = input("(3bld) ").split()
+
+    mode, *args = response
+    return mode, args
+
+
 # todo use ! to repeat inputs
 # todo make funcs to load or dump letterscheme
 # todo make help func
@@ -252,210 +277,211 @@ def get_help(args):
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
 
 
-# load letterscheme
+def main():
+    options = """
+    1. Memo the cube (optional letter scheme)
+    2. Drill list of algs
+    3. Drill sticker
+    4. Drill buffer
+    """
 
-with open("settings.json") as f:
-    settings = json.loads(f.read())
-    letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
-    buffers = settings['buffers']
-    buffer_order = settings['buffer_order']
+    with open("settings.json") as f:
+        settings = json.loads(f.read())
+        letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
+        # buffers = settings['buffers']
+        # buffer_order = settings['buffer_order']
 
-last_args = ""
-last_mode = 1
-intro = 'Welcome to the Letter Pair Finder. Type help or ? to list commands.'
+    last_args = ""
+    last_mode = 1
+    intro = 'Welcome to the Letter Pair Finder. Type help or ? to list commands.'
 
-start_time = time.time()
-print(intro)
+    start_time = time.time()
+    print(intro)
 
-while True:
-    response = input("(3bld) ").split()
-    if not response:
-        continue
+    while True:
+        mode, args = get_query()
 
-    mode, *args = response
-    # todo capitalization
+        # todo capitalization
 
-    if mode == '!r' or mode == "!":
-        mode = last_mode
-        args = last_args
-        # todo set this
+        if mode == '!r' or mode == "!":
+            mode = last_mode
+            args = last_args
+            # todo set this
 
-    match mode:
-        case 'h' | 'help':
-            if not args:
+        match mode:
+            case 'h' | 'help':
                 print("Provides helpful information about commands")
-                continue
-            get_help(args)
+                get_help()
 
-        case "m" | "memo":
-            if not args:
-                print(memo_cube.__doc__)
-                continue
+            case "m" | "memo":
+                if not args:
+                    print(memo_cube.__doc__)
+                    continue
 
-            memo_cube(args, letter_scheme)
+                memo_cube(args, letter_scheme)
 
-        case "ls" | "letterscheme":
-            if not args:
-                print(set_letter_scheme.__doc__)
-                continue
+            case "ls" | "letterscheme":
+                if not args:
+                    print(set_letter_scheme.__doc__)
+                    continue
 
-            set_letter_scheme(args, letter_scheme, settings)
+                letter_scheme = set_letter_scheme(args, letter_scheme)
 
-        # only ones left
-        case "a" | "algs":
-            if not args:
-                print('1 for ltct, 2 for 3 twists,', '3 for floating 3 twists,', '4 for 2 flips')
-                continue
-            last_mode = args[0]
+            # only ones left
+            case "a" | "algs":
+                if not args:
+                    print('1 for ltct, 2 for 3 twists,', '3 for floating 3 twists,', '4 for 2 flips')
+                    continue
+                last_mode = args[0]
 
-            drill_generator.main(args[0])
+                drill_generator.main(args[0])
 
-        # do these two auto convert
-        # only ones left
-        # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>, -i=<cycles to only include(secondsticker)>)
-        case "s" | "sticker":
-            # todo make this for floating too  ... hahahahaa
+            # do these two auto convert
+            # only ones left
+            # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>,
+            # -i=<cycles to only include(secondsticker)>)
+            case "s" | "sticker":
+                # todo make this for floating too  ... hahahahaa
 
-            sticker, *exclude = args
-            drill_sticker(sticker, exclude=exclude)
-            last_args = args
+                sticker, *exclude = args
+                drill_sticker(sticker, exclude=exclude)
+                last_args = args
 
-        # todo add auto save and load for drilling buffer like a global save file, start and continue later
-        # input buffer in loc but still display letter pairs with scheme?
-        # (b/buffer, <buffer name>, optional -l=(load from file) optional <filename>)
-        # the save file and the saved algs to drill are different so idk
-        case "b" | "buff" | "buffer":
-            last_mode = mode
-            last_args = args
-            # buffer name must be location name not letterscheme
-            # todo what if I wanted to use this like eil's trainer
-            if not args:
-                print("Syntax: <buffer> [-l --Load]")
-                continue
-            buffer, *args = args
-            buffer = buffer.upper()
-            filename = "drill_save.json"
-            drill_set = None
-            random_pairs = False
-            if '-r' in args:
-                random_pairs = True
-            elif '-l' not in args:
-                with open(f"{filename}", "r+") as f:
-                    drill_list = json.load(f)
-                    buffer_drill_list = drill_list.get(buffer, [])
-                    if len(buffer_drill_list) > 0:
-                        print("Buffer drill file is not empty for that buffer")
-                        print(len(buffer_drill_list), "comms remaining")
-                        print("Continuing will result the rewriting of the buffer drill file")
-                        response = input("Are you sure you want to continue y/n?: ").lower()
-                        if response not in ['y', 'yes']:
-                            print("Aborting...")
-                            continue
-
-            elif '-l' in args:
-                if len(args) > 1:
-                    filename = args.find('-l') + 1
-
-                # load file
-                print("Loading drill_save.json")
-                with open(f"{filename}", "r+") as f:
-                    drill_list = json.load(f)
-                    buffer_drill_list = drill_list.get(buffer)
-                    if buffer_drill_list is None or not buffer_drill_list:
-                        print("Savefile empty for that buffer")
-                        print(f"Adding {buffer} to savefile")
-                        drill_list[buffer] = []
-                        f.close()
-                with open(f"{filename}", "w") as f:
-                    json.dump(drill_list, f, indent=4)
-                    f.close()
-                drill_set = set(drill_list[buffer])
-            else:
+            # todo add auto save and load for drilling buffer like a global save file, start and continue later
+            # input buffer in loc but still display letter pairs with scheme?
+            # (b/buffer, <buffer name>, optional -l=(load from file) optional <filename>)
+            # the save file and the saved algs to drill are different so I don't know
+            case "b" | "buff" | "buffer":
+                last_mode = mode
+                last_args = args
+                # buffer name must be location name not letterscheme
+                # todo what if I wanted to use this like eil's trainer
+                if not args:
+                    print("Syntax: <buffer> [-l --Load]")
+                    continue
+                buffer, *args = args
+                buffer = buffer.upper()
+                filename = "drill_save.json"
                 drill_set = None
+                random_pairs = False
+                if '-r' in args:
+                    random_pairs = True
+                elif '-l' not in args:
+                    with open(f"{filename}", "r+") as f:
+                        drill_list = json.load(f)
+                        buffer_drill_list = drill_list.get(buffer, [])
+                        if len(buffer_drill_list) > 0:
+                            print("Buffer drill file is not empty for that buffer")
+                            print(len(buffer_drill_list), "comms remaining")
+                            print("Continuing will result the rewriting of the buffer drill file")
+                            response = input("Are you sure you want to continue y/n?: ").lower()
+                            if response not in ['y', 'yes']:
+                                print("Aborting...")
+                                continue
 
-            # to load 1. Buffer 2. Remaining cycles
-            piece_type = 'c' if len(buffer) == 3 else 'e'
-            drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs)
+                elif '-l' in args:
+                    if len(args) > 1:
+                        filename = args.find('-l') + 1
 
-        case 'q' | 'quit' | 'exit':
-            quit()
-
-        case "c" | 'comm':
-            # defaults to using max's list
-            # rapid mode and change buffer
-
-            if not args:
-                print("e.g. comm UF AB -e")
-                continue
-
-            rapid_mode = False
-            if '-r' in args:
-                rapid_mode = True
-                args.remove('-r')
-
-            buffer = get_comm(args)
-
-            while rapid_mode:
-                args = input("(rapid) ").split()
-                if 'quit' in args or 'exit' in args:
-                    break
-
-                if '-b' in args:
-                    buffer = args[args.index('-b') + 1]
-                    args.remove('-b')
+                    # load file
+                    print("Loading drill_save.json")
+                    with open(f"{filename}", "r+") as f:
+                        drill_list = json.load(f)
+                        buffer_drill_list = drill_list.get(buffer)
+                        if buffer_drill_list is None or not buffer_drill_list:
+                            print("Savefile empty for that buffer")
+                            print(f"Adding {buffer} to savefile")
+                            drill_list[buffer] = []
+                            f.close()
+                    with open(f"{filename}", "w") as f:
+                        json.dump(drill_list, f, indent=4)
+                        f.close()
+                    drill_set = set(drill_list[buffer])
                 else:
-                    args = [buffer] + args
+                    drill_set = None
 
-                get_comm(args)
+                # to load 1. Buffer 2. Remaining cycles
+                piece_type = 'c' if len(buffer) == 3 else 'e'
+                drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs)
 
-        case 'reload':
+            case 'q' | 'quit' | 'exit':
+                quit()
 
-            with open("settings.json") as f:
-                settings = json.loads(f.read())
-                letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
-                buffers = settings['buffers']
-                buffer_order = settings['buffer_order']
-                all_buffers_order = buffer_order['edges'] + buffer_order['corners']
-            update_comm_list(buffers=all_buffers_order)
+            case "c" | 'comm':
+                # defaults to using max's list
+                # rapid mode and change buffer
 
-        case 'timeup' | 'time':
-            print(time.time() - start_time)
+                if not args:
+                    print("e.g. comm UF AB -e")
+                    continue
 
-        case 'alger':
-            if not args:
-                print(alger.__doc__)
-                continue
-            alg_count = int(args.pop())
-            alger(alg_count)
+                rapid_mode = False
+                if '-r' in args:
+                    rapid_mode = True
+                    args.remove('-r')
 
-        # todo add quit to all funcs
-        # todo rename to something better
-        # todo put this stuff into a function to run
-        # cycle breaks all edge buffers
+                buffer = get_comm(args)
 
-        # todo add more params
-        case "f" | "float":
-            if not args:
-                print(cycle_break_float.__doc__)
-                continue
+                while rapid_mode:
+                    args = input("(rapid) ").split()
+                    if 'quit' in args or 'exit' in args:
+                        break
 
-            buffer = args.pop()
-            cycle_break_float(buffer)
+                    if '-b' in args:
+                        buffer = args[args.index('-b') + 1]
+                        args.remove('-b')
+                    else:
+                        args = [buffer] + args
 
-        case "t":
-            if not args:
-                print("Drills twists")
-                continue
+                    get_comm(args)
 
-            match args[0]:
-                case ["2f" | "2"]:
-                    print("This is not yet supported")
-                    drill_generator.main("5")
-                case "3":
-                    drill_generator.main("2")
-                case "3f":
-                    drill_generator.main("3")
-        case _:
-            print("that option is not recognised")
-    # todo convert main if elif branch to match case
-# todo fix inconsistent usage of "" and ''
+            case 'reload':
+
+                with open("settings.json") as f:
+                    settings = json.loads(f.read())
+                    letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
+                    # buffers = settings['buffers']
+                    buffer_order = settings['buffer_order']
+                    all_buffers_order = buffer_order['edges'] + buffer_order['corners']
+                update_comm_list(buffers=all_buffers_order)
+
+            case 'timeup' | 'time':
+                print(time.time() - start_time)
+
+            case 'alger':
+                if not args:
+                    print(alger.__doc__)
+                    continue
+                alg_count = int(args.pop())
+                alger(alg_count)
+
+            # todo add quit to all funcs
+            # todo put this stuff into a function to run
+
+            # todo add more params
+            case "f" | "float":
+                if not args:
+                    print(cycle_break_float.__doc__)
+                    continue
+
+                buffer = args.pop()
+                cycle_break_float(buffer)
+
+            case "t":
+                if not args:
+                    print(drill_twists.__doc__)
+                    continue
+                twist_type = args.pop()
+                drill_twists(twist_type)
+
+            case _:
+                print("that option is not recognised")
+    # todo fix inconsistent usage of "" and ''
+    # might be best to allways store and work with letterpairs in Singmaster notation
+    # todo and just convert to and from whenever loading or displaying in letterscheme
+    # todo scramble gen for corners
+    # todo output display class
+
+
+if __name__ == "__main__":
+    main()
