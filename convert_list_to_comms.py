@@ -1,4 +1,5 @@
 import csv
+import json
 from pprint import pprint
 from typing import Dict
 
@@ -7,6 +8,7 @@ from typing import Dict
 from expand_comm import expand_comm
 
 
+# todo make this take a spreadsheet and csv
 def _convert(buffer, file_name="max_comms", top_corner_key="1st Target:"):
     comms = {}
 
@@ -36,7 +38,7 @@ def _convert(buffer, file_name="max_comms", top_corner_key="1st Target:"):
     return comms
 
 
-def update_comm_list(file="max_comms", buffers=None):
+def update_comm_list(buffers=None, file="max_comms", top_corner_key=""):
     # todo import from settings
     if buffers is None:
         buffers = [
@@ -47,26 +49,25 @@ def update_comm_list(file="max_comms", buffers=None):
             'UFR', 'UBR', 'UBL', 'UFL',
             'RDF', 'RDB'
         ]
-    elif len(buffers) != 18:
+    elif len(buffers) != 16:
         raise ValueError("Please include all of the buffers in settings.json")
 
     comms = {}
     for buffer in buffers:
-        comms[buffer] = _convert(buffer, file)
+        comms[buffer] = _convert(buffer, file, top_corner_key=top_corner_key)
 
     pprint(comms, sort_dicts=False)
-    with open(f"{file}.py", "w+") as f:
-        f.write(f"{file.upper()} = ")
-        pprint(comms, f, sort_dicts=False)
+    with open(f"{file}.json", "w+") as f:
+        json.dump(comms, f, indent=4)
 
 
 if __name__ == '__main__':
-    # update_comm_list()
-    buffers = [
-        'UF', 'UB', 'UR', 'UL',
-        'DF', 'DB',
-        'FR', 'FL',
-        'DR', 'DL',
-    ]
-    for buffer in buffers:
-        _convert(buffer, "eli_comms", top_corner_key="")
+    update_comm_list()
+    # buffers = [
+    #     'UF', 'UB', 'UR', 'UL',
+    #     'DF', 'DB',
+    #     'FR', 'FL',
+    #     'DR', 'DL',
+    # ]
+    # for buffer in buffers:
+    #     _convert(buffer, "eli_comms", top_corner_key="")

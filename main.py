@@ -12,22 +12,22 @@ from Cube.drill import Drill
 from Cube.letterscheme import LetterScheme
 from convert_list_to_comms import update_comm_list
 from eli_comms import ELI_COMMS
-from max_comms import MAX_COMMS
 from solution import Solution
 
 
 # todo settings with buffer order and alt pseudo swaps for each parity alg
 # todo how to ingest a new comm sheet esp full floating
 
-def memo(scramble, letter_scheme):
+def memo(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):
     if not scramble:
         return
     # todo cleanup memo output
-    Solution(scramble, letter_scheme=letter_scheme).display()
+    Solution(scramble, letter_scheme=letter_scheme, buffers=buffers, parity_swap_edges=parity_swap_edges,
+             buffer_order=buffer_order).display()
     pprint(dlin.trace(scramble))
 
 
-def memo_cube(scramble, letter_scheme):
+def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):
     """Memo: memo [scramble] [-l filename] [-s filename]
 Options:
     -l filename loads scrambles from FILENAME text file
@@ -45,7 +45,8 @@ Aliases:
         with open(file_name) as f:
             for num, scram in enumerate(f.readlines(), 1):
                 print("Scramble number:", num)
-                pprint(memo(scram.strip("\n").strip().strip('"'), letter_scheme))
+                pprint(
+                    memo(scram.strip("\n").strip().strip('"'), letter_scheme, buffers, parity_swap_edges, buffer_order))
 
     elif '-s' in scramble:
         scramble = scramble.strip('"').split()
@@ -60,7 +61,7 @@ Aliases:
             f.write("\n")
             f.close()
 
-    memo(scramble.strip('"'), letter_scheme)
+    memo(scramble.strip('"'), letter_scheme, buffers, parity_swap_edges, buffer_order=buffer_order)
 
 
 def set_letter_scheme(args, letter_scheme) -> LetterScheme:
@@ -80,7 +81,7 @@ Aliases:
             return LetterScheme(ltr_scheme=settings['letter_scheme'])
 
 
-def drill_sticker(sticker, exclude=None):
+def drill_sticker(sticker, exclude=None, buffer_order=None):
     """Drills a specific sticker from default buffers (UF/UFR)"""
     # todo specify some cycles you want to drill more than others
 
@@ -92,26 +93,29 @@ def drill_sticker(sticker, exclude=None):
     if piece_type == 'edge':
         # todo fix so it can parse args properly
         cycles_to_exclude = {sticker + piece for piece in exclude}
-        Drill().drill_edge_sticker(
-            sticker_to_drill=sticker, return_list=False, cycles_to_exclude=cycles_to_exclude
+        Drill(buffer_order=buffer_order).drill_edge_sticker(
+            sticker_to_drill=sticker, return_list=False, cycles_to_exclude=cycles_to_exclude,
         )
     elif piece_type == 'corner':
         cycles_to_exclude = {sticker + piece for piece in exclude}
-        Drill().drill_corner_sticker(sticker_to_drill=sticker)
+        Drill(buffer_order=buffer_order).drill_corner_sticker(sticker_to_drill=sticker)
     else:
         print("sorry not a valid piece type")
 
 
-def drill_buffer(piece_type: str, buffer: str, drill_list: set | None, random_pairs: bool):
+def drill_buffer(piece_type: str, buffer: str, drill_list: set | None, random_pairs: bool, buffer_order=None,
+                 file_comms=None):
     # todo somehow combine these two!?!
     if piece_type == 'e':
-        Drill().drill_edge_buffer(edge_buffer=buffer, translate_memo=True, drill_set=drill_list,
-                                  random_pairs=random_pairs)
+        Drill(buffer_order=buffer_order).drill_edge_buffer(edge_buffer=buffer, translate_memo=True,
+                                                           drill_set=drill_list,
+                                                           random_pairs=random_pairs, file_comms=file_comms)
     if piece_type == 'c':
-        Drill().drill_corner_buffer(corner_buffer=buffer, drill_set=drill_list, random_pairs=random_pairs)
+        Drill(buffer_order=buffer_order).drill_corner_buffer(corner_buffer=buffer, drill_set=drill_list,
+                                                             random_pairs=random_pairs, file_comms=file_comms)
 
 
-def alger(alg_count):
+def alger(alg_count, buffer_order):
     # todo check this
     """Syntax: alger <alg count>
 Desc: generates a scramble with specified number of algs
@@ -121,7 +125,7 @@ Note: recommended alg range is 7-13 (still needs checking)"""
         cur_alg_count = 0
         while cur_alg_count != alg_count:
             scramble = get_scrambles.get_scramble()
-            cur_alg_count = Solution(scramble=scramble).count_number_of_algs()
+            cur_alg_count = Solution(scramble=scramble, buffer_order=buffer_order).count_number_of_algs()
 
         print(scramble)
         input()
@@ -130,7 +134,7 @@ Note: recommended alg range is 7-13 (still needs checking)"""
 # todo letterscheme
 # todo change which lists are displayed when the buffer is drilled
 
-def cycle_break_float(buffer):
+def cycle_break_float(buffer, buffer_order=None):
     """Syntax: cbuff <buffer>
 Desc: provides scrambles with flips/twists and cycle breaks to practice all edge and corner buffers
 Aliases:
@@ -138,17 +142,17 @@ Aliases:
     piece_type = 'edge' if len(buffer) == 2 else 'corner'
 
     if piece_type == 'edge':
-        cycle_break_floats_edges(buffer)
+        cycle_break_floats_edges(buffer, buffer_order=buffer_order)
     elif piece_type == 'corner':
-        cycle_break_floats_corners(buffer)
+        cycle_break_floats_corners(buffer, buffer_order=buffer_order)
 
 
-def cycle_break_floats_edges(buffer):
+def cycle_break_floats_edges(buffer, buffer_order=None):
     """Syntax: cbuff <edge buffer>
 Desc: provides scrambles with flips and cycle breaks to practice all edge buffers"""
     # todo add corners
     while True:
-        drill = Drill()
+        drill = Drill(buffer_order=buffer_order)
         scram = drill.drill_edge_buffer_cycle_breaks(buffer)
         cube = Cube(scram, can_parity_swap=False)
         if buffer in cube.solved_edges or len(cube.flipped_edges) >= 4:
@@ -168,11 +172,11 @@ Desc: provides scrambles with flips and cycle breaks to practice all edge buffer
             input()
 
 
-def cycle_break_floats_corners(buffer):
+def cycle_break_floats_corners(buffer, buffer_order=None):
     """Syntax: cbuff <corner buffer>
 Desc: provides scrambles with twists and cycle breaks to practice all corner buffers"""
     while True:
-        drill = Drill()
+        drill = Drill(buffer_order=buffer_order)
         scram = drill.drill_corner_buffer_cycle_breaks(buffer)
         cube = Cube(scram, can_parity_swap=False)
         if buffer in cube.solved_corners or len(cube.twisted_corners) > 3:
@@ -192,19 +196,22 @@ Desc: provides scrambles with twists and cycle breaks to practice all corner buf
             input()
 
 
-def get_comm(args):
-    max_list = True
+def get_comm(args, file_comms, file_name):
+    # capitalization is good
+    file_list = True
     eli_list = True
+    file_first_letter = file_name[0]
+    list_name, _ = file_name.split("_")
     # if '-b' not in args:
     if '-e' in args:
         args.remove('-e')
         eli_list = True
-        max_list = False
+        file_list = False
 
-    elif '-m' in args:
-        args.remove('-m')
+    elif f'-{file_first_letter}' in args:
+        args.remove(f'-{file_first_letter}')
         eli_list = False
-        max_list = True
+        file_list = True
 
     buffer, *cycles = args
     buffer = buffer.upper()
@@ -218,8 +225,8 @@ def get_comm(args):
         cycle = cycle.upper()
         a, b = LetterScheme().convert_pair_to_pos(buffer, cycle)
         let1, let2 = cycle
-        if max_list:
-            print(f"Max {let1 + let2}:", MAX_COMMS[buffer][a][b])
+        if file_list:
+            print(f"{list_name.title()} {let1 + let2}:", file_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"))
         if eli_list:
             print(f"Eli {let1 + let2}:", ELI_COMMS.get(buffer, {}).get(a, {}).get(b, "Not listed"))
 
@@ -288,8 +295,20 @@ def main():
     with open("settings.json") as f:
         settings = json.loads(f.read())
         letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
-        # buffers = settings['buffers']
-        # buffer_order = settings['buffer_order']
+        buffers = settings['buffers']
+        buffer_order = settings['buffer_order']
+        all_buffers_order = buffer_order['edges'] + buffer_order['corners']
+        if len(all_buffers_order) != 16:
+            raise ValueError("Please include all of the buffers in settings.json")
+
+        comm_file_name = settings['comm_file_name']
+        parity_swap_edges = settings['parity_swap_edges']
+
+    try:
+        with open(f"{comm_file_name}.json") as f:
+            file_comms = json.load(f)
+    except FileNotFoundError:
+        update_comm_list(buffers=all_buffers_order, file=comm_file_name, )
 
     last_args = ""
     last_mode = 1
@@ -318,7 +337,7 @@ def main():
                     print(memo_cube.__doc__)
                     continue
 
-                memo_cube(args, letter_scheme)
+                memo_cube(args, letter_scheme, buffers, parity_swap_edges, buffer_order)
 
             case "ls" | "letterscheme":
                 if not args:
@@ -344,7 +363,7 @@ def main():
                 # todo make this for floating too  ... hahahahaa
 
                 sticker, *exclude = args
-                drill_sticker(sticker, exclude=exclude)
+                drill_sticker(sticker, exclude=exclude, buffer_order=buffer_order)
                 last_args = args
 
             # todo add auto save and load for drilling buffer like a global save file, start and continue later
@@ -402,7 +421,8 @@ def main():
 
                 # to load 1. Buffer 2. Remaining cycles
                 piece_type = 'c' if len(buffer) == 3 else 'e'
-                drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs)
+                drill_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs,
+                             buffer_order=buffer_order, file_comms=file_comms)
 
             case 'q' | 'quit' | 'exit':
                 quit()
@@ -420,7 +440,7 @@ def main():
                     rapid_mode = True
                     args.remove('-r')
 
-                buffer = get_comm(args)
+                buffer = get_comm(args, file_comms, comm_file_name)
 
                 while rapid_mode:
                     args = input("(rapid) ").split()
@@ -443,7 +463,8 @@ def main():
                     # buffers = settings['buffers']
                     buffer_order = settings['buffer_order']
                     all_buffers_order = buffer_order['edges'] + buffer_order['corners']
-                update_comm_list(buffers=all_buffers_order)
+                    comm_file_name = settings['comm_file_name']
+                update_comm_list(buffers=all_buffers_order, file=comm_file_name)
 
             case 'timeup' | 'time':
                 print(time.time() - start_time)
@@ -453,7 +474,7 @@ def main():
                     print(alger.__doc__)
                     continue
                 alg_count = int(args.pop())
-                alger(alg_count)
+                alger(alg_count, buffer_order=buffer_order)
 
             # todo add quit to all funcs
             # todo put this stuff into a function to run

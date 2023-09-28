@@ -5,8 +5,12 @@ from Cube.memo import Memo
 
 class Solution:
 
-    def __init__(self, scramble, letter_scheme=None, buffers=None):
-        self.cube = Memo(scramble, auto_scramble=False, can_parity_swap=True, ls=letter_scheme, buffers=buffers)
+    def __init__(self, scramble, letter_scheme=None, buffers=None, parity_swap_edges=None, buffer_order=None):
+        self.cube = Memo(
+            scramble, auto_scramble=False, can_parity_swap=True,
+            ls=letter_scheme, buffers=buffers, parity_swap_edges=parity_swap_edges,
+            buffer_order=buffer_order
+        )
         self.scramble = scramble
         self.parity = self.cube.has_parity
         self.cube.scramble_cube(self.scramble)

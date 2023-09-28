@@ -12,7 +12,8 @@ DEBUG = True
 
 # TODO does not reorient the cube after scrambling.
 class Cube:
-    def __init__(self, s="", can_parity_swap=False, auto_scramble=True, ls=None, buffers=None):
+    def __init__(self, s="", can_parity_swap=False, auto_scramble=True, ls=None, buffers=None, parity_swap_edges=None,
+                 buffer_order=None):
 
         self.scramble = s.rstrip('\n').strip().split()
         self.has_parity = (len(self.scramble) - s.count('2')) % 2 == 1
@@ -59,9 +60,15 @@ class Cube:
 
         self.corner_cycle_break_order = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
         self.edge_cycle_break_order = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]
-        self.corner_buffer_order = [UFR, UBR, UBL, UFL, RDF, RDB]
-        self.edge_buffer_order = [UF, UB, UR, UL, DF, DB, FR, FL, DR, DL]
-        self.corner_cycle_break_order = self.corner_buffer_order
+
+        if buffer_order is not None:
+            self.buffer_order = buffer_order
+            self.corner_buffer_order = [ls[buffer] for buffer in buffer_order['corners']]
+            self.edge_buffer_order = [ls[buffer] for buffer in buffer_order['edges']]
+        else:
+            self.corner_buffer_order = [UFR, UBR, UBL, UFL, RDF, RDB]
+            self.edge_buffer_order = [UF, UB, UR, UL, DF, DB, FR, FL, DR, DL]
+
         self.U_edges = deque([UB, UR, UF, UL])
         self.L_edges = deque([LU, LF, LD, LB])
         self.F_edges = deque([FU, FR, FD, FL])
@@ -206,16 +213,22 @@ class Cube:
 
         # UF-UR swap
         if can_parity_swap:
-            self.parity_swap()
+            self.parity_swap(parity_swap_edges)
 
         if auto_scramble:
             self.scramble_cube()
 
     # memo
-    def parity_swap(self):
-        if self.has_parity:
+    def parity_swap(self, parity_swap_edges="UF-UR"):
+        if not self.has_parity:
+            return
+
+        if parity_swap_edges == "UF-UR" or parity_swap_edges is None:
             self.U_edges[1], self.U_edges[2] = self.U_edges[2], self.U_edges[1]
             self.F_edges[0], self.R_edges[0] = self.R_edges[0], self.F_edges[0]
+        elif parity_swap_edges == "UL-UB":
+            self.U_edges[0], self.U_edges[3] = self.U_edges[3], self.U_edges[0]
+            self.B_edges[0], self.L_edges[0] = self.L_edges[0], self.B_edges[0]
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:

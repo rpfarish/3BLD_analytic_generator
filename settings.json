@@ -71,8 +71,10 @@
       "UBR",
       "UBL",
       "UFL",
-      "RDF",
-      "RDB"
+      "DFR",
+      "DFL"
     ]
-  }
+  },
+  "comm_file_name": "eli_comms",
+  "parity_swap_edges": "UF-UR"
 }

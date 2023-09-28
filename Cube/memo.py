@@ -7,9 +7,10 @@ from Cube.letterscheme import LetterScheme
 
 
 class Memo(Cube):
-    def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls: LetterScheme = None, buffers=None):
+    def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls: LetterScheme = None, buffers=None,
+                 parity_swap_edges=None, buffer_order=None):
         super().__init__(s=scramble, can_parity_swap=can_parity_swap, auto_scramble=auto_scramble, ls=ls,
-                         buffers=buffers)
+                         buffers=buffers, parity_swap_edges=parity_swap_edges, buffer_order=buffer_order)
         #
         # with open("../settings.json") as f:
         #     settings = json.loads(f.read())
