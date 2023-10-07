@@ -33,11 +33,16 @@ all_edges = {
     'DF', 'DR', 'DB', 'DL',
 }
 
-sticker_to_drill = "DF"
+sticker_to_drill = "DB"
 adj = sticker_to_drill[::-1]
 all_edges.remove(sticker_to_drill)
 all_edges.remove(adj)
-algs_to_drill = {sticker_to_drill + i for i in all_edges}
+invert_pairs = False
+if invert_pairs:
+    algs_to_drill = {i + sticker_to_drill for i in all_edges}
+else:
+    algs_to_drill = {sticker_to_drill + i for i in all_edges}
+
 # algs_to_drill = {''}
 print(algs_to_drill)
 # algs_to_drill = algs_to_drill.union({"UBDF", "URRD", "ULLD"})
@@ -48,7 +53,7 @@ print("This program generates scrambles that contain certain letter pairs")
 frequency = int(input("Enter freq (recommended less than 3): "))
 no_cycle_break_edge_memo = set()
 # print('Running...')
-algs_to_drill = {"LFFD"}
+# algs_to_drill = {"LFFD"}
 strict = True
 no_repeat = True
 # I don't recommend going above 2 else it will take forever

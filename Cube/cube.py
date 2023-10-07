@@ -197,11 +197,18 @@ class Cube:
             'l': ('M', 1),
             'd': ('E', 1),
             'b': ('S', -1),
+            'U': ("E", -1),
+            'R': ('M', -1),
+            'F': ('S', 1),
+            'L': ('M', 1),
+            'D': ('E', 1),
+            'B': ('S', -1),
         }
         self.rotations_map = {
             "'": -1,
             "2": 2,
             "2'": 2,
+            "'2": 2,
             "": 1,
             "3": -1,
             "3'": 1,
@@ -209,6 +216,13 @@ class Cube:
             1: "",
             2: "2",
             -2: "2",
+            "''": 1,
+        }
+
+        self.cube_rotations_map = {
+            "x": ["Rw", "L'"],
+            "y": ["Uw", "D'"],
+            "z": ["Fw", "B'"],
         }
 
         # UF-UR swap
@@ -247,13 +261,19 @@ class Cube:
             return not result
 
     def do_move(self, move: str):
+        has_wide_move = False
         if not move:
             return
 
         elif len(move) > 3:
-            raise ValueError("Invalid move length")
+            raise ValueError("Invalid move length", move)
 
-        rotation = self.rotations_map[move[1:]]
+        elif 'w' in move:
+            has_wide_move = True
+            rotation = self.rotations_map[move[2:]]
+            move = move.replace("w", "")
+        else:
+            rotation = self.rotations_map[move[1:]]
 
         moves_map = {
             'U': (self.U_edges, self.u_adj_edges, self.u_adj_edges_index,
@@ -288,14 +308,14 @@ class Cube:
         }
 
         face_turn = move[:1]
-        if face_turn in self.faces:
+        if has_wide_move:
+            self._rotate_wide(move)
+        elif face_turn in self.faces:
             side = moves_map.get(face_turn)
             self._rotate_layer(rotation, *side)
         elif face_turn in self.slices:
             side = moves_map.get(face_turn)
             self._rotate_slice(rotation, *side)
-        elif face_turn.islower():
-            self._rotate_wide(move)
 
     @staticmethod
     def _rotate_layer(rotation, edges, adj_edges, adj_edges_index, corners, adj_corners, adj_corners_index):
@@ -417,6 +437,16 @@ class Cube:
 
         for move in scramble:
             self.do_move(move)
+
+        # rotations = self.get_dlin_trace().get("rotation", [])
+        # for rotation in rotations:
+        #     face_rotation_degree = rotation[1:]
+        #     face_rotation = rotation[:1]
+        #     wide_move, face_turn = self.cube_rotations_map[face_rotation]
+        #     wide_move += face_rotation_degree
+        #     face_turn += face_rotation_degree
+        #     self.do_move(wide_move)
+        #     self.do_move(face_turn)
 
     def is_solved(self):
         if self == Cube():

@@ -5,7 +5,8 @@ from Cube.memo import Memo
 
 class Solution:
 
-    def __init__(self, scramble, letter_scheme=None, buffers=None, parity_swap_edges=None, buffer_order=None):
+    def __init__(self, scramble, letter_scheme=None, buffers=None, parity_swap_edges=None, buffer_order=None,
+                 inc_floats=True):
         self.cube = Memo(
             scramble, auto_scramble=False, can_parity_swap=True,
             ls=letter_scheme, buffers=buffers, parity_swap_edges=parity_swap_edges,
@@ -26,10 +27,10 @@ class Solution:
 
         self.number_of_edge_flips = len(self.flipped_edges) // 2
         self.number_of_corner_twists = len(self.twisted_corners) // 3
-        self.number_of_algs = self.count_number_of_algs()
+        self.number_of_algs = self.count_number_of_algs(inc_floats=inc_floats)
         self.edge_float_buffers = []
         self.can_float_edges = self.can_float_edges()
-
+        self.inc_floats = inc_floats
         # TODO support wide moves
 
         # TODO return twists with top or bottom color
@@ -110,13 +111,15 @@ class Solution:
 
         return float_count
 
-    def count_number_of_algs(self) -> int:
-        number_of_floats = self.count_sandwich_floats()
+    def count_number_of_algs(self, inc_floats=True) -> int:
+        number_of_floats = self.count_sandwich_floats() if inc_floats else 0
 
         twists_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
-        print(self.edges, len(self.edges), self.corners, len(self.corners), self.number_of_edge_flips,
-              self.number_of_corner_twists, number_of_floats)
-        num_of_algs = (len(self.edges) + len(self.corners) + self.number_of_edge_flips // 2 +
+        flips_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
+        # print(self.edges, len(self.edges), self.corners, len(self.corners), "FLIPS", self.number_of_edge_flips,
+        #       "TWISTS", self.number_of_corner_twists, "FLOATS", number_of_floats)
+        num_of_algs = (len(self.edges) + len(self.corners) +
+                       flips_to_alg.get(self.number_of_edge_flips, self.number_of_edge_flips) +
                        twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2))
         num_of_algs -= number_of_floats
         return num_of_algs
@@ -134,7 +137,7 @@ class Solution:
             'twisted_corners': list(self.cube.twisted_corners),
             'corner_buffers': list(self.cube.corner_memo_buffers),
             'can_float_corners': None,
-            'number_of_algs': self.count_number_of_algs(),
+            'number_of_algs': self.count_number_of_algs(inc_floats=self.inc_floats),
         }
         solution['number_of_edge_flips'] = len(solution['flipped_edges']) // 2
         solution['number_of_corner_twists'] = len(solution['twisted_corners']) // 3

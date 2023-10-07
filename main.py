@@ -41,12 +41,11 @@ Aliases:
     if scramble.startswith('-l'):
         _, file_name = scramble.split()
         file_name = f"{file_name}.txt" if '.txt' not in file_name else file_name
-
         with open(file_name) as f:
             for num, scram in enumerate(f.readlines(), 1):
-                print("Scramble number:", num)
-                pprint(
-                    memo(scram.strip("\n").strip().strip('"'), letter_scheme, buffers, parity_swap_edges, buffer_order))
+                # print("Scramble number:", num)
+                memo(scram.strip("\n").strip().strip('"'), letter_scheme, buffers, parity_swap_edges, buffer_order)
+        return
 
     elif '-s' in scramble:
         scramble = scramble.strip('"').split()
@@ -64,7 +63,7 @@ Aliases:
     memo(scramble.strip('"'), letter_scheme, buffers, parity_swap_edges, buffer_order=buffer_order)
 
 
-def set_letter_scheme(args, letter_scheme) -> LetterScheme:
+def set_letter_scheme(args, letter_scheme: LetterScheme) -> LetterScheme:
     """Letter Scheme: ls [-d] [-l]
 Options:
     -d dumps the current loaded letter scheme for the standard Singmaster notation
@@ -196,7 +195,7 @@ Desc: provides scrambles with twists and cycle breaks to practice all corner buf
             input()
 
 
-def get_comm(args, file_comms, file_name):
+def get_comm(args, file_comms, file_name, letterscheme: LetterScheme):
     # capitalization is good
     file_list = True
     eli_list = True
@@ -224,7 +223,10 @@ def get_comm(args, file_comms, file_name):
         # do I check both? prob just the first one haha
         cycle = cycle.upper()
         a, b = LetterScheme().convert_pair_to_pos(buffer, cycle)
-        let1, let2 = cycle
+        if letterscheme.is_default:
+            let1, let2 = a, b
+        else:
+            let1, let2 = cycle
         if file_list:
             print(f"{list_name.title()} {let1 + let2}:", file_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"))
         if eli_list:
@@ -440,7 +442,7 @@ def main():
                     rapid_mode = True
                     args.remove('-r')
 
-                buffer = get_comm(args, file_comms, comm_file_name)
+                buffer = get_comm(args, file_comms, comm_file_name, letterscheme=letter_scheme)
 
                 while rapid_mode:
                     args = input("(rapid) ").split()
@@ -453,7 +455,7 @@ def main():
                     else:
                         args = [buffer] + args
 
-                    get_comm(args)
+                    get_comm(args, file_comms, letterscheme=letter_scheme)
 
             case 'reload':
 
