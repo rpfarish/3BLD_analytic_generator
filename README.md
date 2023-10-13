@@ -51,8 +51,8 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
 
 - **Options:**
     - [scramble]: The scramble to memo.
-    - -l filename: Load scrambles from the FILENAME text file.
-    - -s filename: Save the SCRAMBLE to the FILENAME text file.
+    - -l filename: Load scrambles from the FILENAME text file
+    - -s filename: Save the SCRAMBLE to the FILENAME text file
 
 - **Usage Examples**:
     - Memo the scramble
@@ -73,13 +73,14 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
        memo -s new_scramble.txt
        ```
 
-## Letter Scheme: `ls [-d] [-l]`
+## Letter Scheme: `ls [-d] [-l] [-c]`
 
 - **Description:** Manage letter scheme options.
 
 - **Options:**
-    - -d: Dumps the current loaded letter scheme for the standard Singmaster notation.
-    - -l: Loads the letter scheme from settings.json.
+    - -d: Dumps the current loaded letter scheme for the standard Singmaster notation
+    - -l: Loads the letter scheme from settings.json
+    - -c prints the current letter scheme
 
 - **Usage Examples**:
     - Dump the letter scheme
@@ -144,8 +145,8 @@ These examples demonstrate how to use the buffer command with various options.
 
 - **Description:** Retrieve and display commutators.
 - **Options:**
-    - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query.
-    - -b: Selects a new buffer while in rapid mode.
+    - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
+    - -b: Selects a new buffer while in rapid mode
 
 - **Example Usages**:
 
