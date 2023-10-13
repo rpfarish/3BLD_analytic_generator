@@ -180,3 +180,7 @@ These examples demonstrate how to use the buffer command with various options.
 ### Options:
 
 - `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist
+
+## Random Buffer: `rb`
+
+- **Description:** Pick a random buffer from settings.json

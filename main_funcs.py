@@ -1,4 +1,5 @@
 import json
+import random
 from pprint import pprint
 from typing import List, Tuple
 
@@ -321,6 +322,16 @@ def drill_twists(twist_type):
             drill_generator.main("3")
 
 
+def get_rand_buff(all_buffers_order: list):
+    buffers = all_buffers_order.copy()
+    random.shuffle(buffers)
+    for i in buffers:
+        print(i, end='')
+        resp = input().lower()
+        if resp.startswith('q') or 'quit' in resp:
+            return
+
+
 def get_help():
     # print(f"Just enter '{args}' with no addtional arguments or parameters to see the help file")
     print("Type 'name' to find out more about the function 'name'.")
@@ -338,6 +349,7 @@ timeup | time: Display the elapsed time.
 alger: Generate a scramble with a specified number of algs.
 f | float: Provide scrambles with flips and cycle breaks.
 t: Drill twists: 2f, 3, or 3f.
+rb: Pick a random buffer from settings.json
     """
     print(docs)
     return

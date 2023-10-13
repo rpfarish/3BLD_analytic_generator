@@ -2,7 +2,7 @@ import json
 import time
 
 from convert_list_to_comms import update_comm_list
-from main_funcs import LetterScheme, alger, cycle_break_float, drill_buffer, get_comm_loop
+from main_funcs import LetterScheme, alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff
 from main_funcs import drill_generator, drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
 
 
@@ -149,6 +149,8 @@ def main():
                     continue
                 twist_type = args.pop()
                 drill_twists(twist_type)
+            case "rb":
+                get_rand_buff(all_buffers_order)
 
             case _:
                 print("that option is not recognised")
