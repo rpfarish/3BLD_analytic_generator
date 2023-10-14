@@ -8,6 +8,7 @@ import kociemba
 import get_scrambles
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
+from Cube.letterscheme import letter_scheme
 from Cube.memo import Memo
 from comms import COMMS
 
@@ -97,32 +98,105 @@ class Drill:
             return self.get_target_scramble(algs_to_drill)
 
     # memo
-    def drill_corner_sticker(self, sticker_to_drill):
-        #             # todo make it so if you're no_repeat then allow to repeat the letter pairs
-        #     return scrambles
-        # todo fix buffer thing
-        algs_to_drill = self.generate_drill_list(self.cube_memo.ls, self.cube_memo.default_corner_buffer,
-                                                 sticker_to_drill)
+    # def drill_corner_sticker(self, sticker_to_drill):
+    #     #             # todo make it so if you're no_repeat then allow to repeat the letter pairs
+    #     #     return scrambles
+    #     # todo fix buffer thing
+    #     algs_to_drill = self.generate_drill_list(self.cube_memo.ls, self.cube_memo.default_corner_buffer,
+    #                                              sticker_to_drill)
+    #
+    #     alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
+    #     # print(type(alg_freq_dist))
+    #     # print('Running...')
+    #     count = 2
+    #     inc_amt = 2
+    #     while True:
+    #         scramble, alg_to_drill = self.get_target_scramble(algs_to_drill)
+    #         # check if freq is < count and if so continue
+    #         if alg_freq_dist[alg_to_drill] < count:
+    #             alg_freq_dist[alg_to_drill] += 1
+    #         elif len(set(alg_freq_dist.values())) == 1:
+    #             print("Increasing count")
+    #             count += inc_amt
+    #         else:
+    #             continue
+    #
+    #         print(scramble, end="")
+    #
+    #         input()
 
+    def drill_corner_sticker(self, sticker_to_drill):
+
+        def remove_piece(target_list, piece, ltr_scheme):
+            piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
+            target_list.remove(piece)
+            target_list.remove(piece_adj1)
+            target_list.remove(piece_adj2)
+            return target_list
+
+        def generate_drill_list(ltr_scheme: LetterScheme, buffer, target):
+            all_targets = LetterScheme(use_default=False).get_corners()
+            remove_piece(all_targets, buffer, ltr_scheme)
+
+            target_list = all_targets[:]
+            # remove buffer stickers
+            remove_piece(target_list, target, ltr_scheme)
+
+            # generate random pairs
+            # generate specific pairs
+            # generate target groups e.g. just Z or H and k
+            # generate inverse target groups
+            # specify buffer
+            return {target + i for i in target_list}
+
+        sticker_to_drill = sticker_to_drill
+
+        algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
+        number = 0
+        # fixme drill just one sticker with s XY -onlypairIwanttodrill
+        # algs_to_drill = {"NS"}
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
-        # print(type(alg_freq_dist))
-        # print('Running...')
+        print(type(alg_freq_dist))
+        print('Running...')
         count = 2
         inc_amt = 2
-        while True:
-            scramble, alg_to_drill = self.get_target_scramble(algs_to_drill)
-            # check if freq is < count and if so continue
-            if alg_freq_dist[alg_to_drill] < count:
-                alg_freq_dist[alg_to_drill] += 1
-            elif len(set(alg_freq_dist.values())) == 1:
-                print("Increasing count")
-                count += inc_amt
-            else:
-                continue
 
-            print(scramble, end="")
+        while algs_to_drill:
+            scramble = get_scrambles.get_scramble()
+            cube = Memo(scramble, ls=letter_scheme)
+            corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
+            no_cycle_break_corner_memo = set()
 
-            input()
+            # if just the first target of the memo is the target eg: L then cycle break, this is bad
+
+            corner_buffers = cube.corner_memo_buffers
+            for pair in corner_memo:
+                if len(pair) == 4 or len(pair) == 2:
+                    pair_len_half = len(pair) // 2
+                    a = pair[:pair_len_half]
+                    b = pair[pair_len_half:]
+                else:
+                    a = pair
+                    b = ''
+                if a in corner_buffers or b in corner_buffers:
+                    break
+                no_cycle_break_corner_memo.add(pair)
+
+            alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
+
+            if algs_to_drill.intersection(no_cycle_break_corner_memo):
+                alg_to_drill = alg_to_drill.pop()
+                algs_to_drill -= algs_to_drill.intersection(no_cycle_break_corner_memo)
+                # check if freq is < count and if so continue
+                if alg_freq_dist[alg_to_drill] < count:
+                    alg_freq_dist[alg_to_drill] += 1
+                elif len(set(alg_freq_dist.values())) == 1:
+                    count += inc_amt
+                else:
+                    continue
+
+                print(scramble)
+                input()
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
@@ -550,9 +624,12 @@ class Drill:
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
     drill = Drill()
-
+    a = drill.total_cases_per_corner_buffer
+    b = drill.total_cases_per_edge_buffer
+    print(a, b)
     s = drill.drill_edge_buffer_cycle_breaks("UB")
     print(s)
+
     quit()
     print(convert_letterpairs(drill.get_all_buffer_targets("UFL", 'corners'), 'loc_to_letters', 'corners'))
     # drill.drill_edge_sticker(sticker_to_drill="FD", single_cycle=True, return_list=False,

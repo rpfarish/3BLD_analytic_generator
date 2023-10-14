@@ -45,12 +45,12 @@ def generate_drill_list(ltr_scheme: LetterScheme, buffer, target):
     return {target + i for i in target_list}
 
 
-sticker_to_drill = "L"
+sticker_to_drill = "B"
 
 algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
 number = 0
 # fixme drill just one sticker with s XY -onlypairIwanttodrill
-algs_to_drill = {"NS"}
+# algs_to_drill = {"NS"}
 alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
 print(type(alg_freq_dist))
 print('Running...')

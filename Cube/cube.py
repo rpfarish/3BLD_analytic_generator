@@ -461,6 +461,9 @@ class Cube:
             a = str(target)
             b = str(next(iter_memo))
             buffer = COMMS[str(edge_buffer)]
+            print(buffer)
+            print(a)
+            print(b)
             comm = buffer[a][b]
             self.scramble_cube(comm)
 

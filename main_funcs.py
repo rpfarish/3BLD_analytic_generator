@@ -297,7 +297,6 @@ def get_comm(args, file_comms, file_name, letterscheme: LetterScheme):
         # do I check both? prob just the first one haha
         cycle = cycle.upper()
         a, b = LetterScheme().convert_pair_to_pos(buffer, cycle)
-        print(letterscheme, type(letterscheme))
         if letterscheme.is_default:
             let1, let2 = a, b
         else:

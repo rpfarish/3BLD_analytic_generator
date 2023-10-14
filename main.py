@@ -8,7 +8,7 @@ from main_funcs import drill_generator, drill_sticker, drill_twists, get_help, g
 
 # todo settings with buffer order and alt pseudo swaps for each parity alg
 # todo how to ingest a new comm sheet esp full floating
-
+# todo convert a sheet to have any comm for any buffer ie custom buffer order
 
 # todo use ! to repeat inputs
 # todo make funcs to load or dump letterscheme
