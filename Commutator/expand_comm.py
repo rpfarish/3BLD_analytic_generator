@@ -1,6 +1,6 @@
 import re
 
-from get_scrambles import invert_solution as inv
+from .invert_solution import invert_solution as inv
 
 
 def expand_comm(comm):

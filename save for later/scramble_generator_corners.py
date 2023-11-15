@@ -1,7 +1,7 @@
-import get_scrambles
 from Cube.cube import Cube
 from Cube.letterscheme import letter_scheme, LetterScheme
 from Cube.memo import Memo
+from Scramble import get_scramble
 
 
 def remove_piece(target_list, piece, ltr_scheme):
@@ -57,7 +57,7 @@ print('Running...')
 count = 2
 inc_amt = 2
 while True:
-    scramble = get_scrambles.get_scramble()
+    scramble = get_scramble.get_scramble()
     cube = Memo(scramble, ls=letter_scheme)
     corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
     no_cycle_break_corner_memo = set()

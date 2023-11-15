@@ -17,6 +17,8 @@ alger: Generate a scramble with a specified number of algs.
 f | float: Provide scrambles with flips and cycle breaks.
 t: Drill twists: 2f, 3, or 3f.
 rb: Pick a random buffer from settings.json
+ltct: Drill LTCT either a full scramble or just algs
+flip: Drill 2 flips
     """
     print(docs)
     return

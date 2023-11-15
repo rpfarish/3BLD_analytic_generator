@@ -1,8 +1,7 @@
 from Cube.letterscheme import LetterScheme
-from eli_comms import ELI_COMMS
 
 
-def get_comm(args, file_comms, file_name, letterscheme: LetterScheme):
+def get_comm(args, file_comms, eli_comms, file_name, letterscheme: LetterScheme):
     # capitalization is good
     file_list = True
     eli_list = True
@@ -37,7 +36,7 @@ def get_comm(args, file_comms, file_name, letterscheme: LetterScheme):
         if file_list:
             print(f"{list_name.title()} {let1 + let2}:", file_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"))
         if eli_list:
-            print(f"Eli {let1 + let2}:", ELI_COMMS.get(buffer, {}).get(a, {}).get(b, "Not listed"))
+            print(f"Eli {let1 + let2}:", eli_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"))
 
         # should it show just the expanded ver or the comm notation?
     return buffer

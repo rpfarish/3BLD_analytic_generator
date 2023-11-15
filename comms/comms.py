@@ -9197,7 +9197,6 @@ COMMS.update({'DF': {'BD': {'BL': "M2 U' L U M' U' L' U M M2",
 
 # todo reformat
 if __name__ == '__main__':
-    from Cube.memo import Memo
 
     print(COMMS['UFL']['LDB']['FDL'])
     quit()

@@ -1,7 +1,7 @@
 from webbrowser import open_new_tab
 
 from Cube.cube import Cube
-from get_scrambles import get_scramble
+from Scramble.get_scramble import get_scramble
 
 """For practicing edges only solves but with full scrambles"""
 

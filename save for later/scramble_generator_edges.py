@@ -1,6 +1,6 @@
-import get_scrambles
 from Cube.memo import Memo
 from Cube.solution import Solution
+from Scramble import get_scramble
 
 
 def memo_cube(scramble):
@@ -58,7 +58,7 @@ strict = True
 no_repeat = True
 # I don't recommend going above 2 else it will take forever
 while len(algs_to_drill) >= frequency:
-    scramble = get_scrambles.gen_premove(min_len=17, max_len=20)
+    scramble = get_scramble.gen_premove(min_len=17, max_len=20)
     cube = Memo(scramble, can_parity_swap=True)
     edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
     last_added_pair = ''

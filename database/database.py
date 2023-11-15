@@ -45,4 +45,5 @@ def get_all(table='edges_cycle_averages'):
 curr_table = 'edges_cycle_averages'
 set_average(curr_table, 'QQ', 1.5)
 
-# print(get_all(curr_table))
+print(get_all(curr_table))
+print(len(get_all(curr_table)))

@@ -13,3 +13,28 @@ UB XW: U R' D' R D R D R D' R' D' U'
 UR WX: D R D R' D' R' D' R' D R
 UR XU: R D R' D' R' D' R' D R D
 11 rud edge comms (all in Speffz)
+
+all R2 ins corner comms
+algs = [
+            "D2 R2' D' R2 U R2' D R2 D' R2' U' R2 D'",
+            "D R2' D' R2 U R2' D R2 D' R2 U' R2'",
+            "R2' D' R2 U R2' D R2 D' R2' U' R2 D",
+            "D R2' U R2 D R2' D' R2 U' R2' D R2 D2'",
+            "U' R2' D R2 U R2' U' R2 D' R2' U R2",
+            "R2 U R2' D R2 D' R2' U' R2 D R2' D'",
+            "U' R2' U R2 D' R2' U' R2 U R2' D R2",
+            "D' R2' U R2 D R2' D' R2 U' R2' D R2",
+            "R2' U' R2 D R2' U R2 U' R2' D' R2 U",
+            "R2' D' R2 U' R2' U R2 D R2' U' R2 U",
+        ]
+
+        algs += [
+            "D R2' D R2 U' R2' D' R2 D R2' U R2 D2'", "R2' D R2 U' R2' D' R2 D R2' U R2 D'",
+            "D' R2' D R2 U' R2' D' R2 D R2' U R2", "D2' R2' D R2 U' R2' D' R2 D R2' U R2 D",
+            "D2 R2' U' R2 D' R2' D R2 U R2' D' R2 D'", "R2' D R2 U R2' U' R2 D' R2' U R2 U'",
+            "D R2' U' R2 D' R2' D R2 U R2' D' R2", "R2 U' R2' U R2 D R2' U' R2 U R2' D'",
+            "R2' U R2 D' R2' U' R2 U R2' D R2 U'", "R2' U' R2 D' R2' D R2 U R2' D' R2 D",
+            "U R2' U' R2 D R2' U R2 U' R2' D' R2", "D R2 U' R2' U R2 D' R2' U' R2 U R2'",
+            "D' R2 U' R2' U R2 D R2' U' R2 U R2'", "D' R2' U' R2 D' R2' D R2 U R2' D' R2 D2",
+            "U R2' D' R2 U' R2' U R2 D R2' U' R2", "R2 U' R2' U R2 D' R2' U' R2 U R2' D",
+        ]

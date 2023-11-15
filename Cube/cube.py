@@ -5,7 +5,7 @@ import dlin
 import kociemba
 
 from Cube.letterscheme import LetterScheme
-from comms import COMMS
+from comms.comms import COMMS
 
 DEBUG = True
 
@@ -482,7 +482,7 @@ class Cube:
 
 
 if __name__ == "__main__":
-    with open("../settings.json") as f:
+    with open("../Settings/settings.json") as f:
         settings = json.loads(f.read())
         letter_scheme = settings['letter_scheme']
     #     buffers = settings['buffers']

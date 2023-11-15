@@ -3,12 +3,14 @@ import json
 import random
 import time
 
-import get_scrambles
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.letterscheme import letter_scheme
 from Cube.memo import Memo
-from comms import COMMS
+from Scramble import get_scramble
+from comms.comms import COMMS
+
+DEBUG = 0
 
 
 class Drill:
@@ -60,7 +62,7 @@ class Drill:
     # memo
     def get_target_scramble(self, algs_to_drill):
         # print("getting scramble", getting_scramble_depth)
-        scramble = get_scrambles.get_scramble()
+        scramble = get_scramble.get_scramble()
 
         cube = Memo(scramble, ls=self.cube_memo.ls)
         corner_memo = self.cube_memo.format_corner_memo(cube.memo_corners()).split(' ')
@@ -123,7 +125,8 @@ class Drill:
     #
     #         input()
 
-    def drill_corner_sticker(self, sticker_to_drill):
+    @staticmethod
+    def drill_corner_sticker(sticker_to_drill):
 
         def remove_piece(target_list, piece, ltr_scheme):
             piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
@@ -150,7 +153,6 @@ class Drill:
         sticker_to_drill = sticker_to_drill
 
         algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
-        number = 0
         # fixme drill just one sticker with s XY -onlypairIwanttodrill
         # algs_to_drill = {"NS"}
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
@@ -160,7 +162,7 @@ class Drill:
         inc_amt = 2
 
         while algs_to_drill:
-            scramble = get_scrambles.get_scramble()
+            scramble = get_scramble.get_scramble()
             cube = Memo(scramble, ls=letter_scheme)
             corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
             no_cycle_break_corner_memo = set()
@@ -498,7 +500,7 @@ class Drill:
         start = time.time()
         while len(algs_to_drill) >= frequency:
             # scramble = get_scrambles.gen_premove(20, 25)
-            scramble = get_scrambles.gen_premove(10, 15)
+            scramble = get_scramble.gen_premove(10, 15)
             cube = Memo(scramble, can_parity_swap=True, ls=self.cube_memo.ls)
             edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
             no_cycle_break_edge_memo = set()
@@ -574,7 +576,7 @@ class Drill:
         return target_list
 
     # memo
-    def generate_random_pair(self, target_list, ltr_scheme):
+    def generate_random_pair(self, target_list):
         first = random.choice(target_list)
         self.remove_piece(target_list, first)
         second = random.choice(target_list)
@@ -597,14 +599,51 @@ class Drill:
         else:
             raise Exception('put "corners" or "edges" in params pls')
 
-    def drill_ltct(self):
+    def drill_ltct(self, args):
+        algs = []
+        ltct_u = ["U R U R2' D' R U R' D R2 U2' R'", "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",
+                  "U' R' U2 R U R2' D' R U R' D R2 U2'", "U R U R' U R2 D R' U' R D' R' U' R'",
+                  "R' D R' U R D' R' U R2 U' R2' U' R2 U'", "U R' D' R U R' D R2 U R' U2 R U R' U'",
+                  "R2 U R' D' R U R' D R' U' R2 U' R2' U'", "D R2' U' R U R U' R D' U R U' R' U",
+                  "U R' D' R U' R' D R U2 R U R' U2 R U R' U'", "U' R' U2 R U R2' F' R U R U' R' F R U'",
+                  "U' f R' F' R U2 R U2' R' U2 S'", "U R' U R U R' U' R' D' R U' R' D R2",
+                  "U' R2 D R' U' R D' R' U' R' U R U R' U2", "U R U R' U2 L U' R U L' U R'",
+                  "U2' R' U2 L U' R U L' U R' U R U'", "R' U' R U D' R U' R U R U' R2' D U",
+                  "U R U R' U' R U R2' D' R U2 R' D R2 U2' R' U", "U' R' U' R U R' U' R2 D R' U R D' R' U2 R' U R U'",
+                  "U' R D R' U' R D' R2' U R U' R' U' R U R' U' R", "U2 R' U' R2 D R' U' R D' R2' U2' R U",
+                  "R U R D R' U R D' R2' U' R U' R' U'", "U' R U' R' U R U' R' U' R U R2' D' R U' R' D R",
+                  "U R U' R' U2 R U' R2' D' R U' R' D R U'", "R U2 R' U' R2 D R' U' R D' R2' U'",
+                  "D' U R2 D' R U R' D R2 U R' U2 R D", "R2' D' R U R' D R U R U' R' U' R U'",
+                  "U R' F' R U R' U' R' F R2 U' R' U2 R U", "R U R' U' R U R2' D' R U' R' D R U2 R U' R' U2",
+                  "U R U2' R' U' F' R U R' U' R' F R2 U' R'", "U' R U R' U' R' U R' U' D R' U R D' R",
+                  "U R U' R' U2 R U' R' U2 R' D' R U R' D R U'", "U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U",
+                  "D' U' R2 U R' U' R' U R' U' D R' U R", "U2 R U' R' U' R U R D R' U R D' R2' U",
+                  "U' R' U L' U R2 U R2' U R2 U2' R' L", "U2 R2 D' r U2 r' D R U2 R U'",
+                  "U' L' U' L U' R U' L' U R' U2' L"]
+        ltct_ud = ["U R D R' U R D' R2' U R U2 R' U R U'", "R D R' U R D' R2' U R U R' U2' R",
+                   "D U R2 D' R U R' D R2 U R' U2 R D'", "D R' U2 R U' R2 D' R U' R' D R2 U' D'",
+                   "D U R' U' R U2 R' U' R2 D R' U' R D' R' U' D'", "R' U2 R U' R2 D' R U' R' D R2 U'",
+                   "U R' U' R U2 R' U' R2 D R' U' R D' R' U'", "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
+                   "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D"]
+        if '-u' in args:
+            algs += ltct_u
+        if '-ud' in args:
+            algs += ltct_ud
+        if '-def' in args:
+            algs += ltct_u + ltct_ud
+
+        self.drill_algs(algs)
+
+    def drill_ltct_scramble(self):
         # we are now going to pretent that we know what we are dioing
         # todo this is where drill ltct goes
+        # todo add args for which LTCTs are filtered for
+        # you enter in the name of the ltct in your letterscheme eg: ao and then enter
         algs_done = set()
         while True:
             while True:
                 # get parity scramble
-                scramble = get_scrambles.get_scramble(requires_parity=True)
+                scramble = get_scramble.get_scramble(requires_parity=True)
                 self.cube_memo = Memo(scramble)
                 twisted_corners = self.cube_memo.twisted_corners
                 twisted_corner_count = self.cube_memo.twisted_corners_count
@@ -614,202 +653,396 @@ class Drill:
                         iter(twisted_corners.values())):
                     break
             print(scramble, end="")
-            while (alg := input().lower()) == "" and len(alg) != 2:
+            while (alg := input().lower()) == "" or len(alg) != 2:
                 continue
             algs_done.add(alg.strip())
             print(len(algs_done))
 
+    def parallel_cancel(self, pre_move: list, solution: list):
+        sol = solution.copy()
+        pre_move_len = len(pre_move)
+
+        solution = pre_move + solution
+        # todo figure out why this is needed
+        # post_move = "F' D2 R'"
+        # k_sol = "R D2 F2 R2 F' U' B U' B U' L2 F2 U' R2 U F2 D' L2 U'"
+        if '' in solution:
+            solution.remove('')
+        opp = {'U': 'D', 'D': 'U',
+               'F': 'B', 'B': 'F',
+               'L': 'R', 'R': 'L',
+               }
+        for i in range(len(solution) - 3):
+            if DEBUG: print("SOLUTION", solution)
+            first_layer = solution[i][0]
+            first_turn = solution[i]
+            second_layer = solution[i + 1][0]
+            third_layer = solution[i + 2][0]
+            third_turn = solution[i + 2]
+            if first_layer == third_layer and first_layer == opp[second_layer]:
+                canceled_cube = Cube(first_turn + " " + third_turn)
+                # todo convert to using combined rotation and simplifying
+                kociemba_solution = canceled_cube.solve(invert=True).split()
+                if DEBUG: print('k sol', kociemba_solution)
+
+                if i < pre_move_len:
+                    pre_move[i] = " ".join(kociemba_solution)
+                if i + 2 < pre_move_len:
+                    pre_move[i + 2] = ''
+
+                if i >= pre_move_len:
+                    sol[i - pre_move_len] = kociemba_solution
+                if i + 2 >= pre_move_len:
+                    sol[i + 2 - pre_move_len] = ''
+                if DEBUG: print(pre_move)
+                if DEBUG: print(solution)
+                if '' in pre_move:
+                    pre_move.remove('')
+                if '' in sol:
+                    sol.remove('')
+
+                return self.parallel_cancel(pre_move, sol)
+                # kociemba_solution
+
+        return pre_move, sol
+
+    def cancel(self, pre_move, solution):
+        # todo find a way to also cancel U D U moves
+        # aka check for parallel cancellations
+        solution = solution.rstrip('\n').strip().split(' ')[:]
+        pre_move = pre_move.rstrip('\n').strip().split(' ')[:]
+        # checking for parallel cancel
+        pre_move, solution = self.parallel_cancel(pre_move, solution)
+        rev_premove = pre_move[::-1]
+        if DEBUG: print(solution, pre_move, rev_premove, sep=" || ")
+        solved = Cube()
+
+        # full vs partial cancel
+
+        # calculate cancel type
+        for depth, (pre, s) in enumerate(zip(rev_premove.copy(), solution.copy())):
+            combined = pre + " " + s
+            canceled_cube = Cube(combined)
+
+            if DEBUG: print(pre, "||", s, "Full cancel:", "nope" if solved != canceled_cube else "yep")
+
+            if not pre or not s:
+                break
+
+            if DEBUG: print(pre, "||", s, "Parital cancel:", "nope" if pre[0] != s[0] else "yep")
+
+            if solved == canceled_cube and depth < 1:
+                # full cancel
+                # remove the two canceled moves and recurse
+                if DEBUG: print('recursing')
+                rev_premove.remove(pre)
+                solution.remove(s)
+                if DEBUG: print(solution, rev_premove, sep=" || ")
+
+                return self.cancel(" ".join(rev_premove[::-1]), " ".join(solution))
+
+            # partial cancel
+            elif pre[0] == s[0] and depth < 1:
+                canceled_cube = Cube(pre + " " + s)
+                # todo convert to using combined rotation and simplifying
+                kociemba_solution = canceled_cube.solve(invert=True).split()
+                if DEBUG: print('k sol', kociemba_solution)
+
+                # kociemba_solution
+                if DEBUG: print(rev_premove)
+                rev_premove.remove(pre)
+                solution.remove(s)
+                solution = kociemba_solution + solution
+                return self.cancel(" ".join(rev_premove[::-1]), " ".join(solution))
+            break
+        if DEBUG: print("Returning", " ".join(rev_premove[::-1]), " ".join(solution), sep=" || ")
+        return " ".join(rev_premove[::-1]) + " " + " ".join(solution).strip()
+
+    @staticmethod
+    def _get_twists():
+        twists = {
+            "CW": {
+                "UBL": "R U R D R' D' R D R' U' R D' R' D R D' R2",
+                "UBR": "R D R' D' R D R' U' R D' R' D R D' R' U",
+                "UFL": "U' R' D R D' R' D R U R' D' R D R' D' R",
+                "DFL": "U R U' R' D R U R' U' R U R' D' R U' R'",
+                "DFR": "D' U' R' D R U R' D' R D R' D' R U' R' D R U",
+                "DBR": "U R U' R' D' R U R' U' R U R' D R U' R'",
+                "DBL": "D' R D R' U' R D' R' D R D' R' U R D R'"
+            },
+            "CCW": {
+                "UBL": "R2 D R' D' R D R' U R D' R' D R D' R' U' R'",
+                "UBR": "U' R D R' D' R D R' U R D' R' D R D' R'",
+                "UFL": "R' D R D' R' D R U' R' D' R D R' D' R U",
+                "DFL": "R U R' D R U' R' U R U' R' D' R U R' U'",
+                "DFR": "U' R' D' R U R' D R D' R' D R U' R' D' R U D",
+                "DBR": "R U R' D' R U' R' U R U' R' D R U R' U'",
+                "DBL": "R D' R' U' R D R' D' R D R' U R D' R' D",
+            }
+        }
+        return twists
+
+    def drill_twists(self, mode):
+        """2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist"""
+        twists = self._get_twists()
+        if mode == "3":
+            cw_twists = twists["CW"].values()
+            ccw_twists = twists["CCW"].values()
+            cw = list(itertools.combinations(cw_twists, r=2))
+            ccw = list(itertools.combinations(ccw_twists, r=2))
+            algs = [a + " " + b for (a, b) in cw + ccw]
+
+        elif mode == "3f":
+            cw_twists = twists["CW"].values()
+            ccw_twists = twists["CCW"].values()
+            cw = list(itertools.combinations(cw_twists, r=3))
+            ccw = list(itertools.combinations(ccw_twists, r=3))
+            algs = [a + " " + b + " " + c for (a, b, c) in cw + ccw]
+
+        elif mode == "2f" or mode == "2":
+            cw_twists = twists["CW"].values()
+            ccw_twists = twists["CCW"].values()
+
+            algs = []
+            for cw_twist, ccw_twist in itertools.product(cw_twists, ccw_twists):
+                if not Cube(cw_twist + " " + ccw_twist).is_solved():
+                    algs.append(cw_twist + " " + ccw_twist)
+
+            algs.extend(itertools.chain(cw_twists, ccw_twists))
+        else:
+            print("Twist pattern not recognized")
+            return
+
+        self.drill_algs(algs)
+
+    def drill_algs(self, algs):
+
+        algs_help_num = 0
+        algs_help = []
+
+        last_solution = None
+        no_repeat = True
+        num = 1
+        len_algs = len(algs)
+        # TODO support wide moves
+        while algs:
+
+            if DEBUG: print("getting random alg...")
+            alg = a = random.choice(algs)
+
+            post_move = self.gen_premove()
+            if DEBUG: print(post_move)
+
+            alg_with_post_move = alg + " " + post_move
+            cube = Cube(alg_with_post_move)
+            if DEBUG: print("kociemba solving...")
+
+            k_sol = cube.solve(max_depth=16)
+
+            if DEBUG:
+                print("//", post_move, "||", k_sol)
+                print("SETUP:", post_move, alg_with_post_move, sep=" || ")
+                print("canceling")
+
+            solution = self.cancel(post_move, k_sol)
+
+            if len(solution.split()) > 25:
+                if DEBUG:
+                    print(f"Long solution {len(solution.split())}:")
+                    continue
+
+            if no_repeat:
+                algs.remove(alg)
+
+            if DEBUG: print("at input...")
+            if last_solution != solution:
+                print(f"Num {num}/{len_algs}:", solution)
+                num += 1
+                last_solution = solution
+                response = input("")
+                if response == 'quit':
+                    return
+                elif response.startswith('a'):
+                    print("Alg:", a, '\n')
+                    algs_help_num += 1
+                    algs_help.append(a)
+        print(algs_help_num, algs_help)
+
+    def gen_premove(self, min_len=1, max_len=3, requires_parity=False):
+        faces = ['U', 'L', 'F', 'R', 'B', 'D']
+        directions = ["", "'", "2"]
+        turns = []
+        if max_len < 1:
+            raise ValueError("max_len must be greater than 0")
+        if min_len > max_len:
+            raise ValueError("min_len cannot be greater than max len")
+        scram_len = random.randint(min_len, max_len)
+        opp = {'U': 'D', 'D': 'U',
+               'F': 'B', 'B': 'F',
+               'L': 'R', 'R': 'L',
+               }
+
+        # first turn
+        turn = random.choice(faces)
+        direction = random.choice(directions)
+        scramble = [turn + direction]
+        turns.append(turn)
+
+        for turn_num in range(1, scram_len):
+            direction = random.choice(directions)
+            last_turn = turns[turn_num - 1]
+            while turn == last_turn or (opp[turn] == last_turn and turns[turn_num - 2] == opp[last_turn]):
+                turn = random.choice(faces)
+            scramble.append(turn + direction)
+            turns.append(turn)
+
+        joined_scramble = " ".join(scramble)
+
+        has_parity = (len(scramble) - joined_scramble.count('2')) % 2 == 1
+
+        if not requires_parity:
+            return joined_scramble
+
+        if requires_parity and not has_parity:
+            return self.gen_premove(min_len=min_len, max_len=max_len, requires_parity=requires_parity)
+        if requires_parity and has_parity:
+            return joined_scramble
+
+    def cycle_break_float(self, buffer, buffer_order=None):
+        """Syntax: cbuff <buffer>
+    Desc: provides scrambles with flips/twists and cycle breaks to practice all edge and corner buffers
+    Aliases:
+        m"""
+        piece_type = 'edge' if len(buffer) == 2 else 'corner'
+
+        if piece_type == 'edge':
+            self.cycle_break_floats_edges(buffer, buffer_order=buffer_order)
+        elif piece_type == 'corner':
+            self.cycle_break_floats_corners(buffer, buffer_order=buffer_order)
+
+    def cycle_break_floats_edges(self, buffer, buffer_order=None):
+        """Syntax: cbuff <edge buffer>
+    Desc: provides scrambles with flips and cycle breaks to practice all edge buffers"""
+        # todo add corners
+        while True:
+            drill = Drill(buffer_order=buffer_order)
+            scram = drill.drill_edge_buffer_cycle_breaks(buffer)
+            cube = Cube(scram, can_parity_swap=False)
+            if buffer in cube.solved_edges or len(cube.flipped_edges) >= 4:
+                continue
+            cube_trace = cube.get_dlin_trace()
+            for edge in cube_trace["edge"]:
+
+                if (edge['type'] == "cycle" and edge["buffer"] == buffer and
+                        edge['orientation'] == 0 and edge['parity'] == 0):
+                    cycle_breaks = False
+                    break
+            else:
+                cycle_breaks = True
+
+            if cycle_breaks:
+                print(scram)
+                input()
+
+    def cycle_break_floats_corners(self, buffer, buffer_order=None):
+        """Syntax: cbuff <corner buffer>
+    Desc: provides scrambles with twists and cycle breaks to practice all corner buffers"""
+        while True:
+            drill = Drill(buffer_order=buffer_order)
+            scram = drill.drill_corner_buffer_cycle_breaks(buffer)
+            cube = Cube(scram, can_parity_swap=False)
+            if buffer in cube.solved_corners or len(cube.twisted_corners) > 3:
+                continue
+            cube_trace = cube.get_dlin_trace()
+            for corner in cube_trace["corner"]:
+
+                if (corner['type'] == "cycle" and corner["buffer"] == buffer and
+                        corner['orientation'] == 0 and corner['parity'] == 0):
+                    cycle_breaks = False
+                    break
+            else:
+                cycle_breaks = True
+
+            if cycle_breaks:
+                print(scram)
+                input()
+
+    def drill_two_flips(self):
+        two_flips = {
+            "[U , R' E2 R2 E' R']": "U R' E2 R2 E' R' U' R E R2' E2' R",
+            "[U' : [S , R' F' R]] [U2' , M']": "U' S R' F' R S' R' F R U' M' U2 M",
+            "[U' , L E2' L2' E L]": "U' L E2' L2' E L U L' E' L2 E2 L'",
+            "[L' E2' L , U'] [U' , L E' L']": "L' E2' L U' L' E2 L2 E' L' U L E L'",
+            "[R E2 R' , U] [U , R' E R]": "R E2 R' U R E2' R2' E R U' R' E' R",
+            "[R' E2 R , U] [U , R E' R']": "R' E2 R U R' E2' R2 E' R' U' R E R'",
+            "[L E2' L' , U'] [U' , L' E L]": "L E2' L' U' L E2 L2' E L U L' E' L",
+            "[M' , U2] [U : [S , R' F' R]]": "M' U2 M U' S R' F' R S' R' F R U'",
+            "[U' : [R E R' , U2]] [U : [S , R2']]": "U' R E R' U2 R E' R' S R2' S' R2 U'",
+            "[M U' : [S , R' F' R]] [M , U2]": "M U' S R' F' R S' R' F R U' M' U2'",
+            "[U : [L' E' L , U2']] [U' : [S' , L2]]": "U L' E' L U2' L' E L S' L2 S L2' U",
+            "[R' E2 R2 E' R' , U']": "R' E2 R2 E' R' U' R E R2' E2' R U",
+            "[S , R' F' R] [U' : [M' , U2]]": "S R' F' R S' R' F R U' M' U2 M U'",
+            "[U R : [U' , R' E' R2 E2 R']]": "U R U' R' E' R2 E2 R' U R E2' R2' E U'",
+            "[U , R' E R] [R E2 R' , U]": "U R' E R U' R' E' R2 E2 R' U R E2' R' U'",
+            "[R E' R2' : [F2 , R S' R']] [R : [E' , R2']]": "R E' R2' F2 R S' R' F2' R S R' E R",
+            "[U : [L' E L , U]] [U2 : [L E2' L' , U']]": "U L' E L U L' E' L2 E2' L' U' L E2 L' U'",
+            "[U' : [M' , U2]] [S , R' F' R]": "U' M' U2 M U' S R' F' R S' R' F R",
+            "[R' F' R , S'] [S' U' : [M' , U2]]": "R' F' R S' R' F R U' M' U2 M U' S",
+            "[U' M U' : [S , R' F' R]] [U' : [M , U2]]": "U' M U' S R' F' R S' R' F R U' M' U'",
+            "[R2' , S'] [S' : [U2 , R E R']]": "R2' S' R2 U2 R E R' U2' R E' R' S",
+            "[L E2' L2' E L , U]": "L E2' L2' E L U L' E' L2 E2 L' U'",
+            "[L E' L' , U] [U , L' E2' L]": "L E' L' U L E L2' E2' L U' L' E2 L",
+            "[R' E R , U'] [U' , R E2 R']": "R' E R U' R' E' R2 E2 R' U R E2' R'",
+            "[R E' R' , U'] [U' , R' E2 R]": "R E' R' U' R E R2' E2 R U R' E2' R",
+            "[L' E L , U] [U , L E2' L']": "L' E L U L' E' L2 E2' L' U' L E2 L'",
+            "[U2 , M'] [U' : [S , R' F' R]]": "U2 M' U2' M U' S R' F' R S' R' F R U",
+            "[U : [R E R' , U2]] [U' : [S , R2']]": "U R E R' U2 R E' R' S R2' S' R2 U",
+            "[U2 M U' : [S , R' F' R]] [U2 , M]": "U2 M U' S R' F' R S' R' F R U' M'",
+            "[U' : [L' E' L , U2']] [U : [S' , L2']]": "U' L' E' L U2' L' E L S' L2' S L2 U'",
+            "[U' , L E' L'] [L' E2' L , U']": "U' L E' L' U L E L2' E2' L U' L' E2 L U",
+            "[U' : [R' E R , U']] [U2' : [R E2 R' , U]]": "U' R' E R U' R' E' R2 E2 R' U R E2' R' U",
+            "[U' : [R E' R' , U']] [U2' : [R' E2 R , U]]": "U' R E' R' U' R E R2' E2 R U R' E2' R U",
+            "[L' E L2 : [F2' , L' S L]] [L' : [E , L2]]": "L' E L2 F2' L' S L F2 L' S' L E' L'",
+            "[U : [M' , U2']] [S' , L F L']": "U M' U2' M U S' L F L' S L F' L'",
+            "[S , R2'] [U2 , R E R']": "S R2' S' R2 U2 R E R' U2' R E' R'",
+            "[U M U' : [S , R' F' R]] [U : [M , U2']]": "U M U' S R' F' R S' R' F R U' M' U",
+            "[L F L' , S] [S U : [M' , U2']]": "L F L' S L F' L' U M' U2' M U S'",
+            "[R S R' F2 : [R2 , E]] [R S R' , F2]": "R S R' F2 R2 E R2' E' R S' R' F2'",
+            "[R2 , E'] [E' : [F2 , R S' R']]": "R2 E' R2' F2 R S' R' F2' R S R' E",
+            "[R2 , E] [R S' R' , F2]": "R2 E R2' E' R S' R' F2 R S R' F2'",
+            "[R U' : [M' , U2]] [R S R' , F']": "R U' M' U2 M U' S R' F' R S' R' F",
+            "[S L : [E' , L2']] [r , E' L' E]": "S L E' L2' E L S' r E' L' E r' E' L E",
+            "[M : [L' E2' L , U']] [M : [U' , L E' L']]": "M L' E2' L U' L' E2 L2 E' L' U L E L' M'",
+            "[L : [E' , L2']] [L F2' L' , S]": "L E' L2' E L2 F2' L' S L F2 L' S'",
+            "[L2' , E'] [L' S L , F2']": "L2' E' L2 E L' S L F2' L' S' L F2",
+            "[E , R2] [F2 , R S' R']": "E R2 E' R2' F2 R S' R' F2' R S R'",
+            "[M' : [R' E R , U']] [M' : [U' , R E2 R']]": "M' R' E R U' R' E' R2 E2 R' U R E2' R' M",
+            "[R' : [E , R2]] [R' F2 R , S']": "R' E R2 E' R2' F2 R S' R' F2' R S",
+            "[M : [R E2 R' , U]] [M : [U , R' E R]]": "M R E2 R' U R E2' R2' E R U' R' E' R M'",
+            "[S' R' : [E , R2]] [l' , E R E']": "S' R' E R2 E' R' S l' E R E' l E R' E'",
+            "[R2' , E'] [E' R' : [S' , R' F2 R]]": "R2' E' R S' R' F2 R S R' F2' R2 E",
+            "[r : [E' , R' U' R]] [M' : [U' , R' E2 R]]": "r E' R' U' R E R' U R r' M' U' R' E2 R U R' E2' R M",
+            "[l : [S , R2']] [l U2 l' , S']": "l S R2' S' R2 U2 l' S' l U2' l' S",
+            "[r' : [E2 , R U R']] [M : [U , R E' R']]": "r' E2 R U R' E2' R U' R' r M U R E' R' U' R E R' M'",
+            "[S' R : [E' , R2']] [l , E' R' E]": "S' R E' R2' E R S l E' R' E l' E' R E",
+            "[R' U' : [M' , U2]] [R' : [S , R' F' R]]": "R' U' M' U2 M U' S R' F' R S' R' F R2",
+            "[S L' : [E , L2]] [r' , E L E']": "S L' E L2 E' L' S' r' E L E' r E L' E'",
+            "[l : [E2' , L' U' L]] [M : [U' , L' E L]]": "l E2' L' U' L E2 L' U L l' M U' L' E L U L' E' L M'",
+            "[r' : [S' , L2]] [r' U2' r , S]": "r' S' L2 S L2' U2' r S r' U2 r S'",
+            "[S , R F' R'] [S' , R' F' R]": "S R F' R' S' R F R' S' R' F' R S R' F R",
+            "[M2 U' : [S , R' F' R]] [M2 : [U2 , M']]": "M2 U' S R' F' R S' R' F R U' M' U2' M'",
+            "[S' , L' F L] [S , L F L']": "S' L' F L S L' F' L S L F L' S' L F' L'",
+            "[S2' , r' U' r] [r' : [U' , L' E L]]": "S2' r' U' r S2 r' L' E L U L' E' L r",
+            "[U' : [R2' , S']] [R F R' , S']": "U' R2' S' R2 S U R F R' S' R F' R' S",
+            "[S2 , l U l'] [l : [U , R E' R']]": "S2 l U l' S2' l R E' R' U' R E R' l'",
+        }
+        algs = list(two_flips.values())
+        random.shuffle(algs)
+        self.drill_algs(algs)
 
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
 
     drill = Drill()
-
     s = drill.drill_edge_buffer_cycle_breaks("UB")
     print(s)
-
-    quit()
-    print(convert_letterpairs(drill.get_all_buffer_targets("UFL", 'corners'), 'loc_to_letters', 'corners'))
-    # drill.drill_edge_sticker(sticker_to_drill="FD", single_cycle=True, return_list=False,
-    #                          cycles_to_exclude=
-    #                          {'FDRB', 'FDDB', 'FDDL', 'FDFR', 'FDLF', 'FDBR', 'FDBL', 'FDBU', 'FDRU', 'FDLU', 'FDUL',
-    #                           'FDLD', 'FDUR', 'FDBD', 'FDUB', 'FDFL', 'FDLB', 'FDRD', 'FDRF'}
-    #                          )
-
-    # memo = drill.generate_random_edge_memo("UF", translate_memo=True)
-
-    # print(memo)
-    # drill.drill_edge_buffer("UB", exclude_from_memo=set(), return_list=False)
-    # drill.drill_edge_sticker("DB", invert=True)  # todo rename invert
-    # algs = {'BDLF', 'RBUL', 'RDRF', 'BULF', 'BDFD', 'FLFR', 'BRLF', 'DLRF', 'UBBL', 'RULD',
-    #         'BUUR', 'RFUL', 'FLLD', 'URRF', 'LDLB', 'UBFD', 'RUDL', 'RFBL', 'LDBU', 'ULFL',
-    #         }
-    algs = convert_letterpairs(
-        [
-            "LG", "BP", "AI", "SO", "HG", "GL", "ZX", "XV", "NX", "VW", "OG", "XS", "CB",
-            "SR", "GW", "IZ", "PS", "DB", "NJ", "CZ", "FW", "GT", "OJ"
-        ],
-        direction="letter_to_loc", piece_type="edges"
-    )
-    # "OJ",
-    print(algs)
-    print(len(algs))
-    # buffer = "UFR"
-    # result = ''
-    # print(result)
-    # drill.drill_corner_buffer('UBL')
-    drill.drill_edge_buffer("DL", translate_memo=True)
-    # drill.drill_edge_sticker("DB", algs=algs, single_cycle=False)
-
-    # # max_num = drill.max_cycles_per_buffer
-    # # print(max_num)
-
-    algs = {'UR': 'RU', 'UL': 'LU', 'LU': 'UL', 'LF': 'FL', 'LD': 'DL', 'LB': 'BL', 'FR': 'RF', 'FD': 'DF', 'FL': 'LF',
-            'RU': 'UR', 'RB': 'BR', 'RD': 'DR', 'RF': 'FR', 'BL': 'LB', 'BD': 'DB', 'BR': 'RB', 'DF': 'FD', 'DR': 'RD',
-            'DB': 'BD', 'DL': 'LD'}
-
-    # print(len(list(permutations(algs, 2))))
-    # print(permutations(algs, 2))
-    # UB 2:08:00.00
-    # UB   53:00.00
-    # UL 1:40.59.77
-
-# UL: ON GH OJ OR JN NO XI HJ IT HI WV LJ IH HS TV PR
-
-# NL ?
-# TV last U last move R U R U' R' U' R' U' R U
-# RP L u L' OR U'
-# FW l u' L
-# VT no AUF
-# NF u' R' U' R
-# SO r' might be better than MUD
-# RJ U' L' U L'
-# CV R2 U'
-# GN U' F R'
-# CS l' M' RH
-# VW R2 U'
-# PH u'
-# LJ U' L
-# JL U' R'
-# JH u R2'
-# IF M' U2
-# LH U' LH regrip
-# TI F' R
-# FT U'
-# IS U2
-# SI U2
-# TH U
-# XV S L2' S' L2
-# TP U' R'
-DL_comms = [
-    "ON",
-    "GH",
-    "OJ",
-    "OR",
-    "JN",
-    "NO",
-    "XI",
-    "HJ",
-    "IT",
-    "HI",
-    "WV",
-    "LJ",
-    "IH",
-    "HS",
-    "TV",
-    "PR ",
-    "NL",
-    "TV",
-    "RP",
-    "FW",
-    "VT",
-    "NF",
-    "SO",
-    "RJ",
-    "CV",
-    "GN",
-    "CS",
-    "VW",
-    "PH",
-    "LJ",
-    "JL",
-    "JH",
-    "IF",
-    "LH",
-    "TI",
-    "FT",
-    "IS",
-    "SI",
-    "TH",
-    "XV",
-    "TP",
-]
-# UBL
-"""
-DK, LH, EZ, TC, DC, FW, VE, HL, CH, SE, EG, ZE, WP, EP, PS, SC
-GO D2'
-U2 R2' U' R2 D R2' U R2 U' R2' D' R2 U': U2 U' D
-ZL D2'
-LT KS D2'
-GV U
-OG D' U'
-GH D' R' D' R D R' U R D' R' U' D R D:   D' R' UBR AS
-PH PEACH D R' U R D2' R' U' R D2 D'
-PC D R D' L2' D R' D' L2
-HG <RUL> or <RUD> ??
-PW D
-VG U
-ZG D'
-PE U' FK
-GP U
-GS D2'
-SD D'
-LZ: D' R2 U'
-WE U'D'
-"""
-#
-# from itertools import permutations
-#
-# algs = permutations(['C', 'D', 'E', 'F', 'G', 'H', 'K', 'L', 'O', 'P', 'S', 'T', 'V', 'W', 'Z'], r=2)
-# algs = list(algs)
-# print(algs)
-# print(len(algs))
-# b = [i + j for i, j in algs]
-# print(set(b))
-
-# DL
-# NR R' E' R E R S' R' S
-# RN S' R S R' E' R' E R  you can also do it with wide Rs
-
-
-# DL 1:42.84
-# DL 1:00.83
-# DL 1:05.94
-# DL   59.09
-# DL   51.51 did i actually do all the cases tho
-# DL   51.79
-# DL   50.30
-# DL   47.76
-# DL   47.82
-# DL   43.70 (5.46 per case)
-
-
-# DR 7:36
-# DR 6:54.06
-# DR 5:08.67
-# DR 3:37.48
-# DR 4:08.39
-# DR 3:07.88
-# DR 3:45.56
-# DR 2:44.34
-# DR 3:04.97
-# DR 2:43.51
-# DR 2:43.14
-# DR 2:23.99 5.999583333333333
-# DR 2:24.63
-
-# DB 35:46.151
-
-# 2 flips 1824.52 33:24.52
-
-# FR 6:41.75

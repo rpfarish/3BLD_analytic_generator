@@ -184,3 +184,19 @@ These examples demonstrate how to use the buffer command with various options.
 ## Random Buffer: `rb`
 
 - **Description:** Pick a random buffer from settings.json
+
+## LTCT: `ltct [ltct type]`
+
+- **Description:** Drills specified LTCT algs
+
+### Options:
+
+-
+    - -s: Generates a full scramble with an ltct
+    - -u: Adds all UU LTCT to be drilled
+    - -ud: Adds some UD LTCT to be drilled
+    - -def: Adds default LTCT: UU and some UD
+
+## Flips: `flip`
+
+- **Description:** Drills all 2 flips

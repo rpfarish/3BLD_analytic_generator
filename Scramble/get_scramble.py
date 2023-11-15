@@ -1,24 +1,6 @@
 import random
 
 
-# todo the things in here should be renamed and moved to different files
-
-def invert_solution(s):
-    if not s:
-        return ""
-
-    s = s.rstrip('\n').strip().split(' ')[:]
-    inverse = []
-    for move in reversed(s):
-        if move.endswith("'"):
-            inverse.append(move.strip("'"))
-        elif move.endswith("2"):
-            inverse.append(move)
-        else:
-            inverse.append(move + "'")
-    return " ".join(inverse)
-
-
 def get_scramble(requires_parity=False):
     if requires_parity:
         pass
@@ -64,11 +46,3 @@ def gen_premove(min_len=1, max_len=3, requires_parity=False):
         return gen_premove(min_len=min_len, max_len=max_len, requires_parity=requires_parity)
     if requires_parity and has_parity:
         return joined_scramble
-
-
-if __name__ == "__main__":
-    print(get_scramble(requires_parity=True))
-    # for i in range(100):
-    #     print(gen_premove(3))
-
-    # print(get_bld_scramble())
