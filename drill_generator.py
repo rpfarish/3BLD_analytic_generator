@@ -88,6 +88,8 @@ EDGE_BUFFER = UF
 CORNER_BUFFER = UFR
 
 
+# TODO move to drill in Cube
+
 # noinspection PyMissingConstructor
 class ColoredCube(Cube):
     def __init__(self, s=""):
@@ -258,7 +260,7 @@ def parallel_cancel(pre_move: list, solution: list):
         if first_layer == third_layer and first_layer == opp[second_layer]:
             canceled_cube = ColoredCube(first_turn + " " + third_turn)
             # todo convert to using combined rotation and simplifying
-            kociemba_solution = invert_solution(kociemba.solve(canceled_cube.get_faces_colors())).split()
+            kociemba_solution = canceled_cube.solve(invert=True).split()
             if DEBUG: print('k sol', kociemba_solution)
 
             if i < pre_move_len:
@@ -322,7 +324,7 @@ def cancel(pre_move, solution):
         elif pre[0] == s[0] and depth < 1:
             canceled_cube = ColoredCube(pre + " " + s)
             # todo convert to using combined rotation and simplifying
-            kociemba_solution = invert_solution(kociemba.solve(canceled_cube.get_faces_colors())).split()
+            kociemba_solution = invert_solution(canceled_cube.solve()).split()
             if DEBUG: print('k sol', kociemba_solution)
 
             # kociemba_solution

@@ -2,7 +2,7 @@
 
 from Cube.memo import Memo
 
-from solution import Solution
+from Cube.solution import Solution
 
 scramble_file = "scrambles.txt"
 
@@ -68,7 +68,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-def memo_cube():
-    return None

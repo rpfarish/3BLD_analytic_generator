@@ -6,7 +6,7 @@ from typing import Dict
 from Cube import Cube
 # for i in a.split('\n'):
 # print(i.split(','), "\n\n")
-from expand_comm import expand_comm
+from .expand_comm import expand_comm
 
 
 # todo make this take a spreadsheet and csv
@@ -128,57 +128,19 @@ def update_comm_list(buffers=None, file="max_comms", top_corner_key=""):
         ]
     elif len(buffers) != 16:
         raise ValueError("Please include all of the buffers in settings.json")
-    cube = Cube()
     comms = {}
-    # comms_corners = collections.defaultdict(lambda: collections.defaultdict(dict))
-    # comms_edges = collections.defaultdict(lambda: collections.defaultdict(dict))
-    # from itertools import permutations
-    # print('corners', len(list(permutations(cube.all_corners.copy(), 3))))
-    # len_corners = 0
-    # len_edges = 0
-    # for buffer, sticker1, sticker2 in permutations(cube.all_corners, 3):
-    #     if len({buffer, sticker1, sticker2}) != 3:
-    #         continue
-    #     if (buffer in cube.adj_corners[sticker1] or buffer in cube.adj_corners[sticker2] or
-    #             sticker1 in cube.adj_corners[sticker2]):
-    #         continue
-    #     len_corners += 1
-    #     comms_corners[buffer][sticker1][sticker2] = ""
-    # from pprint import pprint
-    # pprint(comms_corners, sort_dicts=False)
-    # print('edges', len(list(permutations(cube.all_edges.copy(), 3))))
-    # for buffer, sticker1, sticker2 in permutations(cube.all_edges, 3):
-    #     if len({buffer, sticker1, sticker2}) != 3:
-    #         continue
-    #     if (buffer in cube.adj_edges[sticker1] or buffer in cube.adj_edges[sticker2] or
-    #             sticker1 in cube.adj_edges[sticker2]):
-    #         continue
-    #     comms_edges[buffer][sticker1][sticker2] = ""
-    #     len_edges += 1
-    # print(len_corners, len_edges)
-    # comms = comms_corners | comms_edges
-    # pprint(comms)
-    num = 0
-    for buffer in buffers:
-        comms[buffer] |= _convert(buffer, file, top_corner_key=top_corner_key)
 
-        # for buff, sticker1 in comms[buffer].items():
-        #     for i in sticker1.values():
-        #         if i is not None and [par.isalpha() for par in i]:
-        #             num += 1
-        # print(i)
-        # pprint(comms, sort_dicts=False)
-    # print(buffer, num)
-    # pprint(comms)
-    # print(num)
-    with open(f"{file}.json", "w+") as f:
+    for buffer in buffers:
+        comms[buffer] = _convert(buffer, file, top_corner_key=top_corner_key)
+
+    with open(f"comms/{file}/{file}.json", "w+") as f:
         json.dump(comms, f, indent=4)
 
 
 if __name__ == '__main__':
     # print(rotate_pair("UF", "UL", "UR"))
-    with open(f"{'max_comms'}.json") as f:
-        file_comms = json.load(f)
+    with open(f"{'max_comms'}.json") as file:
+        file_comms = json.load(file)
     # print(add_nested({}, "UF", "UR", "UL"))
     # fill_in_buffers(file_comms)
     update_comm_list(top_corner_key="1st Target:")

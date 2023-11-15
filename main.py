@@ -2,8 +2,8 @@ import json
 import time
 
 import drill_generator
+from Commutator.convert_list_to_comms import update_comm_list
 from Cube.letterscheme import LetterScheme
-from convert_list_to_comms import update_comm_list
 from operations import alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff
 from operations import drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
 
@@ -39,12 +39,12 @@ def main():
 
         comm_file_name = settings['comm_file_name']
         parity_swap_edges = settings['parity_swap_edges']
-
+        top_corner_key = "1st Target:"
     try:
-        with open(f"{comm_file_name}.json") as f:
+        with open(f"comms/{comm_file_name}/{comm_file_name}.json") as f:
             file_comms = json.load(f)
     except FileNotFoundError:
-        update_comm_list(buffers=all_buffers_order, file=comm_file_name, )
+        update_comm_list(buffers=all_buffers_order, file=comm_file_name, top_corner_key=top_corner_key)
 
     last_args = ""
     last_mode = 1
@@ -106,7 +106,7 @@ def main():
                     continue
                 buffer, *args = args
                 buffer = buffer.upper()
-                filename = "drill_save.json"
+                filename = "cache/drill_save.json"
                 drill_buffer(args, filename, buffer, buffer_order, file_comms)
 
             case 'q' | 'quit' | 'exit':
@@ -125,7 +125,7 @@ def main():
                     buffer_order = settings['buffer_order']
                     all_buffers_order = buffer_order['edges'] + buffer_order['corners']
                     comm_file_name = settings['comm_file_name']
-                update_comm_list(buffers=all_buffers_order, file=comm_file_name)
+                update_comm_list(buffers=all_buffers_order, file=comm_file_name, top_corner_key=top_corner_key)
 
             case 'timeup' | 'time':
                 print(time.time() - start_time)

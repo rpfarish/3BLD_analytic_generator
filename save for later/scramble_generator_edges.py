@@ -1,6 +1,6 @@
 import get_scrambles
 from Cube.memo import Memo
-from solution import Solution
+from Cube.solution import Solution
 
 
 def memo_cube(scramble):

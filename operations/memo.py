@@ -2,7 +2,7 @@ from pprint import pprint
 
 import dlin
 
-from solution import Solution
+from Cube.solution import Solution
 
 
 def memo(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):

@@ -1,5 +1,5 @@
 import get_scrambles
-from solution import Solution
+from Cube.solution import Solution
 
 
 def alger(alg_count, buffer_order):

@@ -3,8 +3,6 @@ import json
 import random
 import time
 
-import kociemba
-
 import get_scrambles
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
@@ -200,7 +198,6 @@ class Drill:
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
-        # print(edges)
 
         all_edges = [i + j for i, j in itertools.permutations(edges, 2) if
                      i != self.cube_memo.adj_edges[j]]
@@ -209,18 +206,13 @@ class Drill:
 
         rand_edges = random.choices(all_edges, k=len(all_edges) // 2)
         cube = Cube()
-        from max_comms import MAX_COMMS
         for pair in rand_edges:
             a, b = pair[:len(pair) // 2], pair[len(pair) // 2:]
-            # print(a, b)
-            buffer = MAX_COMMS[str(edge_buffer)]
-            # print(edge_buffer)
-            # print("buffer", buffer)
+            buffer = COMMS[str(edge_buffer)]
             comm = buffer[a][b]
-            # print(comm)
             cube.scramble_cube(comm)
 
-        scram = kociemba.solve(cube.get_faces_colors(), max_depth=19)
+        scram = cube.solve(max_depth=19)
 
         return scram
 
@@ -239,7 +231,7 @@ class Drill:
             comm = buffer[a][b]
             cube.scramble_cube(comm)
 
-        scram = kociemba.solve(cube.get_faces_colors(), max_depth=20)
+        scram = cube.solve(max_depth=19)
 
         return scram
 
@@ -274,9 +266,9 @@ class Drill:
                 else:
                     print(f'Scramble {num}/{max_number_of_times}: "{scramble}"')
 
-                with open(f"drill_save.json", "r+") as f:
+                with open(f"cache/drill_save.json", "r+") as f:
                     drill_list_json = json.load(f)
-                with open(f"drill_save.json", "w") as f:
+                with open(f"cache/drill_save.json", "w") as f:
                     drill_list_json[edge_buffer] = list(all_edges - exclude_from_memo)
                     json.dump(drill_list_json, f, indent=4)
 
@@ -312,9 +304,9 @@ class Drill:
                 if input() == 'quit':
                     return
         print("Finished")
-        with open(f"drill_save.json", "r+") as f:
+        with open(f"cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
-        with open(f"drill_save.json", "w") as f:
+        with open(f"cache/drill_save.json", "w") as f:
             drill_list_json[edge_buffer] = []
             json.dump(drill_list_json, f, indent=4)
         return scrams
@@ -351,9 +343,9 @@ class Drill:
                 else:
                     print(f'Scramble {num}/{max_number_of_times}: "{scramble}"')
 
-                with open(f"drill_save.json", "r+") as f:
+                with open(f"cache/drill_save.json", "r+") as f:
                     drill_list_json = json.load(f)
-                with open(f"drill_save.json", "w") as f:
+                with open(f"cache/drill_save.json", "w") as f:
                     drill_list_json[corner_buffer] = list(all_corners - exclude_from_memo)
                     json.dump(drill_list_json, f, indent=4)
 
@@ -387,9 +379,9 @@ class Drill:
                     return
 
         print("Finished")
-        with open(f"drill_save.json", "r+") as f:
+        with open(f"cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
-        with open(f"drill_save.json", "w") as f:
+        with open(f"cache/drill_save.json", "w") as f:
             drill_list_json[corner_buffer] = []
             json.dump(drill_list_json, f, indent=4)
         return scrams
@@ -468,7 +460,7 @@ class Drill:
     # memo
     def drill_edge_sticker(self, sticker_to_drill, single_cycle=True, return_list=False, cycles_to_exclude: set = None,
                            invert=False, algs: set = None, no_repeat=True):
-        from solution import Solution
+        from Cube.solution import Solution
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
         # todo support starting from any buffer
         # support default certain alternate pseudo edge swaps depending on last corner target
@@ -631,13 +623,8 @@ class Drill:
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
 
-    cube = Cube("r' U R S R2' S' R U' r L U' L E' L' U L E L2' U' L' U' M' U L U' M U' R D R' D' R' D' R' D R U' D")
-    cube.display_cube()
-    quit()
     drill = Drill()
-    a = drill.total_cases_per_corner_buffer
-    b = drill.total_cases_per_edge_buffer
-    print(a, b)
+
     s = drill.drill_edge_buffer_cycle_breaks("UB")
     print(s)
 

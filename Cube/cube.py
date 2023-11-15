@@ -18,6 +18,7 @@ class Cube:
         self.scramble = s.rstrip('\n').strip().split()
         self.has_parity = (len(self.scramble) - s.count('2')) % 2 == 1
         self.kociemba_order = 'URFDLB'
+        self.kociemba_solved_cube = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
         self.faces = 'ULFRBD'
         use_default_letter_scheme = True if ls is None else False
         if type(ls) is LetterScheme:
@@ -435,13 +436,10 @@ class Cube:
             a = str(target)
             b = str(next(iter_memo))
             buffer = COMMS[str(edge_buffer)]
-            print(buffer)
-            print(a)
-            print(b)
             comm = buffer[a][b]
             self.scramble_cube(comm)
 
-        return kociemba.solve(self.get_faces_colors(), max_depth=20)
+        return self.solve()
 
     def scramble_corners_from_memo(self, memo, corner_buffer=None):
         corner_buffer = self.default_corner_buffer if corner_buffer is None else corner_buffer
@@ -454,7 +452,7 @@ class Cube:
             comm = buffer[a][b]
             self.scramble_cube(comm)
 
-        return kociemba.solve(self.get_faces_colors())
+        return self.solve()
 
     def _reset(self):
         self.__init__()
@@ -473,6 +471,15 @@ class Cube:
     def get_dlin_trace(self):
         return dlin.trace(" ".join(self.scramble))
 
+    def solve(self, max_depth=20, invert=False):
+        # todo fix this to accept both letter schemes
+        if not self.ls.is_default:
+            raise Exception("letter scheme must be default in order to solve cube")
+        if not invert:
+            return kociemba.solve(self.get_faces_colors(), max_depth=max_depth)
+        else:
+            return kociemba.solve(self.kociemba_solved_cube, self.get_faces_colors(), max_depth=max_depth)
+
 
 if __name__ == "__main__":
     with open("../settings.json") as f:
@@ -484,10 +491,14 @@ if __name__ == "__main__":
     # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
     #
     # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    cube = Cube("r", ls=letter_scheme)
+    scramble = "R U R' U' " * 5
+    cube = Cube(scramble)
+    print(scramble)
     # # print(c.adj_corners)
-    cube.display_cube()
-
+    # cube.display_cube()
+    print(cube.get_faces_colors())
+    print(cube.solve(invert=False))
+    print(cube.solve(invert=True))
     # # # todo adapt for different versions of FDR ie FRD
     # # # c.drill_corner_sticker('FDR')
     # # # todo letter scheme for below is a dependency for working

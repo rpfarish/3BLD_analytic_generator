@@ -1,4 +1,5 @@
 import json
+import os
 
 from operations.drill_piece_buffer import drill_piece_buffer
 
@@ -7,6 +8,10 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
     """Syntax: <buffer> [-l --Load]"""
     drill_set = None
     random_pairs = False
+    if not os.path.exists(filename):
+        with open(f"{filename}", "w+") as f:
+            f.write('{"description": "Saves states of drilling buffers"}')
+
     if '-r' in args:
         random_pairs = True
     elif '-l' not in args:
