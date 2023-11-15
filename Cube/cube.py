@@ -197,12 +197,6 @@ class Cube:
             'l': ('M', 1),
             'd': ('E', 1),
             'b': ('S', -1),
-            'U': ("E", -1),
-            'R': ('M', -1),
-            'F': ('S', 1),
-            'L': ('M', 1),
-            'D': ('E', 1),
-            'B': ('S', -1),
         }
         self.rotations_map = {
             "'": -1,
@@ -217,12 +211,6 @@ class Cube:
             2: "2",
             -2: "2",
             "''": 1,
-        }
-
-        self.cube_rotations_map = {
-            "x": ["Rw", "L'"],
-            "y": ["Uw", "D'"],
-            "z": ["Fw", "B'"],
         }
 
         # UF-UR swap
@@ -268,12 +256,7 @@ class Cube:
         elif len(move) > 3:
             raise ValueError("Invalid move length", move)
 
-        elif 'w' in move:
-            has_wide_move = True
-            rotation = self.rotations_map[move[2:]]
-            move = move.replace("w", "")
-        else:
-            rotation = self.rotations_map[move[1:]]
+        rotation = self.rotations_map[move[1:]]
 
         moves_map = {
             'U': (self.U_edges, self.u_adj_edges, self.u_adj_edges_index,
@@ -308,14 +291,15 @@ class Cube:
         }
 
         face_turn = move[:1]
-        if has_wide_move:
-            self._rotate_wide(move)
-        elif face_turn in self.faces:
+
+        if face_turn in self.faces:
             side = moves_map.get(face_turn)
             self._rotate_layer(rotation, *side)
         elif face_turn in self.slices:
             side = moves_map.get(face_turn)
             self._rotate_slice(rotation, *side)
+        elif face_turn.islower():
+            self._rotate_wide(move)
 
     @staticmethod
     def _rotate_layer(rotation, edges, adj_edges, adj_edges_index, corners, adj_corners, adj_corners_index):
@@ -438,16 +422,6 @@ class Cube:
         for move in scramble:
             self.do_move(move)
 
-        # rotations = self.get_dlin_trace().get("rotation", [])
-        # for rotation in rotations:
-        #     face_rotation_degree = rotation[1:]
-        #     face_rotation = rotation[:1]
-        #     wide_move, face_turn = self.cube_rotations_map[face_rotation]
-        #     wide_move += face_rotation_degree
-        #     face_turn += face_rotation_degree
-        #     self.do_move(wide_move)
-        #     self.do_move(face_turn)
-
     def is_solved(self):
         if self == Cube():
             return True
@@ -510,9 +484,10 @@ if __name__ == "__main__":
     # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
     #
     # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    cube = Cube("", ls=letter_scheme)
+    cube = Cube("r", ls=letter_scheme)
     # # print(c.adj_corners)
-    # c.display_cube()
+    cube.display_cube()
+
     # # # todo adapt for different versions of FDR ie FRD
     # # # c.drill_corner_sticker('FDR')
     # # # todo letter scheme for below is a dependency for working

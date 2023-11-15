@@ -1,16 +1,13 @@
 import json
-import random
 from pprint import pprint
-from typing import List, Tuple
 
 import dlin
 
-import drill_generator
 import get_scrambles
 from Cube import Cube
 from Cube.drill import Drill
 from Cube.letterscheme import LetterScheme
-from eli_comms import ELI_COMMS
+from operations.get_buffer import get_comm
 from solution import Solution
 
 
@@ -267,97 +264,3 @@ def get_comm_loop(args, file_comms, comm_file_name, letter_scheme: LetterScheme)
             args = [buffer] + args
 
         get_comm(args, file_comms, comm_file_name, letterscheme=letter_scheme)
-
-
-def get_comm(args, file_comms, file_name, letterscheme: LetterScheme):
-    # capitalization is good
-    file_list = True
-    eli_list = True
-    file_first_letter = file_name[0]
-    list_name, _ = file_name.split("_")
-    # if '-b' not in args:
-    if '-e' in args:
-        args.remove('-e')
-        eli_list = True
-        file_list = False
-
-    elif f'-{file_first_letter}' in args:
-        args.remove(f'-{file_first_letter}')
-        eli_list = False
-        file_list = True
-
-    buffer, *cycles = args
-    buffer = buffer.upper()
-
-    # Name person, comm name: comm notation, expanded comm?
-    # prob comm lists should be json lol
-
-    # iterate the cycles
-    for cycle in cycles:
-        # do I check both? prob just the first one haha
-        cycle = cycle.upper()
-        a, b = LetterScheme().convert_pair_to_pos(buffer, cycle)
-        if letterscheme.is_default:
-            let1, let2 = a, b
-        else:
-            let1, let2 = cycle
-        if file_list:
-            print(f"{list_name.title()} {let1 + let2}:", file_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"))
-        if eli_list:
-            print(f"Eli {let1 + let2}:", ELI_COMMS.get(buffer, {}).get(a, {}).get(b, "Not listed"))
-
-        # should it show just the expanded ver or the comm notation?
-    return buffer
-
-
-def drill_twists(twist_type):
-    """Drills twists: 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist"""
-    match twist_type:
-        case "2f" | "2":
-            drill_generator.main("5")
-        case "3":
-            drill_generator.main("2")
-        case "3f":
-            drill_generator.main("3")
-
-
-def get_rand_buff(all_buffers_order: list):
-    buffers = all_buffers_order.copy()
-    random.shuffle(buffers)
-    for i in buffers:
-        print(i, end='')
-        resp = input().lower()
-        if resp.startswith('q') or 'quit' in resp:
-            return
-
-
-def get_help():
-    # print(f"Just enter '{args}' with no addtional arguments or parameters to see the help file")
-    print("Type 'name' to find out more about the function 'name'.")
-    docs = """
-h | help: Display help information for commands.
-m | memo: Memo the cube and handle options.
-ls | letterscheme: Manage letter scheme options.
-b | buff | buffer: Drill buffer and handle options.
-a | algs: Generate algorithm drills.
-s | sticker: Drill stickers from default buffers.
-q | quit | exit: Exit the program.
-c | comm: Retrieve and display commutators.
-reload: Reload settings and letter scheme.
-timeup | time: Display the elapsed time.
-alger: Generate a scramble with a specified number of algs.
-f | float: Provide scrambles with flips and cycle breaks.
-t: Drill twists: 2f, 3, or 3f.
-rb: Pick a random buffer from settings.json
-    """
-    print(docs)
-    return
-
-
-def get_query() -> Tuple[str, List[str]]:
-    response = ""
-    while not response:
-        response = input("(3bld) ").split()
-
-    mode, *args = response
-    return mode, args

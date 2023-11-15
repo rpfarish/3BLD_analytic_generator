@@ -1,9 +1,11 @@
 import json
 import time
 
+import drill_generator
+from Cube.letterscheme import LetterScheme
 from convert_list_to_comms import update_comm_list
-from main_funcs import LetterScheme, alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff
-from main_funcs import drill_generator, drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
+from operations import alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff
+from operations import drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
 
 
 # todo settings with buffer order and alt pseudo swaps for each parity alg
@@ -63,7 +65,6 @@ def main():
 
         match mode:
             case 'h' | 'help':
-                print("Provides helpful information about commands")
                 get_help()
 
             case "m" | "memo":
@@ -154,6 +155,7 @@ def main():
 
             case _:
                 print("that option is not recognised")
+
     # todo fix inconsistent usage of "" and ''
     # might be best to allways store and work with letterpairs in Singmaster notation
     # todo and just convert to and from whenever loading or displaying in letterscheme

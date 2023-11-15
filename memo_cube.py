@@ -68,3 +68,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def memo_cube():
+    return None

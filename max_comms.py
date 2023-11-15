@@ -7281,3 +7281,5 @@ MAX_COMMS = {'UF': {'UR': {'UB': "R2 U' R2' S R2 S' U R2",
                              'DFR': '',
                              'DBL': '',
                              '': '18 Comms'}}}
+if __name__ == "__main__":
+       print(MAX_COMMS['UB']['DF']['DR'])

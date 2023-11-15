@@ -200,6 +200,8 @@ class Drill:
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
+        # print(edges)
+
         all_edges = [i + j for i, j in itertools.permutations(edges, 2) if
                      i != self.cube_memo.adj_edges[j]]
         all_edges += all_edges
@@ -207,10 +209,15 @@ class Drill:
 
         rand_edges = random.choices(all_edges, k=len(all_edges) // 2)
         cube = Cube()
+        from max_comms import MAX_COMMS
         for pair in rand_edges:
             a, b = pair[:len(pair) // 2], pair[len(pair) // 2:]
-            buffer = COMMS[str(edge_buffer)]
+            # print(a, b)
+            buffer = MAX_COMMS[str(edge_buffer)]
+            # print(edge_buffer)
+            # print("buffer", buffer)
             comm = buffer[a][b]
+            # print(comm)
             cube.scramble_cube(comm)
 
         scram = kociemba.solve(cube.get_faces_colors(), max_depth=19)
@@ -623,6 +630,10 @@ class Drill:
 
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function
+
+    cube = Cube("r' U R S R2' S' R U' r L U' L E' L' U L E L2' U' L' U' M' U L U' M U' R D R' D' R' D' R' D R U' D")
+    cube.display_cube()
+    quit()
     drill = Drill()
     a = drill.total_cases_per_corner_buffer
     b = drill.total_cases_per_edge_buffer
