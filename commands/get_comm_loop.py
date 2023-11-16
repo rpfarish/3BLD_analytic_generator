@@ -8,7 +8,7 @@ def get_comm_loop(args, file_comms, eli_comms, comm_file_name, letter_scheme: Le
         rapid_mode = True
         args.remove('-r')
 
-    buffer = get_comm(args, file_comms, comm_file_name, eli_comms, letterscheme=letter_scheme)
+    buffer = get_comm(args, file_comms, eli_comms, comm_file_name, letterscheme=letter_scheme)
 
     while rapid_mode:
         args = input("(rapid) ").split()
