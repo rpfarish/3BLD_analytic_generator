@@ -94,6 +94,10 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
       ls -load
       ```
 
+## Sticker:  `s | sticker`
+
+- **Description**: Drill stickers from default buffers.
+
 ## HELP: `help`
 
 - **Description:** Provides list of commands

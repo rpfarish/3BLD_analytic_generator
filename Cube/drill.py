@@ -126,7 +126,7 @@ class Drill:
     #         input()
 
     @staticmethod
-    def drill_corner_sticker(sticker_to_drill):
+    def drill_corner_sticker(sticker_to_drill, invert=False, algs: set = None, cycles_to_exclude: set = None):
 
         def remove_piece(target_list, piece, ltr_scheme):
             piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
@@ -152,7 +152,14 @@ class Drill:
 
         sticker_to_drill = sticker_to_drill
 
-        algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
+        if algs is not None:
+            algs_to_drill = algs
+        else:
+            algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
+
+        if cycles_to_exclude is not None:
+            algs_to_drill -= cycles_to_exclude
+
         # fixme drill just one sticker with s XY -onlypairIwanttodrill
         # algs_to_drill = {"NS"}
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
@@ -460,28 +467,46 @@ class Drill:
         return scramble, self.cube_memo.format_corner_memo(memo)
 
     # memo
-    def drill_edge_sticker(self, sticker_to_drill, single_cycle=True, return_list=False, cycles_to_exclude: set = None,
-                           invert=False, algs: set = None, no_repeat=True):
+    def drill_edge_sticker(self, sticker_to_drill, letter_scheme, single_cycle=True, return_list=False,
+                           cycles_to_exclude: set = None,
+                           invert=False, algs: set = None, no_repeat=True, ):
         from Cube.solution import Solution
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
+
+        def remove_piece(target_list, piece, ltr_scheme):
+            print(Cube(ls=ltr_scheme).adj_edges)
+            piece_adj1 = Cube(ls=ltr_scheme).adj_edges[piece]
+            target_list.remove(piece)
+            target_list.remove(piece_adj1)
+            return target_list
+
+        def generate_drill_list(ltr_scheme: LetterScheme, buffer, target, invert):
+            all_targets = ltr_scheme.get_edges()
+            remove_piece(all_targets, buffer, ltr_scheme)
+
+            target_list = all_targets[:]
+            # remove buffer stickers
+            remove_piece(target_list, target, ltr_scheme)
+
+            # generate random pairs
+            # generate specific pairs
+            # generate target groups e.g. just Z or H and k
+            # generate inverse target groups
+            # specify buffer
+            if not invert:
+                return {target + i for i in target_list}
+            else:
+                return {i + target for i in target_list}
+
         # todo support starting from any buffer
         # support default certain alternate pseudo edge swaps depending on last corner target
         scrambles = []
-        all_edges = self.cube_memo.default_edges.copy()
         buffer = self.cube_memo.default_edge_buffer
-        buffer_adj = self.cube_memo.adj_edges[buffer]
-        all_edges.remove(buffer)
-        all_edges.remove(buffer_adj)
 
-        adj = self.cube_memo.adj_edges[sticker_to_drill]
-        all_edges.remove(sticker_to_drill)
-        all_edges.remove(adj)
         if algs is not None:
             algs_to_drill = algs
-        elif not invert:
-            algs_to_drill = {sticker_to_drill + i for i in all_edges}
         else:
-            algs_to_drill = {i + sticker_to_drill for i in all_edges}
+            algs_to_drill = generate_drill_list(letter_scheme, buffer, sticker_to_drill, invert)
         # todo optionally inject list of algs to drill
         # algs_to_drill = {'DBDR'}
 
@@ -1039,6 +1064,7 @@ class Drill:
         algs = list(two_flips.values())
         random.shuffle(algs)
         self.drill_algs(algs)
+
 
 if __name__ == "__main__":
     # todo add translate UR to B and B to UR function

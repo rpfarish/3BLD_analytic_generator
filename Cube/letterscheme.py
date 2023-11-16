@@ -254,17 +254,29 @@ class LetterScheme:
         if self.scheme[pos].type == 'e':
             self.reverse_scheme_edges[name] = pos
 
-    def convert_to_pos(self, buffer, piece):
+    def convert_to_pos(self, buffer, piece, piece_type=None):
         if self.scheme.get(piece) is not None:
             return piece
-        elif self.scheme[buffer].type == 'c':
+        elif self.scheme[buffer].type == 'c' or piece_type == 'corner':
             return self.reverse_scheme_corners[piece]
-        elif self.scheme[buffer].type == 'e':
+        elif self.scheme[buffer].type == 'e' or piece_type == 'edge':
+            return self.reverse_scheme_edges[piece]
+
+    def convert_to_pos_from_type(self, piece, piece_type):
+        if self.scheme.get(piece) is not None:
+            return piece
+        elif piece_type == 'corner':
+            return self.reverse_scheme_corners[piece]
+        elif piece_type == 'edge':
             return self.reverse_scheme_edges[piece]
 
     def convert_pair_to_pos(self, buffer, pair):
         a, b = pair[:len(pair) // 2], pair[len(pair) // 2:]
         return self.convert_to_pos(buffer, a), self.convert_to_pos(buffer, b)
+
+    def convert_pair_to_pos_type(self, pair, piece_type):
+        a, b = pair[:len(pair) // 2], pair[len(pair) // 2:]
+        return self.convert_to_pos_from_type(a, piece_type), self.convert_to_pos_from_type(b, piece_type)
 
     def __repr__(self):
         return str({str(pos): letter for pos, letter in self.scheme.items()})
@@ -447,3 +459,5 @@ def convert_letterpairs(to_convert, direction, piece_type=None, display=False, r
 
 if __name__ == '__main__':
     scheme = LetterScheme(use_default=False)
+    converted = scheme.convert_to_pos_from_type("N", 'edge')
+    print(converted)

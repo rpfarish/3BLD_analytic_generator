@@ -23,7 +23,7 @@ from commands import drill_sticker, drill_twists, get_help, get_query, memo_cube
 def main():
     # todo add settings to readme
 
-    settings = Settings()
+    settings = Settings("settings.json")
     top_corner_key = "1st Target:"
     try:
         with open(f"comms/{settings.comm_file_name}/{settings.comm_file_name}.json") as f:
@@ -89,8 +89,7 @@ def main():
             case "s" | "sticker":
                 # todo make this for floating too  ... hahahahaa
 
-                sticker, *exclude = args
-                drill_sticker(sticker, exclude=exclude, buffer_order=settings.buffer_order)
+                drill_sticker(args, buffers=settings.buffers)
                 last_args = args
 
             case "b" | "buff" | "buffer":
