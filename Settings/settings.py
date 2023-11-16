@@ -14,7 +14,7 @@ class Settings:
         self.reload()
 
     def reload(self):
-        with open("Settings/settings.json") as f:
+        with open("settings.json") as f:
             settings = json.loads(f.read())
             self.letter_scheme = LetterScheme(ltr_scheme=settings['letter_scheme'])
             self.buffers = settings['buffers']

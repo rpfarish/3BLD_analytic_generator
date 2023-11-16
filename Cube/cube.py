@@ -482,7 +482,7 @@ class Cube:
 
 
 if __name__ == "__main__":
-    with open("../Settings/settings.json") as f:
+    with open("../settings.json") as f:
         settings = json.loads(f.read())
         letter_scheme = settings['letter_scheme']
     #     buffers = settings['buffers']

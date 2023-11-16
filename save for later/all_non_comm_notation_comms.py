@@ -24,7 +24,7 @@ all_rud_edge_comms_eli = [
     "D' U R' D' R D R D R D' R' U'",
 ]
 
-with open("../Settings/settings.json") as f:
+with open("../settings.json") as f:
     settings = json.loads(f.read())
     letterscheme_names = settings['letter_scheme']
     letterscheme = LetterScheme(ltr_scheme=letterscheme_names)
