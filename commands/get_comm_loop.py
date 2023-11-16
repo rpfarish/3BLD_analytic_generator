@@ -1,5 +1,5 @@
 from Cube.letterscheme import LetterScheme
-from operations.get_buffer import get_comm
+from commands.get_buffer import get_comm
 
 
 def get_comm_loop(args, file_comms, eli_comms, comm_file_name, letter_scheme: LetterScheme):

@@ -1,4 +1,4 @@
-from operations.memo import memo
+from commands.memo import memo
 
 
 def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):

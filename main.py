@@ -4,8 +4,8 @@ import time
 from Commutator.convert_list_to_comms import update_comm_list
 from Cube import Drill
 from Settings.settings import Settings
-from operations import alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff, drill_ltct, drill_two_flips
-from operations import drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
+from commands import alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff, drill_ltct, drill_two_flips
+from commands import drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
 
 
 # todo settings with buffer order and alt pseudo swaps for each parity alg

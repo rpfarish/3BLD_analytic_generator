@@ -1,7 +1,7 @@
 import json
 import os
 
-from operations.drill_piece_buffer import drill_piece_buffer
+from commands.drill_piece_buffer import drill_piece_buffer
 
 
 def drill_buffer(args, filename, buffer, buffer_order, file_comms):
