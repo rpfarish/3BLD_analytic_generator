@@ -1,12 +1,27 @@
-# Letter Pair Finder
+# 3BLD Analytic Generator
 
-The repo allows you to quickly memorize Rubik's Cubes.
+## Generates 3BLD specific scrambles to drill various algsets
+
+- Memo
+- Gen scrambles
+- Get comms
+
+The repo allows you to memo and dlin trace a scramble, generate scrambles for various alg sets (defined below) and get and compare comms from different sheets
+
+Alg sets:
+- Full floating trainer (both like Eli's and random state with cycle breaks)
+- Specific letter pairs in a random scramble
+- Twists
+- Flips
+- LTCT
+
+
 This also allows you to specify what cycles you would like to drill and
 generates a scramble with those specific letter pairs in it.
-Supports both edge and corner piece types though separately.
-Does not account for breaking into twists, flips or parity shifting.
-These scrambles are random move, but not random state but should be good enough for training
+These scrambles are random move, but not random state but should be good enough for training.
 Please note that the letters on the buffers are not important, but each of them need to be unique.
+
+ It supports intelligent cycle breaking, memoing with alternate pseudoswaps, and the identification of specific cube states like 2-flips, 2-twists, 3-twists, and parity twists. Users can customize the lettering scheme and generate training scrambles based on specified algorithms or letter pairs for both edges and corners. The repository includes commands for memoizing the cube, generating training scrambles, managing letter schemes, drilling buffers, displaying commutators, and more. Note that some features are still a work in progress. The repository emphasizes functionality for blindfolded solving training.
 
 ## Features:
 
@@ -21,7 +36,7 @@ Syntax: memo [scramble]
 - customizable lettering scheme for people who don't use Speffz
 
 ### Generate Training Scrambles
-
+      
 - Given a list of algs will generate random scrambles to drill those algs, and will print the alg if you forget it and
   keep track of how many and which ones it was
 - Given a list of letter pairs (for either edges or corners) will generate random scrambles that have one or more of
