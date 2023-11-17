@@ -9,5 +9,6 @@ from .get_comm_loop import get_comm_loop
 from .get_help import get_help
 from .get_query import get_query
 from .get_rand_buff import get_rand_buff
+from .load_comms import load_comms
 from .memo_cube import memo_cube
 from .set_letter_scheme import set_letter_scheme

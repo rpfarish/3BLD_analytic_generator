@@ -10,8 +10,10 @@ from .expand_comm import expand_comm
 
 
 # todo make this take a spreadsheet and csv
-def _convert(buffer, file_name="max_comms", top_corner_key="1st Target:"):
+def _convert(buffer, file_name="max_comms"):
     comms = {}
+    with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
+        top_corner_key, *_ = next(csv.reader(csvfile))
 
     with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
@@ -115,7 +117,7 @@ def fill_in_buffers(file_comms):
     return file_comms
 
 
-def update_comm_list(buffers=None, file="max_comms", top_corner_key=""):
+def update_comm_list(buffers=None, file="max_comms"):
     # todo import from settings
     if buffers is None:
         buffers = [
@@ -131,7 +133,7 @@ def update_comm_list(buffers=None, file="max_comms", top_corner_key=""):
     comms = {}
 
     for buffer in buffers:
-        comms[buffer] = _convert(buffer, file, top_corner_key=top_corner_key)
+        comms[buffer] = _convert(buffer, file)
 
     with open(f"comms/{file}/{file}.json", "w+") as f:
         json.dump(comms, f, indent=4)
@@ -143,7 +145,7 @@ if __name__ == '__main__':
         file_comms = json.load(file)
     # print(add_nested({}, "UF", "UR", "UL"))
     # fill_in_buffers(file_comms)
-    update_comm_list(top_corner_key="1st Target:")
+    update_comm_list()
     # buffers = [
     #     'UF', 'UB', 'UR', 'UL',
     #     'DF', 'DB',

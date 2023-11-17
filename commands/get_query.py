@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 
 def get_query() -> Tuple[str, List[str]]:

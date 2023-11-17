@@ -1,19 +1,15 @@
-import json
 import time
 
-from Commutator.convert_list_to_comms import update_comm_list
 from Cube import Drill
 from Settings.settings import Settings
-from commands import alger, cycle_break_float, drill_buffer, get_comm_loop, get_rand_buff, drill_ltct, drill_two_flips
-from commands import drill_sticker, drill_twists, get_help, get_query, memo_cube, set_letter_scheme
+from commands import (alger, cycle_break_float, drill_buffer, drill_ltct, drill_sticker, drill_twists, drill_two_flips,
+                      get_comm_loop, get_help, get_query, get_rand_buff, load_comms, memo_cube, set_letter_scheme,
+                      )
 
 
-# todo settings with buffer order and alt pseudo swaps for each parity alg
 # todo how to ingest a new comm sheet esp full floating
-# todo convert a sheet to have any comm for any buffer ie custom buffer order
 
 # todo use ! to repeat inputs
-# todo make funcs to load or dump letterscheme
 # todo make help func
 
 
@@ -23,19 +19,10 @@ from commands import drill_sticker, drill_twists, get_help, get_query, memo_cube
 def main():
     # todo add settings to readme
 
-    settings = Settings("settings.json")
-    top_corner_key = "1st Target:"
-    try:
-        with open(f"comms/{settings.comm_file_name}/{settings.comm_file_name}.json") as f:
-            file_comms = json.load(f)
-    except FileNotFoundError:
-        update_comm_list(buffers=settings.all_buffers_order, file=settings.comm_file_name,
-                         top_corner_key=top_corner_key)
-    try:
-        with open(f"comms/eli_comms/eli_comms.json") as f:
-            eli_comms = json.load(f)
-    except FileNotFoundError:
-        update_comm_list(buffers=settings.all_buffers_order, file="eli_comms")
+    settings = Settings()
+
+    file_comms = load_comms(settings.all_buffers_order, file_name=settings.comm_file_name)
+    eli_comms = load_comms(settings.all_buffers_order, file_name='eli_comms')
 
     last_args = ""
     last_mode = 1
@@ -63,8 +50,10 @@ def main():
                     print(memo_cube.__doc__)
                     continue
                     # todo buffer swap
-                memo_cube(args, settings.letter_scheme, settings.buffers, settings.parity_swap_edges,
-                          settings.buffer_order)
+                memo_cube(
+                    args, settings.letter_scheme, settings.buffers, settings.parity_swap_edges,
+                    settings.buffer_order
+                )
 
             case "ls" | "letterscheme":
                 if not args:

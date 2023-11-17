@@ -1,79 +1,4 @@
-"""Put your letter scheme here."""
-
-# # -------EDGES--------
-# # U Face
-# UB = 'A'
-# UR = 'B'
-# UF = 'U'
-# UL = 'D'
-#
-# # L Face
-# LU = 'E'
-# LF = 'F'
-# LD = 'G'
-# LB = 'H'
-#
-# # F Face
-# FU = 'K'
-# FR = 'J'
-# FD = 'I'
-# FL = 'L'
-#
-# # R Face
-# RU = 'M'
-# RB = 'N'
-# RD = 'O'
-# RF = 'P'
-#
-# # B Face
-# BU = 'Z'
-# BL = 'R'
-# BD = 'S'
-# BR = 'T'
-#
-# # D Face
-# DF = 'C'
-# DR = 'V'
-# DB = 'W'
-# DL = 'X'
-#
-# # -------CORNERS--------
-#
-# # U Face
-# UBL = 'A'
-# UBR = 'B'
-# UFR = 'U'
-# UFL = 'D'
-#
-# # L Face
-# LUB = 'J'
-# LUF = 'F'
-# LDF = 'G'
-# LDB = 'H'
-#
-# # F Face
-# FUL = 'E'
-# FUR = 'I'
-# FDR = 'K'
-# FDL = 'L'
-#
-# # R Face
-# RUF = 'X'
-# RUB = 'N'
-# RDB = 'O'
-# RDF = 'P'
-#
-# # B Face
-# BUR = 'R'
-# BUL = 'M'
-# BDL = 'S'
-# BDR = 'T'
-#
-# # D Face
-# DFL = 'C'
-# DFR = 'V'
-# DBR = 'W'
-# DBL = 'Z'
+import json
 
 letter_scheme = dict(
     # -------EDGES--------
@@ -154,11 +79,6 @@ letter_scheme = dict(
 )
 
 
-# -----BUFFERS------
-# EDGE_BUFFER = UF
-# CORNER_BUFFER = UFR
-
-# todo this should be using settings.json
 class PieceId:
     def __init__(self, pos, name):
         self.pos = pos
@@ -181,7 +101,10 @@ class LetterScheme:
     def __init__(self, ltr_scheme: dict[str: str] = None, use_default=False):
         self.is_default = use_default
         if ltr_scheme is None:
-            ltr_scheme = letter_scheme
+            with open("settings.json") as f:
+                settings = json.loads(f.read())
+                ltr_scheme = settings['letter_scheme']
+
         self.scheme = {}
         self.reverse_scheme_corners = {}
         self.reverse_scheme_edges = {}
@@ -303,7 +226,7 @@ def convert_letterpairs(to_convert, direction, piece_type=None, display=False, r
     direction: letter_to_loc, loc_to_letter letter representation and location
     """
     # todo setting for letter scheme modular and global
-    # add letterscheme as a param
+    # todo add letterscheme as a param
     if direction == "letter_to_loc" and piece_type is None:
         raise Exception("Cannot convert letter scheme from letter to name without piece type")
 
@@ -440,9 +363,6 @@ def convert_letterpairs(to_convert, direction, piece_type=None, display=False, r
     elif piece_type == "edges":
         convert_table |= edge_letter_to_loc
 
-    # for i, j in s.items():
-    #     print(f"{j} = '{i}',")
-
     converted_set = set()
     converted_list = []
     for i in to_convert:
@@ -458,6 +378,6 @@ def convert_letterpairs(to_convert, direction, piece_type=None, display=False, r
 
 
 if __name__ == '__main__':
-    scheme = LetterScheme(use_default=False)
+    scheme = LetterScheme()
     converted = scheme.convert_to_pos_from_type("N", 'edge')
     print(converted)

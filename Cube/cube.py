@@ -1,5 +1,6 @@
 import json
 from collections import deque
+from typing import Dict, List, Optional, Set
 
 import dlin
 import kociemba
@@ -12,27 +13,30 @@ DEBUG = True
 
 # TODO does not reorient the cube after scrambling.
 class Cube:
-    def __init__(self, s="", can_parity_swap=False, auto_scramble=True, ls=None, buffers=None, parity_swap_edges=None,
-                 buffer_order=None):
+    def __init__(self, s: str = "", can_parity_swap: bool = False, auto_scramble: bool = True,
+                 ls: Optional[LetterScheme] = None,
+                 buffers: Optional[Dict[str, str]] = None, parity_swap_edges: Optional[str] = None,
+                 buffer_order: Optional[Dict[str, List[str]]] = None):
 
-        self.scramble = s.rstrip('\n').strip().split()
-        self.has_parity = (len(self.scramble) - s.count('2')) % 2 == 1
-        self.kociemba_order = 'URFDLB'
-        self.kociemba_solved_cube = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
-        self.faces = 'ULFRBD'
+        self.scramble: List[str] = s.rstrip('\n').strip().split()
+        self.has_parity: bool = (len(self.scramble) - s.count('2')) % 2 == 1
+        self.kociemba_order: str = 'URFDLB'
+        self.kociemba_solved_cube: str = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
+        self.faces: str = 'ULFRBD'
         use_default_letter_scheme = True if ls is None else False
         if type(ls) is LetterScheme:
-            self.ls = ls
+            self.ls: LetterScheme = ls
         else:
-            self.ls = ls = LetterScheme(ls, use_default=use_default_letter_scheme)
+            ls: letter_scheme = LetterScheme(ls, use_default=use_default_letter_scheme)
+            self.ls: LetterScheme = ls
+        self.slices: str = 'MSE'
 
-        self.slices = 'MSE'
-
-        self.directions = ["", "'", "2"]
-        self.opp_faces = {'U': 'D', 'D': 'U',
-                          'F': 'B', 'B': 'F',
-                          'L': 'R', 'R': 'L',
-                          }
+        self.directions: List[str] = ["", "'", "2"]
+        self.opp_faces: Dict[str, str] = {
+            'U': 'D', 'D': 'U',
+            'F': 'B', 'B': 'F',
+            'L': 'R', 'R': 'L',
+        }
 
         # letter scheme
         UB, UR, UF, UL = ls['UB'], ls['UR'], ls['UF'], ls['UL']
@@ -50,22 +54,22 @@ class Cube:
         DFL, DFR, DBR, DBL = ls['DFL'], ls['DFR'], ls['DBR'], ls['DBL']
 
         if buffers is not None:
-            self.default_edge_buffer = ls[buffers['edge_buffer']]
-            self.default_corner_buffer = ls[buffers['corner_buffer']]
+            self.default_edge_buffer: str = ls[buffers['edge_buffer']]
+            self.default_corner_buffer: str = ls[buffers['corner_buffer']]
         else:
-            self.default_edge_buffer = ls['UF']
-            self.default_corner_buffer = ls['UFR']
+            self.default_edge_buffer: str = ls['UF']
+            self.default_corner_buffer: str = ls['UFR']
 
-        self.edge_memo_buffers = set()
-        self.corner_memo_buffers = set()  # {UFR, RUF, FUR}
+        self.edge_memo_buffers: Set[str] = set()
+        self.corner_memo_buffers: Set[str] = set()
 
-        self.corner_cycle_break_order = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
-        self.edge_cycle_break_order = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]
+        self.corner_cycle_break_order: List[str] = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
+        self.edge_cycle_break_order: List[str] = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]
 
         if buffer_order is not None:
-            self.buffer_order = buffer_order
-            self.corner_buffer_order = [ls[buffer] for buffer in buffer_order['corners']]
-            self.edge_buffer_order = [ls[buffer] for buffer in buffer_order['edges']]
+            self.buffer_order: Dict[str, List[str]] = buffer_order
+            self.corner_buffer_order: List[str] = [ls[buffer] for buffer in buffer_order['corners']]
+            self.edge_buffer_order: List[str] = [ls[buffer] for buffer in buffer_order['edges']]
         else:
             self.corner_buffer_order = [UFR, UBR, UBL, UFL, RDF, RDB]
             self.edge_buffer_order = [UF, UB, UR, UL, DF, DB, FR, FL, DR, DL]
@@ -250,7 +254,6 @@ class Cube:
             return not result
 
     def do_move(self, move: str):
-        has_wide_move = False
         if not move:
             return
 
@@ -386,21 +389,19 @@ class Cube:
     def edge_swaps(self):
         solved = self.solved_edges
         flipped = self.flipped_edges
-        return {
-            default: current
-            for default, current in zip(self.default_edges, self.all_edges)
-            if default not in solved and default not in flipped
-        }
+        return {default: current
+                for default, current in zip(self.default_edges, self.all_edges)
+                if default not in solved and default not in flipped
+                }
 
     @property
     def corner_swaps(self):
         solved = self.solved_corners
         twisted = self.twisted_corners
-        return {
-            default: current
-            for default, current in zip(self.default_corners, self.all_corners)
-            if current not in solved and current not in twisted
-        }
+        return {default: current
+                for default, current in zip(self.default_corners, self.all_corners)
+                if current not in solved and current not in twisted
+                }
 
     def cube_faces(self):
         all_edges = [self.U_edges, self.L_edges, self.F_edges, self.R_edges, self.B_edges, self.D_edges]
@@ -491,9 +492,9 @@ if __name__ == "__main__":
     # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
     #
     # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    scramble = "R U R' U' " * 5
-    cube = Cube(scramble)
-    print(scramble)
+    scram = "R U R' U' " * 5
+    cube = Cube(scram)
+    print(scram)
     # # print(c.adj_corners)
     # cube.display_cube()
     print(cube.get_faces_colors())

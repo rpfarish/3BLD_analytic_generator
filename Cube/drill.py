@@ -5,7 +5,6 @@ import time
 
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
-from Cube.letterscheme import letter_scheme
 from Cube.memo import Memo
 from Scramble import get_scramble
 from comms.comms import COMMS
@@ -126,17 +125,20 @@ class Drill:
     #         input()
 
     @staticmethod
-    def drill_corner_sticker(sticker_to_drill, invert=False, algs: set = None, cycles_to_exclude: set = None):
+    def drill_corner_sticker(sticker_to_drill, invert=False, algs: set = None, cycles_to_exclude: set = None,
+                             letter_scheme=None, buffer=None):
 
         def remove_piece(target_list, piece, ltr_scheme):
+            print(Cube(ls=ltr_scheme).adj_corners)
             piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
+            print(target_list, piece)
             target_list.remove(piece)
             target_list.remove(piece_adj1)
             target_list.remove(piece_adj2)
             return target_list
 
         def generate_drill_list(ltr_scheme: LetterScheme, buffer, target):
-            all_targets = LetterScheme(use_default=False).get_corners()
+            all_targets = LetterScheme(use_default=True).get_corners()
             remove_piece(all_targets, buffer, ltr_scheme)
 
             target_list = all_targets[:]
@@ -155,7 +157,9 @@ class Drill:
         if algs is not None:
             algs_to_drill = algs
         else:
-            algs_to_drill = generate_drill_list(letter_scheme, "U", sticker_to_drill)
+            print(letter_scheme)
+            print(sticker_to_drill)
+            algs_to_drill = generate_drill_list(letter_scheme, buffer, sticker_to_drill)
 
         if cycles_to_exclude is not None:
             algs_to_drill -= cycles_to_exclude
@@ -469,7 +473,7 @@ class Drill:
     # memo
     def drill_edge_sticker(self, sticker_to_drill, letter_scheme, single_cycle=True, return_list=False,
                            cycles_to_exclude: set = None,
-                           invert=False, algs: set = None, no_repeat=True, ):
+                           invert=False, algs: set = None, no_repeat=True, buffer=None):
         from Cube.solution import Solution
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
 
@@ -501,7 +505,6 @@ class Drill:
         # todo support starting from any buffer
         # support default certain alternate pseudo edge swaps depending on last corner target
         scrambles = []
-        buffer = self.cube_memo.default_edge_buffer
 
         if algs is not None:
             algs_to_drill = algs
@@ -513,9 +516,9 @@ class Drill:
         print("algs to drill", algs_to_drill)
         number = 0
         max_wait_time = 20
-        len_algs_to_drill = len(algs_to_drill)
         if cycles_to_exclude is not None:
             algs_to_drill = algs_to_drill.difference(cycles_to_exclude)
+        len_algs_to_drill = len(algs_to_drill)
 
         if single_cycle:
             frequency = 1
@@ -693,10 +696,11 @@ class Drill:
         # k_sol = "R D2 F2 R2 F' U' B U' B U' L2 F2 U' R2 U F2 D' L2 U'"
         if '' in solution:
             solution.remove('')
-        opp = {'U': 'D', 'D': 'U',
-               'F': 'B', 'B': 'F',
-               'L': 'R', 'R': 'L',
-               }
+        opp = {
+            'U': 'D', 'D': 'U',
+            'F': 'B', 'B': 'F',
+            'L': 'R', 'R': 'L',
+        }
         for i in range(len(solution) - 3):
             if DEBUG: print("SOLUTION", solution)
             first_layer = solution[i][0]
@@ -902,10 +906,11 @@ class Drill:
         if min_len > max_len:
             raise ValueError("min_len cannot be greater than max len")
         scram_len = random.randint(min_len, max_len)
-        opp = {'U': 'D', 'D': 'U',
-               'F': 'B', 'B': 'F',
-               'L': 'R', 'R': 'L',
-               }
+        opp = {
+            'U': 'D', 'D': 'U',
+            'F': 'B', 'B': 'F',
+            'L': 'R', 'R': 'L',
+        }
 
         # first turn
         turn = random.choice(faces)

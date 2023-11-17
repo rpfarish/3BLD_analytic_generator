@@ -1,13 +1,13 @@
 import random
 
 
-def get_scramble(requires_parity=False):
+def get_scramble(requires_parity: bool = False):
     if requires_parity:
         pass
     return gen_premove(20, 21, requires_parity=requires_parity)
 
 
-def gen_premove(min_len=1, max_len=3, requires_parity=False):
+def gen_premove(min_len: int = 1, max_len: int = 3, requires_parity: bool = False):
     faces = ['U', 'L', 'F', 'R', 'B', 'D']
     directions = ["", "'", "2"]
     turns = []
