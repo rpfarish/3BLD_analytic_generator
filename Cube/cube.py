@@ -1,12 +1,13 @@
 import json
 from collections import deque
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 import dlin
 import kociemba
 
 from Cube.letterscheme import LetterScheme
 from comms.comms import COMMS
+from .face_enum import CornerFaceEnum as Corner, EdgeFaceEnum as Edge
 
 DEBUG = True
 
@@ -15,10 +16,10 @@ DEBUG = True
 class Cube:
     def __init__(self, s: str = "", can_parity_swap: bool = False, auto_scramble: bool = True,
                  ls: Optional[LetterScheme] = None,
-                 buffers: Optional[Dict[str, str]] = None, parity_swap_edges: Optional[str] = None,
-                 buffer_order: Optional[Dict[str, List[str]]] = None):
+                 buffers: Optional[dict[str, str]] = None, parity_swap_edges: Optional[str] = None,
+                 buffer_order: Optional[dict[str, list[str]]] = None):
 
-        self.scramble: List[str] = s.rstrip('\n').strip().split()
+        self.scramble: list[str] = s.rstrip('\n').strip().split()
         self.has_parity: bool = (len(self.scramble) - s.count('2')) % 2 == 1
         self.kociemba_order: str = 'URFDLB'
         self.kociemba_solved_cube: str = 'UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB'
@@ -31,8 +32,8 @@ class Cube:
             self.ls: LetterScheme = ls
         self.slices: str = 'MSE'
 
-        self.directions: List[str] = ["", "'", "2"]
-        self.opp_faces: Dict[str, str] = {
+        self.directions: list[str] = ["", "'", "2"]
+        self.opp_faces: dict[str, str] = {
             'U': 'D', 'D': 'U',
             'F': 'B', 'B': 'F',
             'L': 'R', 'R': 'L',
@@ -60,16 +61,16 @@ class Cube:
             self.default_edge_buffer: str = ls['UF']
             self.default_corner_buffer: str = ls['UFR']
 
-        self.edge_memo_buffers: Set[str] = set()
-        self.corner_memo_buffers: Set[str] = set()
+        self.edge_memo_buffers: set[str] = set()
+        self.corner_memo_buffers: set[str] = set()
 
-        self.corner_cycle_break_order: List[str] = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
-        self.edge_cycle_break_order: List[str] = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]
+        self.corner_cycle_break_order: list[str] = [UBR, UBL, UFL, RDF, RDB, LDF, LDB]
+        self.edge_cycle_break_order: list[str] = [UB, UR, UL, DF, FR, FL, DR, DL, BR, BL]
 
         if buffer_order is not None:
-            self.buffer_order: Dict[str, List[str]] = buffer_order
-            self.corner_buffer_order: List[str] = [ls[buffer] for buffer in buffer_order['corners']]
-            self.edge_buffer_order: List[str] = [ls[buffer] for buffer in buffer_order['edges']]
+            self.buffer_order: dict[str, list[str]] = buffer_order
+            self.corner_buffer_order: list[str] = [ls[buffer] for buffer in buffer_order['corners']]
+            self.edge_buffer_order: list[str] = [ls[buffer] for buffer in buffer_order['edges']]
         else:
             self.corner_buffer_order = [UFR, UBR, UBL, UFL, RDF, RDB]
             self.edge_buffer_order = [UF, UB, UR, UL, DF, DB, FR, FL, DR, DL]
@@ -92,70 +93,12 @@ class Cube:
         self.default_corners = (self.U_corners + self.L_corners + self.F_corners +
                                 self.R_corners + self.B_corners + self.D_corners)
 
-        self.adj_edges = {
-            self.U_edges[0]: self.B_edges[0],
-            self.U_edges[1]: self.R_edges[0],
-            self.U_edges[2]: self.F_edges[0],
-            self.U_edges[3]: self.L_edges[0],
-
-            self.L_edges[0]: self.U_edges[3],
-            self.L_edges[1]: self.F_edges[3],
-            self.L_edges[2]: self.D_edges[3],
-            self.L_edges[3]: self.B_edges[1],
-
-            self.F_edges[0]: self.U_edges[2],
-            self.F_edges[1]: self.R_edges[3],
-            self.F_edges[2]: self.D_edges[0],
-            self.F_edges[3]: self.L_edges[1],
-
-            self.R_edges[0]: self.U_edges[1],
-            self.R_edges[1]: self.B_edges[3],
-            self.R_edges[2]: self.D_edges[1],
-            self.R_edges[3]: self.F_edges[1],
-
-            self.B_edges[0]: self.U_edges[0],
-            self.B_edges[1]: self.L_edges[3],
-            self.B_edges[2]: self.D_edges[2],
-            self.B_edges[3]: self.R_edges[1],
-
-            self.D_edges[0]: self.F_edges[2],
-            self.D_edges[1]: self.R_edges[2],
-            self.D_edges[2]: self.B_edges[2],
-            self.D_edges[3]: self.L_edges[2],
-        }
-
-        self.adj_corners = {
-            self.U_corners[0]: [self.B_corners[1], self.L_corners[0]],
-            self.U_corners[1]: [self.R_corners[1], self.B_corners[0]],
-            self.U_corners[2]: [self.F_corners[1], self.R_corners[0]],
-            self.U_corners[3]: [self.L_corners[1], self.F_corners[0]],
-
-            self.L_corners[0]: [self.U_corners[0], self.B_corners[1]],
-            self.L_corners[1]: [self.F_corners[0], self.U_corners[3]],
-            self.L_corners[2]: [self.D_corners[0], self.F_corners[3]],
-            self.L_corners[3]: [self.B_corners[2], self.D_corners[3]],
-
-            self.F_corners[0]: [self.U_corners[3], self.L_corners[1]],
-            self.F_corners[1]: [self.R_corners[0], self.U_corners[2]],
-            self.F_corners[2]: [self.D_corners[1], self.R_corners[3]],
-            self.F_corners[3]: [self.L_corners[2], self.D_corners[0]],
-
-            self.R_corners[0]: [self.U_corners[2], self.F_corners[1]],
-            self.R_corners[1]: [self.B_corners[0], self.U_corners[1]],
-            self.R_corners[2]: [self.D_corners[2], self.B_corners[3]],
-            self.R_corners[3]: [self.F_corners[2], self.D_corners[1]],
-
-            self.B_corners[0]: [self.U_corners[1], self.R_corners[1]],
-            self.B_corners[1]: [self.L_corners[0], self.U_corners[0]],
-            self.B_corners[2]: [self.D_corners[3], self.L_corners[3]],
-            self.B_corners[3]: [self.R_corners[2], self.D_corners[2]],
-
-            self.D_corners[0]: [self.F_corners[3], self.L_corners[2]],
-            self.D_corners[1]: [self.R_corners[3], self.F_corners[2]],
-            self.D_corners[2]: [self.B_corners[3], self.R_corners[2]],
-            self.D_corners[3]: [self.L_corners[3], self.B_corners[2]],
-
-        }
+        self.u_adj_edges_index = [Edge.UP, Edge.UP, Edge.UP, Edge.UP]
+        self.l_adj_edges_index = [Edge.LEFT, Edge.LEFT, Edge.LEFT, Edge.RIGHT]
+        self.f_adj_edges_index = [Edge.DOWN, Edge.LEFT, Edge.UP, Edge.RIGHT]
+        self.r_adj_edges_index = [Edge.RIGHT, Edge.LEFT, Edge.RIGHT, Edge.RIGHT]
+        self.b_adj_edges_index = [Edge.UP, Edge.LEFT, Edge.DOWN, Edge.RIGHT]
+        self.d_adj_edges_index = [Edge.DOWN, Edge.DOWN, Edge.DOWN, Edge.DOWN]
 
         self.u_adj_edges = [self.B_edges, self.R_edges, self.F_edges, self.L_edges]
         self.r_adj_edges = [self.U_edges, self.B_edges, self.D_edges, self.F_edges]
@@ -164,6 +107,51 @@ class Cube:
         self.b_adj_edges = [self.U_edges, self.L_edges, self.D_edges, self.R_edges]
         self.d_adj_edges = [self.F_edges, self.R_edges, self.B_edges, self.L_edges]
 
+        all_edges = [self.U_edges, self.L_edges, self.F_edges,
+                     self.R_edges, self.B_edges, self.D_edges]
+        all_adj_edges = [self.u_adj_edges, self.l_adj_edges, self.f_adj_edges,
+                         self.r_adj_edges, self.b_adj_edges, self.d_adj_edges]
+        all_adj_edges_index = [self.u_adj_edges_index, self.l_adj_edges_index, self.f_adj_edges_index,
+                               self.r_adj_edges_index, self.b_adj_edges_index, self.d_adj_edges_index]
+
+        self.adj_edges = {}
+        for face, adjacents, adj_indexes in zip(all_edges, all_adj_edges, all_adj_edges_index):
+            for face_pos, adj, adj_index in zip(Edge, adjacents, adj_indexes):
+                self.adj_edges[face[face_pos]] = adj[adj_index]
+
+        self.adj_corners = {
+            self.U_corners[Corner.UPLEFT]: [self.B_corners[Corner.UPRIGHT], self.L_corners[Corner.UPLEFT]],
+            self.U_corners[Corner.UPRIGHT]: [self.R_corners[Corner.UPRIGHT], self.B_corners[Corner.UPLEFT]],
+            self.U_corners[Corner.DOWNRIGHT]: [self.F_corners[Corner.UPRIGHT], self.R_corners[Corner.UPLEFT]],
+            self.U_corners[Corner.DOWNLEFT]: [self.L_corners[Corner.UPRIGHT], self.F_corners[Corner.UPLEFT]],
+
+            self.L_corners[Corner.UPLEFT]: [self.U_corners[Corner.UPLEFT], self.B_corners[Corner.UPRIGHT]],
+            self.L_corners[Corner.UPRIGHT]: [self.F_corners[Corner.UPLEFT], self.U_corners[Corner.DOWNLEFT]],
+            self.L_corners[Corner.DOWNRIGHT]: [self.D_corners[Corner.UPLEFT], self.F_corners[Corner.DOWNLEFT]],
+            self.L_corners[Corner.DOWNLEFT]: [self.B_corners[Corner.DOWNRIGHT], self.D_corners[Corner.DOWNLEFT]],
+
+            self.F_corners[Corner.UPLEFT]: [self.U_corners[Corner.DOWNLEFT], self.L_corners[Corner.UPRIGHT]],
+            self.F_corners[Corner.UPRIGHT]: [self.R_corners[Corner.UPLEFT], self.U_corners[Corner.DOWNRIGHT]],
+            self.F_corners[Corner.DOWNRIGHT]: [self.D_corners[Corner.UPRIGHT], self.R_corners[Corner.DOWNLEFT]],
+            self.F_corners[Corner.DOWNLEFT]: [self.L_corners[Corner.DOWNRIGHT], self.D_corners[Corner.UPLEFT]],
+
+            self.R_corners[Corner.UPLEFT]: [self.U_corners[Corner.DOWNRIGHT], self.F_corners[Corner.UPRIGHT]],
+            self.R_corners[Corner.UPRIGHT]: [self.B_corners[Corner.UPLEFT], self.U_corners[Corner.UPRIGHT]],
+            self.R_corners[Corner.DOWNRIGHT]: [self.D_corners[Corner.DOWNRIGHT], self.B_corners[Corner.DOWNLEFT]],
+            self.R_corners[Corner.DOWNLEFT]: [self.F_corners[Corner.DOWNRIGHT], self.D_corners[Corner.UPRIGHT]],
+
+            self.B_corners[Corner.UPLEFT]: [self.U_corners[Corner.UPRIGHT], self.R_corners[Corner.UPRIGHT]],
+            self.B_corners[Corner.UPRIGHT]: [self.L_corners[Corner.UPLEFT], self.U_corners[Corner.UPLEFT]],
+            self.B_corners[Corner.DOWNRIGHT]: [self.D_corners[Corner.DOWNLEFT], self.L_corners[Corner.DOWNLEFT]],
+            self.B_corners[Corner.DOWNLEFT]: [self.R_corners[Corner.DOWNRIGHT], self.D_corners[Corner.DOWNRIGHT]],
+
+            self.D_corners[Corner.UPLEFT]: [self.F_corners[Corner.DOWNLEFT], self.L_corners[Corner.DOWNRIGHT]],
+            self.D_corners[Corner.UPRIGHT]: [self.R_corners[Corner.DOWNLEFT], self.F_corners[Corner.DOWNRIGHT]],
+            self.D_corners[Corner.DOWNRIGHT]: [self.B_corners[Corner.DOWNLEFT], self.R_corners[Corner.DOWNRIGHT]],
+            self.D_corners[Corner.DOWNLEFT]: [self.L_corners[Corner.DOWNLEFT], self.B_corners[Corner.DOWNRIGHT]],
+
+        }
+
         self.u_adj_corners = [self.B_corners, self.R_corners, self.F_corners, self.L_corners]
         self.r_adj_corners = [self.U_corners, self.B_corners, self.D_corners, self.F_corners]
         self.l_adj_corners = [self.U_corners, self.F_corners, self.D_corners, self.B_corners]
@@ -171,29 +159,28 @@ class Cube:
         self.b_adj_corners = [self.U_corners, self.L_corners, self.D_corners, self.R_corners]
         self.d_adj_corners = [self.F_corners, self.R_corners, self.B_corners, self.L_corners]
 
-        self.u_adj_edges_index = [0, 0, 0, 0]
-        self.r_adj_edges_index = [1, 3, 1, 1]
-        self.l_adj_edges_index = [3, 3, 3, 1]
-        self.f_adj_edges_index = [2, 3, 0, 1]
-        self.b_adj_edges_index = [0, 3, 2, 1]
-        self.d_adj_edges_index = [2, 2, 2, 2]
-
-        self.u_adj_corners_index = [(1, 0), (1, 0), (1, 0), (1, 0)]
-        self.r_adj_corners_index = [(2, 1), (0, 3), (2, 1), (2, 1)]
-        self.l_adj_corners_index = [(0, 3), (0, 3), (0, 3), (2, 1)]
-        self.f_adj_corners_index = [(3, 2), (0, 3), (1, 0), (2, 1)]
-        self.b_adj_corners_index = [(1, 0), (0, 3), (3, 2), (2, 1)]
-        self.d_adj_corners_index = [(3, 2), (3, 2), (3, 2), (3, 2)]
+        self.u_adj_corners_index = [(Corner.UPRIGHT, Corner.UPLEFT), (Corner.UPRIGHT, Corner.UPLEFT),
+                                    (Corner.UPRIGHT, Corner.UPLEFT), (Corner.UPRIGHT, Corner.UPLEFT)]
+        self.r_adj_corners_index = [(Corner.DOWNRIGHT, Corner.UPRIGHT), (Corner.UPLEFT, Corner.DOWNLEFT),
+                                    (Corner.DOWNRIGHT, Corner.UPRIGHT), (Corner.DOWNRIGHT, Corner.UPRIGHT)]
+        self.l_adj_corners_index = [(Corner.UPLEFT, Corner.DOWNLEFT), (Corner.UPLEFT, Corner.DOWNLEFT),
+                                    (Corner.UPLEFT, Corner.DOWNLEFT), (Corner.DOWNRIGHT, Corner.UPRIGHT)]
+        self.f_adj_corners_index = [(Corner.DOWNLEFT, Corner.DOWNRIGHT), (Corner.UPLEFT, Corner.DOWNLEFT),
+                                    (Corner.UPRIGHT, Corner.UPLEFT), (Corner.DOWNRIGHT, Corner.UPRIGHT)]
+        self.b_adj_corners_index = [(Corner.UPRIGHT, Corner.UPLEFT), (Corner.UPLEFT, Corner.DOWNLEFT),
+                                    (Corner.DOWNLEFT, Corner.DOWNRIGHT), (Corner.DOWNRIGHT, Corner.UPRIGHT)]
+        self.d_adj_corners_index = [(Corner.DOWNLEFT, Corner.DOWNRIGHT), (Corner.DOWNLEFT, Corner.DOWNRIGHT),
+                                    (Corner.DOWNLEFT, Corner.DOWNRIGHT), (Corner.DOWNLEFT, Corner.DOWNRIGHT)]
 
         # Starting from UF following L
-        self.m_edges_index = [2, 2, 2, 0]
-        self.m_adj_edges_index = [0, 0, 2, 0]
+        self.m_edges_index = [Edge.DOWN, Edge.DOWN, Edge.DOWN, Edge.UP]
+        self.m_adj_edges_index = [Edge.UP, Edge.UP, Edge.DOWN, Edge.UP]
         # Starting from UR following F
-        self.s_edges_index = [1, 2, 3, 0]
-        self.s_adj_edges_index = [0, 1, 2, 3]
+        self.s_edges_index = [Edge.RIGHT, Edge.DOWN, Edge.LEFT, Edge.UP]
+        self.s_adj_edges_index = [Edge.UP, Edge.RIGHT, Edge.DOWN, Edge.LEFT]
         # Starting from FR following D
-        self.e_edges_index = [1, 1, 1, 1]
-        self.e_adj_edges_index = [3, 3, 3, 3]
+        self.e_edges_index = [Edge.RIGHT, Edge.RIGHT, Edge.RIGHT, Edge.RIGHT]
+        self.e_adj_edges_index = [Edge.LEFT, Edge.LEFT, Edge.LEFT, Edge.LEFT]
 
         self.wide_moves = {
             'u': ("E", -1),
@@ -230,12 +217,12 @@ class Cube:
         if not self.has_parity:
             return
 
-        if parity_swap_edges == "UF-UR" or parity_swap_edges is None:
-            self.U_edges[1], self.U_edges[2] = self.U_edges[2], self.U_edges[1]
-            self.F_edges[0], self.R_edges[0] = self.R_edges[0], self.F_edges[0]
-        elif parity_swap_edges == "UL-UB":
-            self.U_edges[0], self.U_edges[3] = self.U_edges[3], self.U_edges[0]
-            self.B_edges[0], self.L_edges[0] = self.L_edges[0], self.B_edges[0]
+        if parity_swap_edges == "UF-UR" or parity_swap_edges == "UR-UF" or parity_swap_edges is None:
+            self.U_edges[Edge.RIGHT], self.U_edges[Edge.DOWN] = self.U_edges[Edge.DOWN], self.U_edges[Edge.RIGHT]
+            self.F_edges[Edge.UP], self.R_edges[Edge.UP] = self.R_edges[Edge.UP], self.F_edges[Edge.UP]
+        elif parity_swap_edges == "UL-UB" or parity_swap_edges == "UB-UL":
+            self.U_edges[Edge.UP], self.U_edges[Edge.LEFT] = self.U_edges[Edge.LEFT], self.U_edges[Edge.UP]
+            self.B_edges[Edge.UP], self.L_edges[Edge.UP] = self.L_edges[Edge.UP], self.B_edges[Edge.UP]
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -411,9 +398,9 @@ class Cube:
     def display_cube(self):
         for name, (e, c) in self.cube_faces().items():
             print('-------', name, '-------')
-            print(f'      {c[0]} {e[0]} {c[1]}     ')
-            print(f'      {e[3]}   {e[1]}      ')
-            print(f'      {c[3]} {e[2]} {c[2]}   \n')
+            print(f'      {c[Corner.UPLEFT]} {e[Edge.UP]} {c[Corner.UPRIGHT]}     ')
+            print(f'      {e[Edge.LEFT]}   {e[Edge.RIGHT]}      ')
+            print(f'      {c[Corner.DOWNLEFT]} {e[Edge.DOWN]} {c[Corner.DOWNRIGHT]}   \n')
 
     def scramble_cube(self, scramble=None):
         if scramble is None:
@@ -463,9 +450,9 @@ class Cube:
         cube_string = ""
         for face_name in self.kociemba_order:
             e, c = cube_faces.get(face_name)
-            face = c[0][0] + e[0][0] + c[1][0]
-            face += e[3][0] + face_name + e[1][0]
-            face += c[3][0] + e[2][0] + c[2][0]
+            face = c[Corner.UPLEFT][0] + e[Edge.UP][0] + c[Corner.UPRIGHT][0]
+            face += e[Edge.LEFT][0] + face_name + e[Edge.RIGHT][0]
+            face += c[Corner.DOWNLEFT][0] + e[Edge.DOWN][0] + c[Corner.DOWNRIGHT][0]
             cube_string += face
         return cube_string
 
@@ -492,14 +479,16 @@ if __name__ == "__main__":
     # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
     #
     # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    scram = "R U R' U' " * 5
-    cube = Cube(scram)
+    scram = "R U R' U' " * 6
+    # scram += "F4 B4 L4 R4 D4 R4 B4 U4 R4 L4 S4 E4 M4 S4 L4 F4 U4"
+
+    cube = Cube(scram, ls=letter_scheme)
     print(scram)
     # # print(c.adj_corners)
-    # cube.display_cube()
+    cube.display_cube()
     print(cube.get_faces_colors())
-    print(cube.solve(invert=False))
-    print(cube.solve(invert=True))
+    # print(cube.solve(invert=False))
+    # print(cube.solve(invert=True))
     # # # todo adapt for different versions of FDR ie FRD
     # # # c.drill_corner_sticker('FDR')
     # # # todo letter scheme for below is a dependency for working
