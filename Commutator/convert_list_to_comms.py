@@ -1,7 +1,6 @@
 import csv
 import json
 from collections import deque
-from typing import Dict
 
 from Cube import Cube
 # for i in a.split('\n'):
@@ -17,10 +16,11 @@ def _convert(buffer, file_name="max_comms"):
 
     with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
-        for row in reader:
-            row: Dict[str] = row
+        for num, row in enumerate(reader):
+            row: dict[str] = row
             second_target = row[top_corner_key]
-
+            if len(buffer) + num > 25:
+                break
             if len(second_target) > 3:
                 raise ValueError(buffer, second_target, "second_target is too long")
 
