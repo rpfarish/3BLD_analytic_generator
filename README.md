@@ -9,7 +9,7 @@
 The repo allows you to memo and dlin trace a scramble, generate scrambles for various alg sets (defined below) and get and compare comms from different sheets
 
 Alg sets:
-- Full floating trainer (both like Eli's and random state with cycle breaks)
+- Full floating trainer (both like [Eli's Buffer Trainer](https://elliottkobelansky.github.io/buffer-trainer/) and random state with cycle breaks)
 - Specific letter pairs in a random scramble
 - Twists
 - Flips
@@ -23,11 +23,11 @@ Please note that the letters on the buffers are not important, but each of them 
 
  It supports intelligent cycle breaking, memoing with alternate pseudoswaps, and the identification of specific cube states like 2-flips, 2-twists, 3-twists, and parity twists. Users can customize the lettering scheme and generate training scrambles based on specified algorithms or letter pairs for both edges and corners. The repository includes commands for memoizing the cube, generating training scrambles, managing letter schemes, drilling buffers, displaying commutators, and more. Note that some features are still a work in progress. The repository emphasizes functionality for blindfolded solving training.
 
-## Features:
+# Features:
 
-### Memo the cube
+## Memo the cube:
 
-Syntax: memo [scramble]
+WIP
 
 - to memorize the cube with these specific qualities: intelligent cycle breaking, memoing with alternate pseudoswaps,
   identifying: 2-flips, 2-twists, 3-twists, parity + twist, identifying floats, and trying to grade each of these
@@ -35,7 +35,7 @@ Syntax: memo [scramble]
   using some metric like regrips or total moves
 - customizable lettering scheme for people who don't use Speffz
 
-### Generate Training Scrambles
+## Generate Training Scrambles
       
 - Given a list of algs will generate random scrambles to drill those algs, and will print the alg if you forget it and
   keep track of how many and which ones it was
@@ -52,50 +52,46 @@ Syntax: memo [scramble]
 
 Most of this stuff is still wip.
 
-# 3BLD_analytic_generator
+## Get Comms from sheets
+- You can load in comms given some csv files or a spreadsheet and be able to compare side by side multiple peoples lists for full floating.
 
-Note: Please put all piece names in Singmaster notation e.g. UR or RDB except for when specifying args for drill sticker
+Note: Please put all piece names in Singmaster notation e.g. UR or RDB except for when specifying args for drill sticker (this may not be necessary anymore).
 
 # CMD Commands List:
 
-## Memo: `memo [scramble] [-l filename] [-s filename]`
-
+### Memo: `memo [scramble] [-l filename] [-s filename]`
+------------------------------------------------------------------------------------------------------------------------
 - **Description:** This command allows you to memo the cube and provides options for loading and saving scrambles. Note:
   does not support
   wide move scrambles
 
 - **Options:**
-    - [scramble]: The scramble to memo.
+    - scramble: The scramble to memo.
     - -l filename: Load scrambles from the FILENAME text file
     - -s filename: Save the SCRAMBLE to the FILENAME text file
 
 - **Usage Examples**:
     - Memo the scramble
-
       ```
       memo U B2 D L2 B2 D' L2 R2 D' R2 D' B D2 U F' L2 U R' D' L' U2
       ```
-
     - Memo scramble(s) from text file
-
       ```
         memo -l saved_scrambles.txt
       ```
-
     - Memo the scramble and append it to the text file
-
        ```
-       memo -s new_scramble.txt
+       memo U2 M' U2 M -s new_scramble.txt
        ```
 
-## Letter Scheme: `ls [-d] [-l] [-c]`
-
+### Letter Scheme: `ls [-d] [-l] [-c]`
+------------------------------------------------
 - **Description:** Manage letter scheme options.
 
 - **Options:**
     - -d: Dumps the current loaded letter scheme for the standard Singmaster notation
     - -l: Loads the letter scheme from settings.json
-    - -c prints the current letter scheme
+    - -c: prints the current letter scheme
 
 - **Usage Examples**:
     - Dump the letter scheme
@@ -108,16 +104,57 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
       ```
       ls -load
       ```
+    - Print the current letter scheme
 
-## Sticker:  `s | sticker`
+      ```
+      ls -cur
+      ```
 
-- **Description**: Drill stickers from default buffers.
+### Sticker:  `s | sticker [sticker] [-t e | c] [[-e] | [-c]] [-ex XY ...]`
+---------------------------------------------------------------------------
+- **Description**: Drill a sticker from default buffers or load pairs to drill from a text file which can be found in the drill_lists directory. Corner and edge pairs can only be drilled one at a time.
 
-## HELP: `help`
+- **Options:**
+    - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter must be put first.
+    - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous. 
+    - -edge: Loads letter pairs to drill from drill_list_edges.txt 
+    - -corner: Loads letter pairs to drill from drill_list_corners.txt 
+    - -exclude: Excludes letterpairs from being drilled and are entered one at a time with a space separating each of then. This parameter must be put last.
+    
 
+- **Usage Examples**:
+    - Drill the corner sticker N (RUB)
+
+      ```
+      sticker N -type corner
+      ```
+    - Drill the corner sticker RUB
+
+      ```
+      sticker RUB
+      ```
+    - Drill the edges from drill_list_edges.txt 
+
+      ```
+      sticker -e
+      ```
+    - Drill the edge sticker UR but exclude the cycles UR RD, UR LB, and UR LF 
+
+      ```
+      sticker UR -ex RD LB LF
+      ```
+    - Drill the edge sticker B (UR) but exclude the cycles BO, BH, and BF 
+
+      ```
+      sticker B -t e -ex O H F
+      ```
+
+
+### HELP: `help`
+--------------------------------------------
 - **Description:** Provides list of commands
 
-## Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
+### Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
 
 - **Description**: Drill buffer, specifying the buffer name, and handle options such as loading, random generation, and
   more. Note: all buffers can be saved to the same file
@@ -156,12 +193,12 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
 
 These examples demonstrate how to use the buffer command with various options.
 
-## Quit: `quit`
-
+### Quit: `quit`
+----------------------------------------------------------------------------------
 - **Description:** Exits the program when in the main terminal and quits the current operation when running a command
 
-## Comm: `comm [buffer] [pair | pairs...]`
-
+### Comm: `comm [buffer] [pair | pairs...]`
+----------------------------------------------------------------------------------
 - **Description:** Retrieve and display commutators.
 - **Options:**
     - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
@@ -180,42 +217,41 @@ These examples demonstrate how to use the buffer command with various options.
        comm -r UR
        ```
 
-    - Switch to buffer DR while in rapid mode:
+    - Switch buffer to DR while in rapid mode:
 
       ```
       comm -b DR
       ```
 
-## Reload: `reload`
+### Reload: `reload`
+----------------------------------------------------------------------------------
+### Time up: `timeup`
+----------------------------------------------------------------------------------
+- **Description:** Time since program started.
 
-## Time up: `timeup`
-
-## Alger: `alger [alg count]`
-
-## Cycle Break Float: `float [buffer]`
-
-## Twists: `twist [twist type]`
-
-### Options:
-
+### Alger: `alger [alg count]`
+----------------------------------------------------------------------------------
+### Cycle Break Float: `float [buffer]`
+----------------------------------------------------------------------------------
+### Twists: `twist [twist type]`
+----------------------------------------------------------------------------------
+- **Options:**
 - `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist
 
-## Random Buffer: `rb`
-
+### Random Buffer: `rb`
+----------------------------------------------------------------------------------
 - **Description:** Pick a random buffer from settings.json
 
-## LTCT: `ltct [ltct type]`
-
+### LTCT: `ltct [ltct type]`
+----------------------------------------------------------------------------------
 - **Description:** Drills specified LTCT algs
 
-### Options:
-
--
+- **Options:**
     - -s: Generates a full scramble with an ltct
     - -u: Adds all UU LTCT to be drilled
     - -ud: Adds some UD LTCT to be drilled
     - -def: Adds default LTCT: UU and some UD
 
-## Flips: `flip`
-
+### Flips: `flip`
+----------------------------------------------------------------------------------
 - **Description:** Drills all 2 flips
