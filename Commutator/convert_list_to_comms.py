@@ -19,7 +19,7 @@ def _convert(buffer, file_name="max_comms"):
         for num, row in enumerate(reader):
             row: dict[str] = row
             second_target = row[top_corner_key]
-            if len(buffer) + num > 25:
+            if len(buffer) + num > 24:
                 break
             if len(second_target) > 3:
                 raise ValueError(buffer, second_target, "second_target is too long")

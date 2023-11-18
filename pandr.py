@@ -1,3 +1,4 @@
+import csv
 import os
 import re
 
@@ -60,17 +61,52 @@ print("Full Floating is 16")
 
 for sheet_name, dataframe in dfs.items():
     dataframe.to_csv(f"comms/{file_name}/{sheet_name}.csv", index=False)
-#
-# for buffer in s.all_buffers_order:
-#     with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
-#         top_corner_key, *_ = next(csv.reader(csvfile))
-#
-#     with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
-#         reader = csv.DictReader(csvfile)
-#
-#         pprint(reader)
-#         for num, row in enumerate(reader):
-#             row: dict[str] = row
-#             second_target = row[top_corner_key]
-#             print(buffer, row)
-#         break
+
+pattern = r'^(U|D|R|L|F|B){2,3}'
+sticker_pattern = re.compile(pattern)
+
+
+def filter_buffer(cell) -> str:
+    # check if cell is a corner or edge buffer
+    print(cell)
+    if sticker_pattern.search(cell) is not None:
+        print(sticker_pattern, sticker_pattern.search(cell), sticker_pattern.search(cell).group())
+        return sticker_pattern.search(cell).group()
+    else:
+        print("Cell not parsed", cell)
+        return cell
+
+
+def parse_header(header):
+    return_header = [header[0]]
+    for head_index in range(1, len(header)):
+        return_header.append((filter_buffer(header[head_index])))
+    return return_header
+
+
+def parse_row(row):
+    row_index, *rest_of_row = row
+    row_index = filter_buffer(row_index)
+    return [row_index] + rest_of_row
+
+
+for buffer in s.all_buffers_order:
+    with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
+        top_corner_key, *_ = next(csv.reader(csvfile))
+
+    with (open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile,
+          open(f'comms/{file_name}/temp.csv', newline='', mode='w+') as temp_file
+          ):
+        reader = csv.reader(csvfile)
+        temp_writer = csv.writer(temp_file)
+        print(reader)
+        for row_num, row in enumerate(reader):
+            if len(buffer) + row_num > 24:
+                break
+            if row_num == 0:
+                temp_writer.writerow(parse_header(row))
+            else:
+                temp_writer.writerow(parse_row(row))
+
+    os.remove(f'comms/{file_name}/{buffer}.csv')
+    os.rename(f'comms/{file_name}/temp.csv', f'comms/{file_name}/{buffer}.csv')
