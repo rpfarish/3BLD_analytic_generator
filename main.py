@@ -10,7 +10,6 @@ from commands import (alger, cycle_break_float, drill_buffer, drill_ltct, drill_
 # todo how to ingest a new comm sheet esp full floating
 
 # todo use ! to repeat inputs
-# todo make help func
 
 
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
@@ -26,7 +25,7 @@ def main():
 
     last_args = ""
     last_mode = 1
-    intro = 'Welcome to the Letter Pair Finder. Type help or ? to list commands.'
+    intro = 'Welcome to the 3BLD Analytic Generator. Type help or ? to list commands.'
 
     start_time = time.time()
     print(intro)
