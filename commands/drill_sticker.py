@@ -9,22 +9,30 @@ def drill_sticker(args: list, buffers):
 -ex=<cycles to exclude(secondsticker)(must be last)>)
     """
     cycles_to_exclude = None
+    if '-' not in args[0]:
+        sticker, *args = args
+    else:
+        sticker = None
     if '-ex' in args:
         index = args.index('-ex')
+    elif '-exclude' in args:
+        index = args.index('-exclude')
+
+    if '-ex' in args or '-exclude' in args:
         cycles_to_exclude = set(args[index + 1:])
         letter_scheme = LetterScheme()
 
-        if '-c' in args:
+        if '-c' in args or '-corner' in args:
             cycles_to_exclude = {
                 ''.join(letter_scheme.convert_pair_to_pos_type(a.strip('\n').strip().upper(), 'corner')) for a in
                 cycles_to_exclude}
-        elif '-e' in args:
+        elif '-e' in args or '-edge' in args:
             cycles_to_exclude = {
                 ''.join(letter_scheme.convert_pair_to_pos_type(a.strip('\n').strip().upper(), 'edge')) for a in
                 cycles_to_exclude}
         else:
-            sticker, *args = args
-            if '-t' in args:
+
+            if '-t' in args or '-type' in args:
                 type_index = args.index('-t')
                 piece_type = args[type_index + 1]
                 piece_type = 'edge' if piece_type.startswith('e') else 'corner'
@@ -37,14 +45,12 @@ def drill_sticker(args: list, buffers):
                 cycles_to_exclude}
 
     letter_scheme = LetterScheme(use_default=True)
-    print(cycles_to_exclude)
     # todo specify some cycles you want to drill more than others
-    if '-e' in args:
+    if '-e' in args or '-edge' in args:
         with open("drill_lists/drill_list_edges.txt") as f:
             algs = f.readlines()
             letter_scheme = LetterScheme()
             algs = {''.join(letter_scheme.convert_pair_to_pos_type(a.strip('\n').strip(), 'edge')) for a in algs}
-            print(algs)
             Drill().drill_edge_sticker(
                 letter_scheme=letter_scheme,
                 sticker_to_drill=None,
@@ -53,12 +59,11 @@ def drill_sticker(args: list, buffers):
                 buffer=buffers['edge_buffer'],
             )
         return
-    if '-c' in args:
+    if '-c' in args or '-corner' in args:
         with open("drill_lists/drill_list_corners.txt") as f:
             algs = f.readlines()
             letter_scheme = LetterScheme()
             algs = {''.join(letter_scheme.convert_pair_to_pos_type(a.strip('\n').strip(), 'corner')) for a in algs}
-            print(algs)
             Drill().drill_corner_sticker(
                 sticker_to_drill=None,
                 algs=algs,
@@ -67,19 +72,17 @@ def drill_sticker(args: list, buffers):
             )
         return
 
-    sticker, *args = args
-
-    if '-t' in args:
+    if '-t' in args or '-type' in args:
         type_index = args.index('-t')
         piece_type = args[type_index + 1]
         piece_type = 'edge' if piece_type.startswith('e') else 'corner'
     else:
         piece_type = 'edge' if len(sticker) == 2 else 'corner'
 
-    if '-t' in args and len(sticker) == 1:
+    if ('-t' in args or '-type' in args) and len(sticker) == 1:
         scheme = LetterScheme()
         sticker = scheme.convert_to_pos_from_type(sticker.upper(), piece_type)
-    if '-t' not in args and len(sticker) == 1:
+    if ('-t' not in args or '-type' not in args) and len(sticker) == 1:
         print('piece type is ambiguous')
         return
     if sticker in buffers.values():

@@ -2,26 +2,35 @@
 
 ## Generates 3BLD specific scrambles to drill various algsets
 
+table of contents
+
 - Memo
 - Gen scrambles
 - Get comms
 
-The repo allows you to memo and dlin trace a scramble, generate scrambles for various alg sets (defined below) and get and compare comms from different sheets
+The repo allows you to memo and dlin trace a scramble, generate scrambles for various alg sets (defined below) and get
+and compare comms from different sheets
 
 Alg sets:
-- Full floating trainer (both like [Eli's Buffer Trainer](https://elliottkobelansky.github.io/buffer-trainer/) and random state with cycle breaks)
+
+- Full floating trainer (both like [Eli's Buffer Trainer](https://elliottkobelansky.github.io/buffer-trainer/) and
+  random state with cycle breaks)
 - Specific letter pairs in a random scramble
 - Twists
 - Flips
 - LTCT
-
 
 This also allows you to specify what cycles you would like to drill and
 generates a scramble with those specific letter pairs in it.
 These scrambles are random move, but not random state but should be good enough for training.
 Please note that the letters on the buffers are not important, but each of them need to be unique.
 
- It supports intelligent cycle breaking, memoing with alternate pseudoswaps, and the identification of specific cube states like 2-flips, 2-twists, 3-twists, and parity twists. Users can customize the lettering scheme and generate training scrambles based on specified algorithms or letter pairs for both edges and corners. The repository includes commands for memoizing the cube, generating training scrambles, managing letter schemes, drilling buffers, displaying commutators, and more. Note that some features are still a work in progress. The repository emphasizes functionality for blindfolded solving training.
+It supports intelligent cycle breaking, memoing with alternate pseudoswaps, and the identification of specific cube
+states like 2-flips, 2-twists, 3-twists, and parity twists. Users can customize the lettering scheme and generate
+training scrambles based on specified algorithms or letter pairs for both edges and corners. The repository includes
+commands for memoizing the cube, generating training scrambles, managing letter schemes, drilling buffers, displaying
+commutators, and more. Note that some features are still a work in progress. The repository emphasizes functionality for
+blindfolded solving training.
 
 # Features:
 
@@ -36,7 +45,7 @@ WIP
 - customizable lettering scheme for people who don't use Speffz
 
 ## Generate Training Scrambles
-      
+
 - Given a list of algs will generate random scrambles to drill those algs, and will print the alg if you forget it and
   keep track of how many and which ones it was
 - Given a list of letter pairs (for either edges or corners) will generate random scrambles that have one or more of
@@ -53,14 +62,18 @@ WIP
 Most of this stuff is still wip.
 
 ## Get Comms from sheets
-- You can load in comms given some csv files or a spreadsheet and be able to compare side by side multiple peoples lists for full floating.
 
-Note: Please put all piece names in Singmaster notation e.g. UR or RDB except for when specifying args for drill sticker (this may not be necessary anymore).
+- You can load in comms given some csv files or a spreadsheet and be able to compare side by side multiple peoples lists
+  for full floating.
+
+Note: Please put all piece names in Singmaster notation e.g. UR or RDB except for when specifying args for drill
+sticker (this may not be necessary anymore).
 
 # CMD Commands List:
 
 ### Memo: `memo [scramble] [-l filename] [-s filename]`
 ------------------------------------------------------------------------------------------------------------------------
+
 - **Description:** This command allows you to memo the cube and provides options for loading and saving scrambles. Note:
   does not support
   wide move scrambles
@@ -86,6 +99,7 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
 
 ### Letter Scheme: `ls [-d] [-l] [-c]`
 ------------------------------------------------
+
 - **Description:** Manage letter scheme options.
 
 - **Options:**
@@ -112,15 +126,19 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
 
 ### Sticker:  `s | sticker [sticker] [-t e | c] [[-e] | [-c]] [-ex XY ...]`
 ---------------------------------------------------------------------------
-- **Description**: Drill a sticker from default buffers or load pairs to drill from a text file which can be found in the drill_lists directory. Corner and edge pairs can only be drilled one at a time.
+
+- **Description**: Drill a sticker from default buffers or load pairs to drill from a text file which can be found in
+  the drill_lists directory. Corner and edge pairs can only be drilled one at a time.
 
 - **Options:**
-    - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter must be put first.
-    - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous. 
-    - -edge: Loads letter pairs to drill from drill_list_edges.txt 
-    - -corner: Loads letter pairs to drill from drill_list_corners.txt 
-    - -exclude: Excludes letterpairs from being drilled and are entered one at a time with a space separating each of then. This parameter must be put last.
-    
+    - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter
+      must be put first.
+    - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous.
+    - -edge: Loads letter pairs to drill from drill_list_edges.txt
+    - -corner: Loads letter pairs to drill from drill_list_corners.txt
+    - -exclude: Excludes letterpairs from being drilled and are entered one at a time with a space separating each of
+      then. This parameter must be put last.
+
 
 - **Usage Examples**:
     - Drill the corner sticker N (RUB)
@@ -133,25 +151,25 @@ Note: Please put all piece names in Singmaster notation e.g. UR or RDB except fo
       ```
       sticker RUB
       ```
-    - Drill the edges from drill_list_edges.txt 
+  - Drill the edges from drill_list_edges.txt
 
       ```
       sticker -e
       ```
-    - Drill the edge sticker UR but exclude the cycles UR RD, UR LB, and UR LF 
+  - Drill the edge sticker UR but exclude the cycles UR RD, UR LB, and UR LF
 
       ```
       sticker UR -ex RD LB LF
       ```
-    - Drill the edge sticker B (UR) but exclude the cycles BO, BH, and BF 
+  - Drill the edge sticker B (UR) but exclude the cycles BO, BH, and BF
 
       ```
       sticker B -t e -ex O H F
       ```
 
-
 ### HELP: `help`
 --------------------------------------------
+
 - **Description:** Provides list of commands
 
 ### Buffer: `buffer [buffer name] [-l optional <name=filename>] [-r]`
@@ -195,10 +213,12 @@ These examples demonstrate how to use the buffer command with various options.
 
 ### Quit: `quit`
 ----------------------------------------------------------------------------------
+
 - **Description:** Exits the program when in the main terminal and quits the current operation when running a command
 
 ### Comm: `comm [buffer] [pair | pairs...]`
 ----------------------------------------------------------------------------------
+
 - **Description:** Retrieve and display commutators.
 - **Options:**
     - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
@@ -227,6 +247,7 @@ These examples demonstrate how to use the buffer command with various options.
 ----------------------------------------------------------------------------------
 ### Time up: `timeup`
 ----------------------------------------------------------------------------------
+
 - **Description:** Time since program started.
 
 ### Alger: `alger [alg count]`
@@ -235,15 +256,18 @@ These examples demonstrate how to use the buffer command with various options.
 ----------------------------------------------------------------------------------
 ### Twists: `twist [twist type]`
 ----------------------------------------------------------------------------------
+
 - **Options:**
 - `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist
 
 ### Random Buffer: `rb`
 ----------------------------------------------------------------------------------
+
 - **Description:** Pick a random buffer from settings.json
 
 ### LTCT: `ltct [ltct type]`
 ----------------------------------------------------------------------------------
+
 - **Description:** Drills specified LTCT algs
 
 - **Options:**
@@ -254,4 +278,5 @@ These examples demonstrate how to use the buffer command with various options.
 
 ### Flips: `flip`
 ----------------------------------------------------------------------------------
+
 - **Description:** Drills all 2 flips

@@ -83,7 +83,7 @@ def main():
             case "b" | "buff" | "buffer":
                 last_mode = mode
                 last_args = args
-                # todo what if I wanted to use this like eil's trainer
+                # todo what if I wanted to use this like eil's trainer (with UB UFL -r)
                 if not args:
                     print("Syntax: <buffer> [-l --Load]")
                     continue
@@ -149,6 +149,7 @@ def main():
     # todo scramble gen for corners
     # todo output display class
     # todo add more params
+    # todo add links to other alg/buffer trainers
 
 
 if __name__ == "__main__":

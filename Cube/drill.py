@@ -129,9 +129,7 @@ class Drill:
                              letter_scheme=None, buffer=None):
 
         def remove_piece(target_list, piece, ltr_scheme):
-            print(Cube(ls=ltr_scheme).adj_corners)
             piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
-            print(target_list, piece)
             target_list.remove(piece)
             target_list.remove(piece_adj1)
             target_list.remove(piece_adj2)
@@ -157,21 +155,18 @@ class Drill:
         if algs is not None:
             algs_to_drill = algs
         else:
-            print(letter_scheme)
-            print(sticker_to_drill)
             algs_to_drill = generate_drill_list(letter_scheme, buffer, sticker_to_drill)
-
         if cycles_to_exclude is not None:
             algs_to_drill -= cycles_to_exclude
 
         # fixme drill just one sticker with s XY -onlypairIwanttodrill
         # algs_to_drill = {"NS"}
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
-        print(type(alg_freq_dist))
         print('Running...')
         count = 2
         inc_amt = 2
-
+        number = 0
+        len_algs_to_drill = len(algs_to_drill)
         while algs_to_drill:
             scramble = get_scramble.get_scramble()
             cube = Memo(scramble, ls=letter_scheme)
@@ -196,6 +191,16 @@ class Drill:
             alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
 
             if algs_to_drill.intersection(no_cycle_break_corner_memo):
+                number += 1
+                print(f"Scramble {number}/{len_algs_to_drill}:", scramble)
+                # todo make it so if you're no_repeat then allow to repeat the letter pairs
+                response = input('Enter "r" to repeat letter pairs: ')
+                if response != 'r':
+                    algs_to_drill = algs_to_drill.difference(alg_to_drill)
+                print()
+                if response == 'q' or response == 'quit':
+                    return
+
                 alg_to_drill = alg_to_drill.pop()
                 algs_to_drill -= algs_to_drill.intersection(no_cycle_break_corner_memo)
                 # check if freq is < count and if so continue
@@ -205,9 +210,6 @@ class Drill:
                     count += inc_amt
                 else:
                     continue
-
-                print(scramble)
-                input()
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(self.cube_memo.adj_edges, edge_buffer)
@@ -285,7 +287,8 @@ class Drill:
                     drill_list_json[edge_buffer] = list(all_edges - exclude_from_memo)
                     json.dump(drill_list_json, f, indent=4)
 
-                if input() == 'quit':
+                response = input().lower()
+                if response.startswith('q'):
                     return
 
                 if translate_memo:
@@ -362,34 +365,35 @@ class Drill:
                     drill_list_json[corner_buffer] = list(all_corners - exclude_from_memo)
                     json.dump(drill_list_json, f, indent=4)
 
-                if input() == 'quit':
+                response = input().lower()
+                if response.startswith('q'):
                     return
 
-                print("Memo:", ', '.join(
-                    list(convert_letterpairs(memo.split(), direction="loc_to_letter", piece_type="corners"))))
-                print()
-            comms = []
-            for pair, pair_letters in zip(memo.split(),
-                                          list(convert_letterpairs(memo.split(), direction="loc_to_letter",
-                                                                   piece_type="corners", return_type='list'))):
-                exclude_from_memo.add(pair)
-                a, b = pair[:3], pair[3:]
-                comm = file_comms[corner_buffer][a][b]
-                if not comm:
-                    comm = COMMS[corner_buffer][a][b]
-                comms.append(comm)
-                if not return_list:
-                    print(f"{pair_letters}:", comm)
-
-            scrams[num] = [scramble, memo, comms]
-
-            num += 1
-
-            print("-" * 25)
-
+            print("Memo:", ', '.join(
+                list(convert_letterpairs(memo.split(), direction="loc_to_letter", piece_type="corners"))))
+            print()
+        comms = []
+        for pair, pair_letters in zip(memo.split(),
+                                      list(convert_letterpairs(memo.split(), direction="loc_to_letter",
+                                                               piece_type="corners", return_type='list'))):
+            exclude_from_memo.add(pair)
+            a, b = pair[:3], pair[3:]
+            comm = file_comms[corner_buffer][a][b]
+            if not comm:
+                comm = COMMS[corner_buffer][a][b]
+            comms.append(comm)
             if not return_list:
-                if input() == 'quit':
-                    return
+                print(f"{pair_letters}:", comm)
+
+        scrams[num] = [scramble, memo, comms]
+
+        num += 1
+
+        print("-" * 25)
+
+        if not return_list:
+            if input() == 'quit':
+                return
 
         print("Finished")
         with open(f"cache/drill_save.json", "r+") as f:
@@ -434,7 +438,6 @@ class Drill:
 
     def generate_random_corner_memo(self, corners: set, corner_buffer=None, exclude_from_memo: set = None,
                                     translate_memo=False, random_pairs=False):
-
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
         corner_buffer = self.cube_memo.default_corner_buffer if corner_buffer is None else corner_buffer
         memo = []
@@ -478,7 +481,6 @@ class Drill:
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
 
         def remove_piece(target_list, piece, ltr_scheme):
-            print(Cube(ls=ltr_scheme).adj_edges)
             piece_adj1 = Cube(ls=ltr_scheme).adj_edges[piece]
             target_list.remove(piece)
             target_list.remove(piece_adj1)
@@ -513,7 +515,6 @@ class Drill:
         # todo optionally inject list of algs to drill
         # algs_to_drill = {'DBDR'}
 
-        print("algs to drill", algs_to_drill)
         number = 0
         max_wait_time = 20
         if cycles_to_exclude is not None:
@@ -845,7 +846,6 @@ class Drill:
         self.drill_algs(algs)
 
     def drill_algs(self, algs):
-
         algs_help_num = 0
         algs_help = []
 
