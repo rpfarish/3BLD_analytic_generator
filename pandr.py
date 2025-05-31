@@ -8,8 +8,8 @@ from Settings.settings import Settings
 
 s = Settings()
 all_buffers = s.all_buffers_order
-edge_buffers = s.buffer_order['edges']
-corner_buffers = s.buffer_order['corners']
+edge_buffers = s.buffer_order["edges"]
+corner_buffers = s.buffer_order["corners"]
 print(corner_buffers)
 print(len(corner_buffers))
 corners = "|".join(corner_buffers)
@@ -28,18 +28,18 @@ edges_pattern0 = re.compile(to_compile0)
 edges_pattern1 = re.compile(to_compile1)
 edges_pattern2 = re.compile(to_compile2)
 
-pattern2 = re.compile(r'^(U|D|R|L|F|B){2,3}')
-file_name = 'Max Hilliard 3BLD'
-xl_file = pandas.ExcelFile(f'Spreadsheets/{file_name}.xlsx')
+pattern2 = re.compile(r"^(U|D|R|L|F|B){2,3}")
+file_name = "Max_Hilliard_3BLD"
+xl_file = pandas.ExcelFile(f"Spreadsheets/{file_name}.xlsx")
 
 dfs = {}
 
 for sheet_name in xl_file.sheet_names:
     if pattern2.search(sheet_name) is None:
         print(sheet_name)
-        print('thirds', pattern2.search(sheet_name))
+        print("thirds", pattern2.search(sheet_name))
         continue
-    if sheet_name == 'UF':
+    if sheet_name == "UF":
         print(corners_pattern.search(sheet_name))
         print(edges_pattern0.search(sheet_name))
     if corners_pattern.search(sheet_name):
@@ -52,7 +52,7 @@ for sheet_name in xl_file.sheet_names:
         data_frame = xl_file.parse(sheet_name)
         dfs[match.group()] = data_frame
 
-new_path = f'comms/{file_name}'
+new_path = f"comms/{file_name}"
 if not os.path.exists(new_path):
     os.makedirs(new_path)
 
@@ -62,7 +62,7 @@ print("Full Floating is 16")
 for sheet_name, dataframe in dfs.items():
     dataframe.to_csv(f"comms/{file_name}/{sheet_name}.csv", index=False)
 
-pattern = r'^(U|D|R|L|F|B){2,3}'
+pattern = r"^(U|D|R|L|F|B){2,3}"
 sticker_pattern = re.compile(pattern)
 
 
@@ -70,7 +70,11 @@ def filter_buffer(cell) -> str:
     # check if cell is a corner or edge buffer
     print(cell)
     if sticker_pattern.search(cell) is not None:
-        print(sticker_pattern, sticker_pattern.search(cell), sticker_pattern.search(cell).group())
+        print(
+            sticker_pattern,
+            sticker_pattern.search(cell),
+            sticker_pattern.search(cell).group(),
+        )
         return sticker_pattern.search(cell).group()
     else:
         print("Cell not parsed", cell)
@@ -87,16 +91,18 @@ def parse_header(header):
 def parse_row(row):
     row_index, *rest_of_row = row
     row_index = filter_buffer(row_index)
+    rest_of_row = [i.strip() for i in rest_of_row]
     return [row_index] + rest_of_row
 
 
 for buffer in s.all_buffers_order:
-    with open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile:
+    with open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile:
         top_corner_key, *_ = next(csv.reader(csvfile))
 
-    with (open(f'comms/{file_name}/{buffer}.csv', newline='') as csvfile,
-          open(f'comms/{file_name}/temp.csv', newline='', mode='w+') as temp_file
-          ):
+    with (
+        open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile,
+        open(f"comms/{file_name}/temp.csv", newline="", mode="w+") as temp_file,
+    ):
         reader = csv.reader(csvfile)
         temp_writer = csv.writer(temp_file)
         print(reader)
@@ -108,5 +114,40 @@ for buffer in s.all_buffers_order:
             else:
                 temp_writer.writerow(parse_row(row))
 
-    os.remove(f'comms/{file_name}/{buffer}.csv')
-    os.rename(f'comms/{file_name}/temp.csv', f'comms/{file_name}/{buffer}.csv')
+    os.remove(f"comms/{file_name}/{buffer}.csv")
+    os.rename(f"comms/{file_name}/temp.csv", f"comms/{file_name}/{buffer}.csv")
+
+
+def find_diference_csv():
+    new_path = f"comms/diff"
+    if not os.path.exists(new_path):
+        os.makedirs(new_path)
+
+    for buffer in s.all_buffers_order:
+        with (
+            open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile,
+            open(f"comms/max_comms/{buffer}.csv", newline="") as csvfile2,
+        ):
+
+            fileone = csvfile.readlines()
+            filetwo = csvfile2.readlines()
+            if fileone == filetwo:
+                print(buffer, "same")
+            else:
+                print(buffer, "different")
+
+                with open(f"comms/diff/{buffer}.csv", mode="w+") as outFile:
+                    for line1, line2 in zip(fileone, filetwo):
+                        if line2 not in fileone:
+                            print("File new:")
+                            print(line1)
+                            print("File old:")
+                            print(line2)
+                            outFile.writelines(
+                                [
+                                    "File new:\n",
+                                    line1,
+                                    "\nFile old:\n",
+                                    line2,
+                                ]
+                            )

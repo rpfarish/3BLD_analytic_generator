@@ -5,6 +5,7 @@ def get_turn_parameters(move, pattern, pattern2, pattern3):
     face_turn = re.search(pattern, move)
 
     if not face_turn:
+        print(pattern, move)
         raise Exception
 
     face_turn = face_turn.group()
@@ -21,7 +22,7 @@ def get_turn_parameters(move, pattern, pattern2, pattern3):
 def invert_solution(scramble):
     if not scramble:
         return ""
-    pattern = r"[UDFBRLSMEudfbrl]([Ww]?)"
+    pattern = r"[UDFBRLSMEudfbrlxyz]([Ww]?)"
     pattern2 = r"\d+"
     pattern3 = r"\'"
     scramble = scramble.strip().split()
@@ -30,16 +31,14 @@ def invert_solution(scramble):
         if not move:
             continue
 
-        face_turn, quarter_turns, is_prime = get_turn_parameters(move, pattern, pattern2, pattern3)
+        face_turn, quarter_turns, is_prime = get_turn_parameters(
+            move, pattern, pattern2, pattern3
+        )
         inverse_turns = (4 - (quarter_turns * is_prime)) % 4
         if not inverse_turns:
             continue
 
-        turn_map = {
-            1: "",
-            2: "2",
-            3: "'"
-        }
+        turn_map = {1: "", 2: "2", 3: "'"}
 
         inv_scram.append(face_turn + turn_map[inverse_turns])
     return " ".join(inv_scram)

@@ -1,10 +1,26 @@
+import os
 import time
 
+from comms.comms import COMMS as DEFAULT_COMMS
 from Cube import Drill
 from Settings.settings import Settings
-from commands import (alger, cycle_break_float, drill_buffer, drill_ltct, drill_sticker, drill_twists, drill_two_flips,
-                      get_comm_loop, get_help, get_query, get_rand_buff, load_comms, memo_cube, set_letter_scheme,
-                      )
+from Spreadsheets import ingest_spreadsheet
+from commands import (
+    alger,
+    cycle_break_float,
+    drill_buffer,
+    drill_ltct,
+    drill_sticker,
+    drill_twists,
+    drill_two_flips,
+    get_comm_loop,
+    get_help,
+    get_query,
+    get_rand_buff,
+    load_comms,
+    memo_cube,
+    set_letter_scheme,
+)
 
 
 # todo how to ingest a new comm sheet esp full floating
@@ -15,17 +31,39 @@ from commands import (alger, cycle_break_float, drill_buffer, drill_ltct, drill_
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
 
 
+def check_comm_sheets_exist(path) -> bool:
+    return os.path.isfile(path)
+
+
 def main():
     # todo add settings to readme
 
     settings = Settings()
+    # todo add current loadable buffers json file to each folder in /comms
+    # todo make this loop over the .csv files in the folder instead of in settings?
+    for i, comm_file_name in enumerate(settings.comm_files.copy()):
+        if not check_comm_sheets_exist(f"comms/{comm_file_name}/{comm_file_name}.json"):
+            response = input(
+                f"Do you want to import {comm_file_name} ? (y | n): "
+            ).lower()
+            if response.startswith("y"):
+                ingest_spreadsheet(f"{comm_file_name}", settings)
+            else:
+                settings.comm_files.pop(i)
+    # check file_comms usage and switch some of them to default comms which I haven't made yet
+    file_comms_list = []
+    for comm_file in settings.comm_files:
+        file_comms = file_comms_list.append(
+            load_comms(settings.all_buffers_order, file_name=comm_file)
+        )
 
-    file_comms = load_comms(settings.all_buffers_order, file_name=settings.comm_file_name)
-    eli_comms = load_comms(settings.all_buffers_order, file_name='eli_comms')
+    eli_comms = (
+        DEFAULT_COMMS  # load_comms(settings.all_buffers_order, file_name='eli_comms')
+    )
 
     last_args = ""
     last_mode = 1
-    intro = 'Welcome to the 3BLD Analytic Generator. Type help or ? to list commands.'
+    intro = "Welcome to the 3BLD Analytic Generator. Type help or ? to list commands."
 
     start_time = time.time()
     print(intro)
@@ -35,13 +73,13 @@ def main():
 
         # todo capitalization
 
-        if mode == '!r' or mode == "!":
+        if mode == "!r" or mode == "!":
             mode = last_mode
             args = last_args
             # todo set this
 
         match mode:
-            case 'h' | 'help':
+            case "h" | "help":
                 get_help()
 
             case "m" | "memo":
@@ -50,8 +88,11 @@ def main():
                     continue
                     # todo buffer swap
                 memo_cube(
-                    args, settings.letter_scheme, settings.buffers, settings.parity_swap_edges,
-                    settings.buffer_order
+                    args,
+                    settings.letter_scheme,
+                    settings.buffers,
+                    settings.parity_swap_edges,
+                    settings.buffer_order,
                 )
 
             case "ls" | "letterscheme":
@@ -63,13 +104,13 @@ def main():
             # only ones left
             case "a" | "algs":
                 if not args:
-                    print('enter algs to drill separated by a comma')
-                    print('and the alg must start and end in the same orientation')
+                    print("enter algs to drill separated by a comma")
+                    print("and the alg must start and end in the same orientation")
                     continue
                 last_mode = args[0]
                 print(args)
                 args = "".join(args)
-                Drill().drill_algs(args.split(','))
+                Drill().drill_algs(args.split(","))
 
             # do these two auto convert
             # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>,
@@ -90,24 +131,33 @@ def main():
                 buffer, *args = args
                 buffer = buffer.upper()
                 filename = "cache/drill_save.json"
+                # todo use default list? or maybe not if buffer list is incompatible
+                # use default comms at all if buffers are super different?
                 drill_buffer(args, filename, buffer, settings.buffer_order, file_comms)
 
-            case 'q' | 'quit' | 'exit':
+            case "q" | "quit" | "exit":
                 quit()
 
-            case "c" | 'comm':
+            case "c" | "comm":
+                # todo option to input in using letterscheme but output pos notation
                 if not args:
                     print("e.g. comm UF AB -e")
                     continue
-                get_comm_loop(args, file_comms, eli_comms, settings.comm_file_name, settings.letter_scheme)
+                get_comm_loop(
+                    args,
+                    file_comms_list,
+                    eli_comms,
+                    settings.comm_files,
+                    settings.letter_scheme,
+                )
 
-            case 'reload':
+            case "reload":
                 settings.reload()
 
-            case 'timeup' | 'time':
+            case "timeup" | "time":
                 print(time.time() - start_time)
 
-            case 'alger':
+            case "alger":
                 if not args:
                     print(alger.__doc__)
                     continue

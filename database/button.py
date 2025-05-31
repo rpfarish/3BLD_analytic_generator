@@ -63,11 +63,27 @@ class Button:
     :param obj_li: list of strings to be cycled in the cycle_text method
 
     """
+
     buttons = deque([])  # registrar
 
-    def __init__(self, win, color: tuple, x, y, width, height, win_w: int, win_h: int, text: str,
-                 font_size: int, button_value: any = None, text_color: tuple = None, font: str = None,
-                 obj_li: list = None, cycle_values: list = None):
+    def __init__(
+        self,
+        win,
+        color: tuple,
+        x,
+        y,
+        width,
+        height,
+        win_w: int,
+        win_h: int,
+        text: str,
+        font_size: int,
+        button_value: any = None,
+        text_color: tuple = None,
+        font: str = None,
+        obj_li: list = None,
+        cycle_values: list = None,
+    ):
         assert isinstance(win, pygame.Surface)
         self.__class__.buttons.append(self)
         self.Win = win
@@ -91,7 +107,7 @@ class Button:
         self.text_cycle_len = 0
         self._click_lock = False
         # Change obj_li into a dict
-        self.obj_li = [''] if obj_li is None else obj_li
+        self.obj_li = [""] if obj_li is None else obj_li
         self.cycle_values = [0] if cycle_values is None else cycle_values
 
     @classmethod
@@ -116,11 +132,20 @@ class Button:
         """
         draws the button rect and then the text centered over it
         """
-        pygame.draw.rect(self.Win, self.color, (self.x, self.y, self.width, self.height))
-        self.Win.blit(self.text_label, ((self.width // 2) + self.x - self.text_label.get_width() // 2,
-                                        (self.height // 2) + self.y - self.text_label.get_height() // 2))
+        pygame.draw.rect(
+            self.Win, self.color, (self.x, self.y, self.width, self.height)
+        )
+        self.Win.blit(
+            self.text_label,
+            (
+                (self.width // 2) + self.x - self.text_label.get_width() // 2,
+                (self.height // 2) + self.y - self.text_label.get_height() // 2,
+            ),
+        )
 
-    def draw_resize(self, width: int, height: int, x_offset: float = 0, y_offset: float = 0) -> None:
+    def draw_resize(
+        self, width: int, height: int, x_offset: float = 0, y_offset: float = 0
+    ) -> None:
         """
 
         :param width:
@@ -130,12 +155,22 @@ class Button:
         """
         self.x = width // 2 - self.width // 2 + int(x_offset * width)
         self.y = height // 2 - self.height // 2 + int(y_offset * height)
-        pygame.draw.rect(self.Win, self.color, (self.x, self.y, self.width, self.height))
-        self.Win.blit(self.text_label, ((self.width // 2) + self.x - self.text_label.get_width() // 2,
-                                        (self.height // 2) + self.y - self.text_label.get_height() // 2))
+        pygame.draw.rect(
+            self.Win, self.color, (self.x, self.y, self.width, self.height)
+        )
+        self.Win.blit(
+            self.text_label,
+            (
+                (self.width // 2) + self.x - self.text_label.get_width() // 2,
+                (self.height // 2) + self.y - self.text_label.get_height() // 2,
+            ),
+        )
 
     def _hover(self, mouse: tuple) -> bool:
-        if self.x < mouse[0] < self.x + self.width and self.y < mouse[1] < self.y + self.height:
+        if (
+            self.x < mouse[0] < self.x + self.width
+            and self.y < mouse[1] < self.y + self.height
+        ):
             self.color = medium_gray
             return True
         else:
@@ -180,7 +215,7 @@ class Button:
         :param speed:
         """
         if not self.cycle_values:
-            print('cycle_values is empty')
+            print("cycle_values is empty")
             raise ValueError
         for num, i in enumerate(self.cycle_values):
             if speed == i:
@@ -210,8 +245,15 @@ class Button:
                 self.timer = 0
         self.timer += 1
 
-    def alt_text_state(self, click: bool, text: str, color: tuple, size: int, alt_text: str,
-                       alt_text_size: int) -> None:
+    def alt_text_state(
+        self,
+        click: bool,
+        text: str,
+        color: tuple,
+        size: int,
+        alt_text: str,
+        alt_text_size: int,
+    ) -> None:
         """
         MUST go after handle_mouse/update_all_buttons
         :param click:

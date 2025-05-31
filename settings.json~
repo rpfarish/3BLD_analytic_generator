@@ -1,0 +1,83 @@
+{
+  "letter_scheme": {
+    "UB": "A",
+    "UR": "B",
+    "UF": "U",
+    "UL": "D",
+    "LU": "E",
+    "LF": "F",
+    "LD": "G",
+    "LB": "H",
+    "FU": "K",
+    "FR": "J",
+    "FD": "I",
+    "FL": "L",
+    "RU": "M",
+    "RB": "N",
+    "RD": "O",
+    "RF": "P",
+    "BU": "Z",
+    "BL": "R",
+    "BD": "S",
+    "BR": "T",
+    "DF": "C",
+    "DR": "V",
+    "DB": "W",
+    "DL": "X",
+    "UBL": "A",
+    "UBR": "B",
+    "UFR": "U",
+    "UFL": "D",
+    "LUB": "J",
+    "LUF": "F",
+    "LDF": "G",
+    "LDB": "H",
+    "FUL": "E",
+    "FUR": "I",
+    "FDR": "K",
+    "FDL": "L",
+    "RUF": "X",
+    "RUB": "N",
+    "RDB": "O",
+    "RDF": "P",
+    "BUR": "R",
+    "BUL": "M",
+    "BDL": "S",
+    "BDR": "T",
+    "DFL": "C",
+    "DFR": "V",
+    "DBR": "W",
+    "DBL": "Z"
+  },
+  "buffers": {
+    "edge_buffer": "UF",
+    "corner_buffer": "UFR"
+  },
+  "buffer_order": {
+    "edges": [
+      "UF",
+      "UB",
+      "UR",
+      "UL",
+      "DF",
+      "DB",
+      "FR",
+      "FL",
+      "DR",
+      "DL"
+    ],
+    "corners": [
+      "UFR",
+      "UBR",
+      "UBL",
+      "UFL",
+      "RDF",
+      "RDB"
+    ]
+  },
+  "comm_files": [
+    "Max Hilliard 3BLD",
+    "Elliott Full Floating + More.xlsx"
+  ],
+  "parity_swap_edges": "UF-UR"
+}

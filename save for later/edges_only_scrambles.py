@@ -8,14 +8,14 @@ from Scramble.get_scramble import get_scramble
 
 def url_encode(s):
     """:s scramble"""
-    s = s.split(' ')
+    s = s.split(" ")
     encoded_url = []
     for move in s:
         if move.endswith("'"):
             encoded_url.append(move.replace("'", "-") + "_")
         else:
             encoded_url.append(move + "_")
-    return ''.join(encoded_url)
+    return "".join(encoded_url)
 
 
 number = 1
@@ -25,9 +25,9 @@ last_scramble = scramble
 c = Cube(scramble)
 
 has_parity = c.has_parity
-print(number, scramble, "Parity" * has_parity, end='')
+print(number, scramble, "Parity" * has_parity, end="")
 number += 1
-u = ''
+u = ""
 
 while True:
     last_scramble = scramble
@@ -35,11 +35,11 @@ while True:
     c = Cube(scramble)
 
     has_parity = c.has_parity
-    if input() == 'y':
+    if input() == "y":
         url = "https://alg.cubing.net/?setup=" + url_encode(last_scramble)
         print(url)
         open_new_tab(url)
-    print(number, scramble, "Parity" * has_parity, end='')
+    print(number, scramble, "Parity" * has_parity, end="")
     number += 1
     if u:
         break

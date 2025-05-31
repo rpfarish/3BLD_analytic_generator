@@ -30,13 +30,17 @@ def valid(ar):
 
 a = timeit.timeit("gen_scramble()", number=1000000, setup=setup)
 
-faces = ['U', 'L', 'F', 'R', 'B', 'D']
+faces = ["U", "L", "F", "R", "B", "D"]
 directions = ["", "'", "2"]
 
-opp = {'U': 'D', 'D': 'U',
-       'F': 'B', 'B': 'F',
-       'L': 'R', 'R': 'L',
-       }
+opp = {
+    "U": "D",
+    "D": "U",
+    "F": "B",
+    "B": "F",
+    "L": "R",
+    "R": "L",
+}
 
 
 def c():
@@ -53,7 +57,9 @@ def c():
     for turn_num in range(1, scram_len):
         direction = random.choice(directions)
         last_turn = turns[turn_num - 1]
-        while turn == last_turn or (opp[turn] == last_turn and turns[turn_num - 2] == opp[last_turn]):
+        while turn == last_turn or (
+            opp[turn] == last_turn and turns[turn_num - 2] == opp[last_turn]
+        ):
             turn = random.choice(faces)
         scramble.append(turn + direction)
         turns.append(turn)

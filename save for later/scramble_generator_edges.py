@@ -9,28 +9,44 @@ def memo_cube(scramble):
 
     print("Can float edges:", s.can_float_edges)
     print("Scramble", scramble)
-    print(f"Parity:", solution['parity'])
-    print(f"Edges:", solution['edges'])
-    print(f"Flipped Edges:", solution['flipped_edges'])
-    print("Edge Buffers:", solution['edge_buffers'])
-    print("Corners:", solution['corners'])
+    print(f"Parity:", solution["parity"])
+    print(f"Edges:", solution["edges"])
+    print(f"Flipped Edges:", solution["flipped_edges"])
+    print("Edge Buffers:", solution["edge_buffers"])
+    print("Corners:", solution["corners"])
     print("Twisted Corners:", cube.twisted_corners)
-    print("Alg count:", solution['number_of_algs'])
-    corner_memo = solution['corners']
+    print("Alg count:", solution["number_of_algs"])
+    corner_memo = solution["corners"]
     print(corner_memo)
     # no_cycle_break_corner_memo = set()
-    corner_buffers = solution['corner_buffers']
+    corner_buffers = solution["corner_buffers"]
     print(corner_buffers)
 
 
 # algs_to_drill = {'EB', 'ZV', 'VZ', 'ZO', 'FA', 'SB', 'BV', 'CD', 'NM', 'AV', 'FL'}
 all_edges = {
-    'UB', 'UR', 'UL',
-    'LU', 'LF', 'LD', 'LB',
-    'FR', 'FD', 'FL',
-    'RU', 'RB', 'RD', 'RF',
-    'BU', 'BL', 'BD', 'BR',
-    'DF', 'DR', 'DB', 'DL',
+    "UB",
+    "UR",
+    "UL",
+    "LU",
+    "LF",
+    "LD",
+    "LB",
+    "FR",
+    "FD",
+    "FL",
+    "RU",
+    "RB",
+    "RD",
+    "RF",
+    "BU",
+    "BL",
+    "BD",
+    "BR",
+    "DF",
+    "DR",
+    "DB",
+    "DL",
 }
 
 sticker_to_drill = "DB"
@@ -60,8 +76,8 @@ no_repeat = True
 while len(algs_to_drill) >= frequency:
     scramble = get_scramble.gen_premove(min_len=17, max_len=20)
     cube = Memo(scramble, can_parity_swap=True)
-    edge_memo = cube.format_edge_memo(cube.memo_edges()).split(' ')
-    last_added_pair = ''
+    edge_memo = cube.format_edge_memo(cube.memo_edges()).split(" ")
+    last_added_pair = ""
     # print(scramble)
     no_cycle_break_edge_memo = set(edge_memo)
 
@@ -88,11 +104,11 @@ while len(algs_to_drill) >= frequency:
         # todo make it so if you're no_repeat then allow to repeat the letter pairs
         response = input('Enter "r" to repeat letter pairs: ')
 
-        if response == 'm':
+        if response == "m":
             memo_cube(scramble)
             response = input('Enter "r" to repeat letter pairs: ')
 
-        if response == 'r':
+        if response == "r":
             pass
         elif no_repeat or False:
             algs_to_drill = algs_to_drill.difference(algs_in_scramble)

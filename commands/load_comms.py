@@ -9,5 +9,6 @@ def load_comms(buffer_order, file_name):
             file_comms = json.load(f)
     except FileNotFoundError:
         update_comm_list(buffers=buffer_order, file=file_name)
-    finally:
-        return file_comms
+        return load_comms(buffer_order, file_name)
+
+    return file_comms

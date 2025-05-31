@@ -11,6 +11,7 @@ scramble_file = "scrambles.txt"
 # TODO return twists with top or bottom color
 # TODO add alg count
 
+
 def main():
     # data = get_all()
     with open(scramble_file) as f:
@@ -19,27 +20,29 @@ def main():
             number += 1
             scramble = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
             cube = Memo(scramble, can_parity_swap=True)
-            s = Solution(scramble, )
+            s = Solution(
+                scramble,
+            )
             solution = s.get_solution()
 
             print("Can float edges:", s.can_float_edges)
             print("Scramble", scramble)
-            print(f"Parity:", solution['parity'])
-            print(f"Edges:", solution['edges'])
-            print(f"Flipped Edges:", solution['flipped_edges'])
-            print("Edge Buffers:", solution['edge_buffers'])
+            print(f"Parity:", solution["parity"])
+            print(f"Edges:", solution["edges"])
+            print(f"Flipped Edges:", solution["flipped_edges"])
+            print("Edge Buffers:", solution["edge_buffers"])
             # _sum = 0
             # for i in edge_memo:
             #     _sum += data[i]
             # print(_sum)
 
-            print("Corners:", solution['corners'])
+            print("Corners:", solution["corners"])
             print("Twisted Corners:", cube.twisted_corners)
-            print("Alg count:", solution['number_of_algs'])
-            corner_memo = solution['corners']
+            print("Alg count:", solution["number_of_algs"])
+            corner_memo = solution["corners"]
             print(corner_memo)
             no_cycle_break_corner_memo = set()
-            corner_buffers = solution['corner_buffers']
+            corner_buffers = solution["corner_buffers"]
             print(corner_buffers)
             for pair in corner_memo:
                 print(pair)
@@ -48,7 +51,7 @@ def main():
                     b = pair[3:]
                 elif len(pair) == 3:
                     a = pair
-                    b = ''
+                    b = ""
                 if a in corner_buffers or b in corner_buffers:
                     break
                 no_cycle_break_corner_memo.add(pair)
@@ -66,5 +69,5 @@ def main():
 # all computers do is reduce the space of a problem down to something that they can just search through completely
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

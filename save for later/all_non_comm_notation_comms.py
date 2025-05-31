@@ -26,7 +26,7 @@ all_rud_edge_comms_eli = [
 
 with open("../settings.json") as f:
     settings = json.loads(f.read())
-    letterscheme_names = settings['letter_scheme']
+    letterscheme_names = settings["letter_scheme"]
     letterscheme = LetterScheme(ltr_scheme=letterscheme_names)
 
 comms_to_print = []
@@ -34,8 +34,10 @@ for case in all_rud_edge_comms_eli:
     cube_names = Memo(case, ls=letterscheme)
     cube = Memo(case)
     cube_memo = cube.memo_edges()
-    cube_memo_names = cube_names.translate_letter_scheme(cube_memo, translate_type="name")
-    buffer = 'UF'
+    cube_memo_names = cube_names.translate_letter_scheme(
+        cube_memo, translate_type="name"
+    )
+    buffer = "UF"
 
     if len(cube_memo) == 4:
         buffer = cube_memo[0]
@@ -77,7 +79,7 @@ ru_and_rud_edge_comms = [
     "UL VJ: U R U' R' U' R' U' R U R",
     "UL VT: U' R' U R U R U R' U' R'",
     "UL JV: R' U' R' U R U R U R' U'",
-    "UL TV: R U R U' R' U' R' U' R U"
+    "UL TV: R U R U' R' U' R' U' R U",
 ]
 # 10
 all_rud_edge_comms = [
@@ -90,7 +92,7 @@ all_rud_edge_comms = [
     "UB CX: D' U R' D' R D R D R D' R' U'",
     "UB WX: U D R D R' D' R' D' R' D R U'",
     "UR XC: R D R' D' R' D' R' D R D",
-    "UR WX: D R D R' D' R' D' R' D R"
+    "UR WX: D R D R' D' R' D' R' D R",
 ]
 
 all_rud_edge_comms = [
@@ -103,14 +105,14 @@ all_rud_edge_comms = [
     "UB CX: D' U R' D' R D R D R D' R' U'",
     "UB WX: U D R D R' D' R' D' R' D R U'",
     "UR XC: R D R' D' R' D' R' D R D",
-    "UR WX: D R D R' D' R' D' R' D R"
+    "UR WX: D R D R' D' R' D' R' D R",
 ]
 all_rud_edge_comms_eli = [
     "UF XW: U' R' D' R D R D R D' R' U D'",
     "UF WX: U' D R D R' D' R' D' R' D R U",
     "UB DC: U' D R' U' R U R U R U' R' D'",
     "UB XC: U R D R' D' R' D' R' D R D U'",
-    "UB CX: D' U R' D' R D R D R D' R' U'"
+    "UB CX: D' U R' D' R D R D R D' R' U'",
 ]
 
 all_rud_edge_comms_dict = {
@@ -124,10 +126,10 @@ all_rud_edge_comms_dict = {
     "UR XC": "R D R' D' R' D' R' D R D",
     "UR WX": "D R D R' D' R' D' R' D R",
     "UB DC": "U' D R' U' R U R U R U' R' D'",
-    "UB CX": "D' U R' D' R D R D R D' R' U'"
+    "UB CX": "D' U R' D' R D R D R D' R' U'",
 }
 
 print(len(all_rud_edge_comms_dict))
 pprint(all_rud_edge_comms_dict)
 for pair, comm in all_rud_edge_comms_dict.items():
-    print(f'{pair}: {comm}')
+    print(f"{pair}: {comm}")

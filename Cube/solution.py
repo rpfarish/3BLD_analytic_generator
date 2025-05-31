@@ -5,22 +5,33 @@ from Cube.memo import Memo
 
 class Solution:
 
-    def __init__(self, scramble, letter_scheme=None, buffers=None, parity_swap_edges=None, buffer_order=None,
-                 inc_floats=True):
+    def __init__(
+        self,
+        scramble,
+        letter_scheme=None,
+        buffers=None,
+        parity_swap_edges=None,
+        buffer_order=None,
+        inc_floats=True,
+    ):
         self.cube = Memo(
-            scramble, auto_scramble=False, can_parity_swap=True,
-            ls=letter_scheme, buffers=buffers, parity_swap_edges=parity_swap_edges,
-            buffer_order=buffer_order
+            scramble,
+            auto_scramble=False,
+            can_parity_swap=True,
+            ls=letter_scheme,
+            buffers=buffers,
+            parity_swap_edges=parity_swap_edges,
+            buffer_order=buffer_order,
         )
         self.scramble = scramble
         self.parity = self.cube.has_parity
         self.cube.scramble_cube(self.scramble)
 
-        self.edges = self.cube.format_edge_memo(self.cube.memo_edges()).split(' ')
+        self.edges = self.cube.format_edge_memo(self.cube.memo_edges()).split(" ")
         self.flipped_edges = list(self.cube.flipped_edges)
         self.edge_buffers = list(self.cube.edge_memo_buffers)
 
-        self.corners = self.cube.format_corner_memo(self.cube.memo_corners()).split(' ')
+        self.corners = self.cube.format_corner_memo(self.cube.memo_corners()).split(" ")
         self.twisted_corners = list(self.cube.twisted_corners)
         self.corner_buffers = list(self.cube.corner_memo_buffers)
         self.can_float_corners = None
@@ -76,12 +87,16 @@ class Solution:
                     return True
 
                 # FL hit opp side edge
-                if buffer == self.cube.adj_edges[b] and is_buffer_hit and buffer_hit_parity == 1:
+                if (
+                    buffer == self.cube.adj_edges[b]
+                    and is_buffer_hit
+                    and buffer_hit_parity == 1
+                ):
                     # print("can float from buffer, but it's flipped", buffer, pair)
                     pass
 
             # print("edge_buffer_count", count)
-        return 'maybe'
+        return "maybe"
 
     """
     LL => ac bc = 2e2e - buffer:A <> B:C
@@ -97,14 +112,18 @@ class Solution:
 
     def get_float_memo(self):
         if self.can_float_edges:
-            return 'floating edge memo'
+            return "floating edge memo"
 
     def count_sandwich_floats(self):
         dlin_trace = dlin.trace(scramble=self.scramble)
         float_count = 0
-        for buffer_trace in dlin_trace['corner'] + dlin_trace['edge']:
-            can_float = buffer_trace['orientation'] == 0 and buffer_trace['parity'] == 0 and buffer_trace[
-                'type'] == 'cycle' and buffer_trace['buffer'] not in ['UFR', 'UF']
+        for buffer_trace in dlin_trace["corner"] + dlin_trace["edge"]:
+            can_float = (
+                buffer_trace["orientation"] == 0
+                and buffer_trace["parity"] == 0
+                and buffer_trace["type"] == "cycle"
+                and buffer_trace["buffer"] not in ["UFR", "UF"]
+            )
             # todo fix this 'UFR' to self.corner_buffer etc
             if can_float:
                 float_count += 1
@@ -118,29 +137,36 @@ class Solution:
         flips_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
         # print(self.edges, len(self.edges), self.corners, len(self.corners), "FLIPS", self.number_of_edge_flips,
         #       "TWISTS", self.number_of_corner_twists, "FLOATS", number_of_floats)
-        num_of_algs = (len(self.edges) + len(self.corners) +
-                       flips_to_alg.get(self.number_of_edge_flips, self.number_of_edge_flips) +
-                       twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2))
+        num_of_algs = (
+            len(self.edges)
+            + len(self.corners)
+            + flips_to_alg.get(self.number_of_edge_flips, self.number_of_edge_flips)
+            + twists_to_alg.get(
+                self.number_of_corner_twists, self.number_of_corner_twists // 2
+            )
+        )
         num_of_algs -= number_of_floats
         return num_of_algs
 
     def get_solution(self):
         solution = {
-            'scramble': self.scramble,
-            'parity': self.cube.has_parity,
-            'edges': self.cube.format_edge_memo(self.cube.memo_edges()).split(' '),
-            'flipped_edges': list(self.cube.flipped_edges),
-            'edge_buffers': list(self.cube.edge_memo_buffers),
-            'can_float_edges': self.can_float_edges,
-            'edge_float_buffers': self.edge_float_buffers,
-            'corners': self.cube.format_corner_memo(self.cube.memo_corners()).split(' '),
-            'twisted_corners': list(self.cube.twisted_corners),
-            'corner_buffers': list(self.cube.corner_memo_buffers),
-            'can_float_corners': None,
-            'number_of_algs': self.count_number_of_algs(inc_floats=self.inc_floats),
+            "scramble": self.scramble,
+            "parity": self.cube.has_parity,
+            "edges": self.cube.format_edge_memo(self.cube.memo_edges()).split(" "),
+            "flipped_edges": list(self.cube.flipped_edges),
+            "edge_buffers": list(self.cube.edge_memo_buffers),
+            "can_float_edges": self.can_float_edges,
+            "edge_float_buffers": self.edge_float_buffers,
+            "corners": self.cube.format_corner_memo(self.cube.memo_corners()).split(
+                " "
+            ),
+            "twisted_corners": list(self.cube.twisted_corners),
+            "corner_buffers": list(self.cube.corner_memo_buffers),
+            "can_float_corners": None,
+            "number_of_algs": self.count_number_of_algs(inc_floats=self.inc_floats),
         }
-        solution['number_of_edge_flips'] = len(solution['flipped_edges']) // 2
-        solution['number_of_corner_twists'] = len(solution['twisted_corners']) // 3
+        solution["number_of_edge_flips"] = len(solution["flipped_edges"]) // 2
+        solution["number_of_corner_twists"] = len(solution["twisted_corners"]) // 3
 
         return solution
 
@@ -148,21 +174,22 @@ class Solution:
         solution = self.get_solution()
         print("Can float edges:", self.can_float_edges)
         print("Scramble", self.scramble)
-        print(f"Parity:", solution['parity'])
-        print(f"Edges:", solution['edges'])
-        print(f"Flipped Edges:", solution['flipped_edges'])
-        print("Edge Buffers:", solution['edge_buffers'])
-        print("Corners:", solution['corners'])
+        print(f"Parity:", solution["parity"])
+        print(f"Edges:", solution["edges"])
+        print(f"Flipped Edges:", solution["flipped_edges"])
+        print("Edge Buffers:", solution["edge_buffers"])
+        print("Corners:", solution["corners"])
         print("Twisted Corners:", self.cube.twisted_corners)
-        print("Alg count:", solution['number_of_algs'])
+        print("Alg count:", solution["number_of_algs"])
         # corner_memo = solution['corners']
         # when cube is memoed, the state of the memo should be saved when the buffer is first hit
         # no_cycle_break_corner_memo = set()
-        corner_buffers = solution['corner_buffers']
+        corner_buffers = solution["corner_buffers"]
         print(corner_buffers)
 
 
 # R U' D2 F2 L' B D R2 F B2 L2 U R2 B2 D2 F2 D' L2 D2 R2 F2 L B'
+
 
 def calc_corner_alg_count() -> int:
     pass

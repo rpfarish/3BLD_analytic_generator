@@ -14,6 +14,7 @@ def remove_piece(target_list, piece, ltr_scheme):
 
 def generate_random_pair(target_list, ltr_scheme):
     import random
+
     first = random.choice(target_list)
     remove_piece(target_list, first, ltr_scheme)
     second = random.choice(target_list)
@@ -53,13 +54,13 @@ number = 0
 # algs_to_drill = {"NS"}
 alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
 print(type(alg_freq_dist))
-print('Running...')
+print("Running...")
 count = 2
 inc_amt = 2
 while True:
     scramble = get_scramble.get_scramble()
     cube = Memo(scramble, ls=letter_scheme)
-    corner_memo = cube.format_corner_memo(cube.memo_corners()).split(' ')
+    corner_memo = cube.format_corner_memo(cube.memo_corners()).split(" ")
     no_cycle_break_corner_memo = set()
 
     # if just the first target of the memo is the target eg: L then cycle break, this is bad
@@ -73,7 +74,7 @@ while True:
             # print(pair, pair_len_half, a, b)
         else:
             a = pair
-            b = ''
+            b = ""
         if a in corner_buffers or b in corner_buffers:
             break
         no_cycle_break_corner_memo.add(pair)

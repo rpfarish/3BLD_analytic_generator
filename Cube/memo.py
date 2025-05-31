@@ -8,10 +8,25 @@ from Cube.letterscheme import LetterScheme
 
 
 class Memo(Cube):
-    def __init__(self, scramble="", can_parity_swap=False, auto_scramble=True, ls: LetterScheme = None, buffers=None,
-                 parity_swap_edges=None, buffer_order=None):
-        super().__init__(s=scramble, can_parity_swap=can_parity_swap, auto_scramble=auto_scramble, ls=ls,
-                         buffers=buffers, parity_swap_edges=parity_swap_edges, buffer_order=buffer_order)
+    def __init__(
+        self,
+        scramble="",
+        can_parity_swap=False,
+        auto_scramble=True,
+        ls: LetterScheme = None,
+        buffers=None,
+        parity_swap_edges=None,
+        buffer_order=None,
+    ):
+        super().__init__(
+            s=scramble,
+            can_parity_swap=can_parity_swap,
+            auto_scramble=auto_scramble,
+            ls=ls,
+            buffers=buffers,
+            parity_swap_edges=parity_swap_edges,
+            buffer_order=buffer_order,
+        )
         #
         # with open("../settings.json") as f:
         #     settings = json.loads(f.read())
@@ -62,8 +77,12 @@ class Memo(Cube):
 
             # Return the memo when avail is empty
             if not avail_moves:
-                return [m for m in memo if m not in self.adj_corners[self.default_corner_buffer]
-                        and m != self.default_corner_buffer]
+                return [
+                    m
+                    for m in memo
+                    if m not in self.adj_corners[self.default_corner_buffer]
+                    and m != self.default_corner_buffer
+                ]
 
             # Pick a new corner buffer
             curr = buffer = self.get_new_corner_buffer(avail_moves)
@@ -92,7 +111,10 @@ class Memo(Cube):
             # Memo until a cycle break
             while True:
                 curr = avail_moves[curr]
-                if curr != self.default_edge_buffer and curr != self.adj_edges[self.default_edge_buffer]:
+                if (
+                    curr != self.default_edge_buffer
+                    and curr != self.adj_edges[self.default_edge_buffer]
+                ):
                     new_memo.append(curr)
                 if curr == buffer or curr == self.adj_edges[buffer]:
                     break
@@ -113,7 +135,11 @@ class Memo(Cube):
 
             # Return the memo when avail is empty
             if not avail_moves:
-                return [letter for letter in memo if letter != def_buff and letter != def_buff_adj]
+                return [
+                    letter
+                    for letter in memo
+                    if letter != def_buff and letter != def_buff_adj
+                ]
 
             # Pick a new edge buffer
             curr = buffer = self.get_new_edge_buffer(avail_moves)
@@ -122,7 +148,7 @@ class Memo(Cube):
     # memo
     @staticmethod
     def format_edge_memo(memo):
-        return ' '.join(f'{memo[i]}{memo[i + 1]}' for i in range(0, len(memo) - 1, 2))
+        return " ".join(f"{memo[i]}{memo[i + 1]}" for i in range(0, len(memo) - 1, 2))
 
     @staticmethod
     def get_turn_parameters(move, pattern, pattern2, pattern3):
@@ -153,16 +179,14 @@ class Memo(Cube):
             if not move:
                 continue
 
-            face_turn, quarter_turns, is_prime = self.get_turn_parameters(move, pattern, pattern2, pattern3)
+            face_turn, quarter_turns, is_prime = self.get_turn_parameters(
+                move, pattern, pattern2, pattern3
+            )
             inverse_turns = (4 - (quarter_turns * is_prime)) % 4
             if not inverse_turns:
                 continue
 
-            turn_map = {
-                1: "",
-                2: "2",
-                3: "'"
-            }
+            turn_map = {1: "", 2: "2", 3: "'"}
 
             inv_scram.append(face_turn + turn_map[inverse_turns])
         return " ".join(inv_scram)
@@ -173,7 +197,7 @@ class Memo(Cube):
 
     # memo
     def format_corner_memo(self, memo):
-        parity_target = memo.pop() if self.has_parity else ''
+        parity_target = memo.pop() if self.has_parity else ""
         memo = self.format_edge_memo(memo) + " " + parity_target
         return memo.strip()
 

@@ -75,6 +75,8 @@
       "RDB"
     ]
   },
-  "comm_file_name": "max_comms",
+  "comm_files": [
+    "Max Hilliard 3BLD"
+  ],
   "parity_swap_edges": "UF-UR"
 }

@@ -12,9 +12,9 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
         with open(f"{filename}", "w+") as f:
             f.write('{"description": "Saves states of drilling buffers"}')
 
-    if '-r' in args:
+    if "-r" in args:
         random_pairs = True
-    elif '-l' not in args:
+    elif "-l" not in args:
         with open(f"{filename}", "r+") as f:
             drill_list = json.load(f)
             buffer_drill_list = drill_list.get(buffer, [])
@@ -23,13 +23,13 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
                 print(len(buffer_drill_list), "comms remaining")
                 print("Continuing will result the rewriting of the buffer drill file")
                 response = input("Are you sure you want to continue y/n?: ").lower()
-                if response not in ['y', 'yes']:
+                if response not in ["y", "yes"]:
                     print("Aborting...")
                     return
 
-    elif '-l' in args:
+    elif "-l" in args:
         if len(args) > 1:
-            filename = args.find('-l') + 1
+            filename = args.find("-l") + 1
 
         # load file
         print("Loading drill_save.json")
@@ -49,6 +49,12 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
         drill_set = None
 
     # to load 1. Buffer 2. Remaining cycles
-    piece_type = 'c' if len(buffer) == 3 else 'e'
-    drill_piece_buffer(piece_type, buffer.upper(), drill_list=drill_set, random_pairs=random_pairs,
-                       buffer_order=buffer_order, file_comms=file_comms)
+    piece_type = "c" if len(buffer) == 3 else "e"
+    drill_piece_buffer(
+        piece_type,
+        buffer.upper(),
+        drill_list=drill_set,
+        random_pairs=random_pairs,
+        buffer_order=buffer_order,
+        file_comms=file_comms,
+    )

@@ -1,0 +1,3 @@
+# todo settings with buffer order and alt pseudo swaps for each parity alg
+# todo convert a sheet to have any comm for any buffer ie custom buffer order
+# todo make funcs to load or dump comm sheets
