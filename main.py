@@ -1,7 +1,6 @@
 import os
 import time
 
-from comms.comms import COMMS as DEFAULT_COMMS
 from Cube import Drill
 from Settings.settings import Settings
 from Spreadsheets import ingest_spreadsheet
@@ -21,6 +20,7 @@ from commands import (
     memo_cube,
     set_letter_scheme,
 )
+from comms.comms import COMMS as DEFAULT_COMMS
 
 
 # todo how to ingest a new comm sheet esp full floating
@@ -52,10 +52,10 @@ def main():
                 settings.comm_files.pop(i)
     # check file_comms usage and switch some of them to default comms which I haven't made yet
     file_comms_list = []
+    print(settings.comm_files)
     for comm_file in settings.comm_files:
-        file_comms = file_comms_list.append(
-            load_comms(settings.all_buffers_order, file_name=comm_file)
-        )
+        file_comms = load_comms(settings.all_buffers_order, file_name=comm_file)
+        file_comms_list.append(file_comms)
 
     eli_comms = (
         DEFAULT_COMMS  # load_comms(settings.all_buffers_order, file_name='eli_comms')
