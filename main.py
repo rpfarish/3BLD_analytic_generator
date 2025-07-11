@@ -58,7 +58,8 @@ def main():
         file_comms_list.append(file_comms)
 
     eli_comms = (
-        DEFAULT_COMMS  # load_comms(settings.all_buffers_order, file_name='eli_comms')
+        # load_comms(settings.all_buffers_order, file_name='eli_comms')
+        DEFAULT_COMMS
     )
 
     last_args = ""
@@ -169,7 +170,7 @@ def main():
                     print(cycle_break_float.__doc__)
                     continue
                 buffer = args.pop()
-                cycle_break_float(buffer)
+                cycle_break_float(buffer.upper())
 
             case "t" | "twist":
                 if not args:
