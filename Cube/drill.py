@@ -495,58 +495,52 @@ class Drill:
         return scrams
         # memo
 
-        def generate_random_edge_memo(
-            self,
-            edges,
-            edge_buffer=None,
-            exclude_from_memo=None,
-            translate_memo=False,
-            random_pairs=False,
-        ):
-            exclude_from_memo = (
-                set() if exclude_from_memo is None else exclude_from_memo
-            )
-            edge_buffer = (
-                self.cube_memo.default_edge_buffer
-                if edge_buffer is None
-                else edge_buffer
-            )
-            memo = []
+    def generate_random_edge_memo(
+        self,
+        edges,
+        edge_buffer=None,
+        exclude_from_memo=None,
+        translate_memo=False,
+        random_pairs=False,
+    ):
+        exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
+        edge_buffer = (
+            self.cube_memo.default_edge_buffer if edge_buffer is None else edge_buffer
+        )
+        memo = []
 
-            if random_pairs:
-                edges = list(edges)
-                random.shuffle(edges)
-            else:
-                edges = edges - exclude_from_memo
-            for pair in edges:
-                edge, edge2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+        if random_pairs:
+            edges = list(edges)
+            random.shuffle(edges)
+        else:
+            edges = edges - exclude_from_memo
+        for pair in edges:
+            edge, edge2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
 
-                if edge == self.cube_memo.adj_edges[edge2]:
-                    continue
-                if set(memo).intersection(
-                    {
-                        edge,
-                        edge2,
-                        self.cube_memo.adj_edges[edge],
-                        self.cube_memo.adj_edges[edge2],
-                    }
-                ):
-                    continue
+            if edge == self.cube_memo.adj_edges[edge2]:
+                continue
+            if set(memo).intersection(
+                {
+                    edge,
+                    edge2,
+                    self.cube_memo.adj_edges[edge],
+                    self.cube_memo.adj_edges[edge2],
+                }
+            ):
+                continue
 
-                memo.extend([edge, edge2])
+            memo.extend([edge, edge2])
 
-            if len(memo) % 2 == 1:
-                memo.pop()
+        if len(memo) % 2 == 1:
+            memo.pop()
 
-            # get scramble
-            scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
+        # get scramble
+        scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
 
-            if translate_memo:
-                memo = self.cube_memo.translate_letter_scheme(
-                    memo, translate_type="name"
-                )
+        if translate_memo:
+            memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
 
-            return scramble, self.cube_memo.format_edge_memo(memo)
+        return scramble, self.cube_memo.format_edge_memo(memo)
 
     def generate_random_corner_memo(
         self,
