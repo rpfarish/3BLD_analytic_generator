@@ -51,7 +51,6 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
 
     # to load 1. Buffer 2. Remaining cycles
     piece_type = "c" if len(buffer) == 3 else "e"
-    print("drilling piece type", piece_type)
     drill_piece_buffer(
         piece_type,
         buffer.upper(),
