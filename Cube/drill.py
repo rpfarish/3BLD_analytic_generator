@@ -3,11 +3,11 @@ import json
 import random
 import time
 
+from comms.comms import COMMS
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
 from Scramble import get_scramble
-from comms.comms import COMMS
 
 DEBUG = 0
 
@@ -132,12 +132,12 @@ class Drill:
 
     @staticmethod
     def drill_corner_sticker(
-            sticker_to_drill,
-            invert=False,
-            algs: set = None,
-            cycles_to_exclude: set = None,
-            letter_scheme=None,
-            buffer=None,
+        sticker_to_drill,
+        invert=False,
+        algs: set = None,
+        cycles_to_exclude: set = None,
+        letter_scheme=None,
+        buffer=None,
     ):
 
         def remove_piece(target_list, piece, ltr_scheme):
@@ -239,7 +239,7 @@ class Drill:
         rand_edges = random.choices(all_edges, k=len(all_edges) // 2)
         cube = Cube()
         for pair in rand_edges:
-            a, b = pair[: len(pair) // 2], pair[len(pair) // 2:]
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             buffer = COMMS[str(edge_buffer)]
             comm = buffer[a][b]
             cube.scramble_cube(comm)
@@ -263,7 +263,7 @@ class Drill:
         rand_corners = random.choices(all_corners, k=len(all_corners) // 2)
         cube = Cube()
         for pair in rand_corners:
-            a, b = pair[: len(pair) // 2], pair[len(pair) // 2:]
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             buffer = COMMS[str(corner_buffer)]
             comm = buffer[a][b]
             cube.scramble_cube(comm)
@@ -274,14 +274,14 @@ class Drill:
 
     # memo
     def drill_edge_buffer(
-            self,
-            edge_buffer: str,
-            exclude_from_memo=None,
-            return_list=False,
-            translate_memo=False,
-            drill_set: set | None = None,
-            random_pairs=False,
-            file_comms=None,
+        self,
+        edge_buffer: str,
+        exclude_from_memo=None,
+        return_list=False,
+        translate_memo=False,
+        drill_set: set | None = None,
+        random_pairs=False,
+        file_comms=None,
     ):
         # todo add edge flips hahaha
         scrams = {}
@@ -351,15 +351,15 @@ class Drill:
             print()
             comms = []
             for pair, pair_letters in zip(
-                    memo.split(),
-                    list(
-                        convert_letterpairs(
-                            memo.split(),
-                            direction="loc_to_letter",
-                            piece_type="edges",
-                            return_type="list",
-                        )
-                    ),
+                memo.split(),
+                list(
+                    convert_letterpairs(
+                        memo.split(),
+                        direction="loc_to_letter",
+                        piece_type="edges",
+                        return_type="list",
+                    )
+                ),
             ):
                 exclude_from_memo.add(pair)
                 a, b = pair[:2], pair[2:]
@@ -385,15 +385,14 @@ class Drill:
         return scrams
 
     def drill_corner_buffer(
-            self,
-            corner_buffer: str,
-            exclude_from_memo: set = None,
-            return_list: bool = False,
-            drill_set: set = None,
-            random_pairs=False,
-            file_comms=None,
+        self,
+        corner_buffer: str,
+        exclude_from_memo: set = None,
+        return_list: bool = False,
+        drill_set: set = None,
+        random_pairs=False,
+        file_comms=None,
     ):
-
         # todo add edge flips hahaha
         scrams = {}
         total_cases = self.total_cases_per_buffer[corner_buffer]
@@ -419,14 +418,11 @@ class Drill:
             if drill_set is None
             else len(exclude_from_memo) // self.max_cycles_per_buffer[corner_buffer] + 1
         )
-        while len(exclude_from_memo) < total_cases or random_pairs:
 
+        while len(exclude_from_memo) < total_cases or random_pairs:
             scramble, memo = self.generate_random_corner_memo(
                 all_corners, corner_buffer, exclude_from_memo, random_pairs=random_pairs
             )
-
-            # this is the proper way to do this
-            # memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
 
             if not return_list:
                 if random_pairs:
@@ -446,21 +442,22 @@ class Drill:
                 if response.startswith("q"):
                     return
 
-            print(
-                "Memo:",
-                ", ".join(
-                    list(
-                        convert_letterpairs(
-                            memo.split(),
-                            direction="loc_to_letter",
-                            piece_type="corners",
+                print(
+                    "Memo:",
+                    ", ".join(
+                        list(
+                            convert_letterpairs(
+                                memo.split(),
+                                direction="loc_to_letter",
+                                piece_type="corners",
+                            )
                         )
-                    )
-                ),
-            )
+                    ),
+                )
+
             print()
-        comms = []
-        for pair, pair_letters in zip(
+            comms = []
+            for pair, pair_letters in zip(
                 memo.split(),
                 list(
                     convert_letterpairs(
@@ -470,25 +467,24 @@ class Drill:
                         return_type="list",
                     )
                 ),
-        ):
-            exclude_from_memo.add(pair)
-            a, b = pair[:3], pair[3:]
-            comm = file_comms[corner_buffer][a][b]
-            if not comm:
-                comm = COMMS[corner_buffer][a][b]
-            comms.append(comm)
+            ):
+                exclude_from_memo.add(pair)
+                a, b = pair[:3], pair[3:]
+                comm = file_comms[corner_buffer][a][b]
+                if not comm:
+                    comm = COMMS[corner_buffer][a][b]
+                comms.append(comm)
+                if not return_list:
+                    print(f"{pair_letters}:", comm)
+
+            scrams[num] = [scramble, memo, comms]
+
+            num += 1
+            print("-" * 25)
+
             if not return_list:
-                print(f"{pair_letters}:", comm)
-
-        scrams[num] = [scramble, memo, comms]
-
-        num += 1
-
-        print("-" * 25)
-
-        if not return_list:
-            if input() == "quit":
-                return
+                if input() == "quit":
+                    return
 
         print("Finished")
         with open(f"cache/drill_save.json", "r+") as f:
@@ -497,62 +493,68 @@ class Drill:
             drill_list_json[corner_buffer] = []
             json.dump(drill_list_json, f, indent=4)
         return scrams
+        # memo
 
-    # memo
-    def generate_random_edge_memo(
+        def generate_random_edge_memo(
             self,
             edges,
             edge_buffer=None,
             exclude_from_memo=None,
             translate_memo=False,
             random_pairs=False,
-    ):
-        exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
-        edge_buffer = (
-            self.cube_memo.default_edge_buffer if edge_buffer is None else edge_buffer
-        )
-        memo = []
+        ):
+            exclude_from_memo = (
+                set() if exclude_from_memo is None else exclude_from_memo
+            )
+            edge_buffer = (
+                self.cube_memo.default_edge_buffer
+                if edge_buffer is None
+                else edge_buffer
+            )
+            memo = []
 
-        if random_pairs:
-            edges = list(edges)
-            random.shuffle(edges)
-        else:
-            edges = edges - exclude_from_memo
-        for pair in edges:
-            edge, edge2 = pair[: len(pair) // 2], pair[len(pair) // 2:]
+            if random_pairs:
+                edges = list(edges)
+                random.shuffle(edges)
+            else:
+                edges = edges - exclude_from_memo
+            for pair in edges:
+                edge, edge2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
 
-            if edge == self.cube_memo.adj_edges[edge2]:
-                continue
-            if set(memo).intersection(
+                if edge == self.cube_memo.adj_edges[edge2]:
+                    continue
+                if set(memo).intersection(
                     {
                         edge,
                         edge2,
                         self.cube_memo.adj_edges[edge],
                         self.cube_memo.adj_edges[edge2],
                     }
-            ):
-                continue
+                ):
+                    continue
 
-            memo.extend([edge, edge2])
+                memo.extend([edge, edge2])
 
-        if len(memo) % 2 == 1:
-            memo.pop()
+            if len(memo) % 2 == 1:
+                memo.pop()
 
-        # get scramble
-        scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
+            # get scramble
+            scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
 
-        if translate_memo:
-            memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
+            if translate_memo:
+                memo = self.cube_memo.translate_letter_scheme(
+                    memo, translate_type="name"
+                )
 
-        return scramble, self.cube_memo.format_edge_memo(memo)
+            return scramble, self.cube_memo.format_edge_memo(memo)
 
     def generate_random_corner_memo(
-            self,
-            corners: set,
-            corner_buffer=None,
-            exclude_from_memo: set = None,
-            translate_memo=False,
-            random_pairs=False,
+        self,
+        corners: set,
+        corner_buffer=None,
+        exclude_from_memo: set = None,
+        translate_memo=False,
+        random_pairs=False,
     ):
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
         corner_buffer = (
@@ -568,12 +570,12 @@ class Drill:
         else:
             corners = corners - exclude_from_memo
         for pair in corners:
-            corner, corner2 = pair[: len(pair) // 2], pair[len(pair) // 2:]
+            corner, corner2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
 
             corner_adj1, corner_adj2 = self.cube_memo.adj_corners[corner]
             corner2_adj1, corner2_adj2 = self.cube_memo.adj_corners[corner2]
             if memo_set.intersection(
-                    {corner, corner_adj1, corner_adj2, corner2, corner2_adj1, corner2_adj2}
+                {corner, corner_adj1, corner_adj2, corner2, corner2_adj1, corner2_adj2}
             ):
                 continue
 
@@ -596,16 +598,16 @@ class Drill:
 
     # memo
     def drill_edge_sticker(
-            self,
-            sticker_to_drill,
-            letter_scheme,
-            single_cycle=True,
-            return_list=False,
-            cycles_to_exclude: set = None,
-            invert=False,
-            algs: set = None,
-            no_repeat=True,
-            buffer=None,
+        self,
+        sticker_to_drill,
+        letter_scheme,
+        single_cycle=True,
+        return_list=False,
+        cycles_to_exclude: set = None,
+        invert=False,
+        algs: set = None,
+        no_repeat=True,
+        buffer=None,
     ):
         from Cube.solution import Solution
 
@@ -684,8 +686,8 @@ class Drill:
                 start = time.time()
             # avoid missing a cycle due to breaking into a flipped edge
             if (
-                    last_added_pair in algs_to_drill
-                    and (len(cube.flipped_edges) // 2) % 2 == 1
+                last_added_pair in algs_to_drill
+                and (len(cube.flipped_edges) // 2) % 2 == 1
             ):
                 continue
 
@@ -831,6 +833,7 @@ class Drill:
             "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
             "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D",
         ]
+
         if "-u" in args:
             algs += ltct_u
         if "-ud" in args:
@@ -856,9 +859,9 @@ class Drill:
                 corner_memo = self.cube_memo.memo_corners()
                 # check last parity target
                 if (
-                        twisted_corner_count == 1
-                        and "U" in corner_memo.pop()
-                        and "U" in next(iter(twisted_corners.values()))
+                    twisted_corner_count == 1
+                    and "U" in corner_memo.pop()
+                    and "U" in next(iter(twisted_corners.values()))
                 ):
                     break
             print(scramble, end="")
@@ -1134,7 +1137,7 @@ class Drill:
             direction = random.choice(directions)
             last_turn = turns[turn_num - 1]
             while turn == last_turn or (
-                    opp[turn] == last_turn and turns[turn_num - 2] == opp[last_turn]
+                opp[turn] == last_turn and turns[turn_num - 2] == opp[last_turn]
             ):
                 turn = random.choice(faces)
             scramble.append(turn + direction)
@@ -1181,10 +1184,10 @@ class Drill:
             for edge in cube_trace["edge"]:
 
                 if (
-                        edge["type"] == "cycle"
-                        and edge["buffer"] == buffer
-                        and edge["orientation"] == 0
-                        and edge["parity"] == 0
+                    edge["type"] == "cycle"
+                    and edge["buffer"] == buffer
+                    and edge["orientation"] == 0
+                    and edge["parity"] == 0
                 ):
                     cycle_breaks = False
                     break
@@ -1209,10 +1212,10 @@ class Drill:
             for corner in cube_trace["corner"]:
 
                 if (
-                        corner["type"] == "cycle"
-                        and corner["buffer"] == buffer
-                        and corner["orientation"] == 0
-                        and corner["parity"] == 0
+                    corner["type"] == "cycle"
+                    and corner["buffer"] == buffer
+                    and corner["orientation"] == 0
+                    and corner["parity"] == 0
                 ):
                     cycle_breaks = False
                     break

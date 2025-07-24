@@ -9,6 +9,7 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
     drill_set = None
     random_pairs = False
     if not os.path.exists(filename):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(f"{filename}", "w+") as f:
             f.write('{"description": "Saves states of drilling buffers"}')
 
@@ -50,6 +51,7 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
 
     # to load 1. Buffer 2. Remaining cycles
     piece_type = "c" if len(buffer) == 3 else "e"
+    print("drilling piece type", piece_type)
     drill_piece_buffer(
         piece_type,
         buffer.upper(),
