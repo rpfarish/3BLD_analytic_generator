@@ -14,11 +14,17 @@ DEBUG = 0
 
 class Drill:
 
-    def __init__(self, memo: Memo = None, buffer_order=None):
+    def __init__(self, memo: Memo = None, buffer_order=None, letter_scheme=None):
         if memo is not None:
             self.cube_memo: Memo = memo
         else:
             self.cube_memo: Memo = Memo(buffer_order=buffer_order)
+
+        if letter_scheme is None:
+            self.letter_scheme = LetterScheme()
+            # raise Exception("Panic there is no letterscheme set in drill")
+        else:
+            self.letter_scheme = letter_scheme
 
         self.max_cycles_per_buffer = {
             buffer: (8 - i) // 2
@@ -339,6 +345,7 @@ class Drill:
                                 convert_letterpairs(
                                     memo.split(),
                                     direction="loc_to_letter",
+                                    letter_scheme=self.letter_scheme,
                                     piece_type="edges",
                                     return_type="list",
                                 )
@@ -356,6 +363,7 @@ class Drill:
                     convert_letterpairs(
                         memo.split(),
                         direction="loc_to_letter",
+                        letter_scheme=self.letter_scheme,
                         piece_type="edges",
                         return_type="list",
                     )
@@ -449,6 +457,7 @@ class Drill:
                             convert_letterpairs(
                                 memo.split(),
                                 direction="loc_to_letter",
+                                letter_scheme=self.letter_scheme,
                                 piece_type="corners",
                             )
                         )
@@ -463,6 +472,7 @@ class Drill:
                     convert_letterpairs(
                         memo.split(),
                         direction="loc_to_letter",
+                        letter_scheme=self.letter_scheme,
                         piece_type="corners",
                         return_type="list",
                     )
@@ -1167,7 +1177,8 @@ class Drill:
         """Syntax: cbuff <edge buffer>
         Desc: provides scrambles with flips and cycle breaks to practice all edge buffers
         """
-        # todo add corners
+        allow_other_floats = False
+
         while True:
             drill = Drill(buffer_order=buffer_order)
             scram = drill.drill_edge_buffer_cycle_breaks(buffer)
@@ -1175,18 +1186,23 @@ class Drill:
             if buffer in cube.solved_edges or len(cube.flipped_edges) >= 4:
                 continue
             cube_trace = cube.get_dlin_trace()
+            flipped_count = 0
             for edge in cube_trace["edge"]:
 
+                flipped_count += edge["orientation"] and edge["type"] == "misoriented"
                 if (
                     edge["type"] == "cycle"
-                    and edge["buffer"] == buffer
                     and edge["orientation"] == 0
                     and edge["parity"] == 0
+                    and (edge["buffer"] == buffer or not allow_other_floats)
                 ):
                     cycle_breaks = False
                     break
             else:
                 cycle_breaks = True
+
+            if flipped_count > 1:
+                continue
 
             if cycle_breaks:
                 print(scram)
@@ -1196,6 +1212,7 @@ class Drill:
         """Syntax: cbuff <corner buffer>
         Desc: provides scrambles with twists and cycle breaks to practice all corner buffers
         """
+        allow_other_floats = False
         while True:
             drill = Drill(buffer_order=buffer_order)
             scram = drill.drill_corner_buffer_cycle_breaks(buffer)
@@ -1207,9 +1224,9 @@ class Drill:
 
                 if (
                     corner["type"] == "cycle"
-                    and corner["buffer"] == buffer
                     and corner["orientation"] == 0
                     and corner["parity"] == 0
+                    and (corner["buffer"] == buffer or not allow_other_floats)
                 ):
                     cycle_breaks = False
                     break

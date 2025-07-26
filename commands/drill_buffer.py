@@ -4,8 +4,8 @@ import os
 from commands.drill_piece_buffer import drill_piece_buffer
 
 
-def drill_buffer(args, filename, buffer, buffer_order, file_comms):
-    """Syntax: <buffer> [-l --Load]"""
+def drill_buffer(args, filename, buffer, buffer_order, file_comms, letter_scheme):
+    """Syntax: <buffer> [-l --Load] e.g. buffer UF -l"""
     drill_set = None
     random_pairs = False
     if not os.path.exists(filename):
@@ -58,4 +58,5 @@ def drill_buffer(args, filename, buffer, buffer_order, file_comms):
         random_pairs=random_pairs,
         buffer_order=buffer_order,
         file_comms=file_comms,
+        letter_scheme=letter_scheme,
     )

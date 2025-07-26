@@ -85,12 +85,17 @@ class PieceId:
 
 class LetterScheme:
 
-    def __init__(self, ltr_scheme: dict[str:str] = None, use_default=False):
+    def __init__(self, ltr_scheme: dict[str, str] | None = None, use_default=False):
         self.is_default = use_default
         if ltr_scheme is None:
             with open("settings.json") as f:
                 settings = json.loads(f.read())
                 ltr_scheme = settings["letter_scheme"]
+
+        if len(ltr_scheme) != 48:
+            raise ValueError(
+                f"Letter scheme must contain exactly 48 letter entries, got {len(ltr_scheme)}"
+            )
 
         self.scheme = {}
         self.reverse_scheme_corners = {}
@@ -210,158 +215,75 @@ class LetterScheme:
 
 
 def convert_letterpairs(
-    to_convert, direction, piece_type=None, display=False, return_type="set"
+    to_convert,
+    direction,
+    letter_scheme,
+    piece_type=None,
+    display=False,
+    return_type="set",
 ):
     """
-    piece_type: corner or edge
-    direction: letter_to_loc, loc_to_letter letter representation and location
+    Convert letter pairs using a LetterScheme object.
+
+    Args:
+        to_convert: List/set of letter pairs to convert
+        direction: 'letter_to_loc' or 'loc_to_letter'
+        letter_scheme: LetterScheme object to use for conversions
+        piece_type: 'corners' or 'edges' (required for letter_to_loc direction)
+        display: Whether to print converted pairs
+        return_type: 'set' or 'list' for return format
     """
-    # todo setting for letter scheme modular and global
-    # todo add letterscheme as a param
     if direction == "letter_to_loc" and piece_type is None:
-        raise Exception(
-            "Cannot convert letter scheme from letter to name without piece type"
-        )
+        raise Exception("Cannot convert from letter to location without piece type")
 
-    if piece_type not in (
-        "corners",
-        "edges",
-    ):
+    if piece_type is not None and piece_type not in ("corners", "edges"):
         raise ValueError(
-            f"Value for 'piece_type' should be either corners or edges not '{piece_type}'"
+            f"Value for 'piece_type' should be either 'corners' or 'edges', not '{piece_type}'"
         )
-
-    convert_table = dict(
-        UB="A",
-        UR="B",
-        UF="U",
-        UL="D",
-        # L Face
-        LU="E",
-        LF="F",
-        LD="G",
-        LB="H",
-        # F Face
-        FU="K",
-        FR="J",
-        FD="I",
-        FL="L",
-        # R Face
-        RU="M",
-        RB="N",
-        RD="O",
-        RF="P",
-        # B Face
-        BU="Z",
-        BL="R",
-        BD="S",
-        BR="T",
-        # D Face
-        DF="C",
-        DR="V",
-        DB="W",
-        DL="X",
-        UBL="A",
-        UBR="B",
-        UFR="U",
-        UFL="D",
-        # L Face
-        LUB="J",
-        LUF="F",
-        LDF="G",
-        LDB="H",
-        # F Face
-        FUL="E",
-        FUR="I",
-        FDR="K",
-        FDL="L",
-        # R Face
-        RUF="X",
-        RUB="N",
-        RDB="O",
-        RDF="P",
-        # B Face
-        BUR="R",
-        BUL="M",
-        BDL="S",
-        BDR="T",
-        # D Face
-        DFL="C",
-        DFR="V",
-        DBR="W",
-        DBL="Z",
-    )
-    corner_letter_to_loc = dict(
-        A="UBL",
-        B="UBR",
-        U="UFR",
-        D="UFL",
-        J="LUB",
-        F="LUF",
-        G="LDF",
-        H="LDB",
-        E="FUL",
-        I="FUR",
-        K="FDR",
-        L="FDL",
-        X="RUF",
-        N="RUB",
-        O="RDB",
-        P="RDF",
-        R="BUR",
-        M="BUL",
-        S="BDL",
-        T="BDR",
-        C="DFL",
-        V="DFR",
-        W="DBR",
-        Z="DBL",
-    )
-
-    edge_letter_to_loc = dict(
-        A="UB",
-        B="UR",
-        U="UF",
-        D="UL",
-        E="LU",
-        F="LF",
-        G="LD",
-        H="LB",
-        K="FU",
-        J="FR",
-        I="FD",
-        L="FL",
-        M="RU",
-        N="RB",
-        O="RD",
-        P="RF",
-        Z="BU",
-        R="BL",
-        S="BD",
-        T="BR",
-        C="DF",
-        V="DR",
-        W="DB",
-        X="DL",
-    )
-
-    if piece_type == "corners":
-        convert_table |= corner_letter_to_loc
-    elif piece_type == "edges":
-        convert_table |= edge_letter_to_loc
 
     converted_set = set()
     converted_list = []
-    for i in to_convert:
-        a, b = i[: len(i) // 2], i[len(i) // 2 :]
+
+    for pair in to_convert:
+        # Split the pair in half
+        a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+
+        if direction == "loc_to_letter":
+            # Convert location to letter using the scheme
+            # Uses __getitem__ to get letter name
+            converted_a = letter_scheme[a]
+            converted_b = letter_scheme[b]
+            converted_pair = f"{converted_a}{converted_b}"
+
+        elif direction == "letter_to_loc":
+            # Convert letter to location using the appropriate piece type
+            if piece_type == "corners":
+                converted_a = letter_scheme.convert_to_pos_from_type(a, "corner")
+                converted_b = letter_scheme.convert_to_pos_from_type(b, "corner")
+            elif piece_type == "edges":
+                converted_a = letter_scheme.convert_to_pos_from_type(a, "edge")
+                converted_b = letter_scheme.convert_to_pos_from_type(b, "edge")
+            converted_pair = f"{converted_a}{converted_b}"
+
+        else:
+            raise ValueError(
+                f"Invalid direction '{direction}'. Must be 'loc_to_letter' or 'letter_to_loc'"
+            )
+
         if display:
-            print(f"'{convert_table[a]}{convert_table[b]}',")
-        converted_set.add(f"{convert_table[a]}{convert_table[b]}")
-        converted_list.append(f"{convert_table[a]}{convert_table[b]}")
+            print(f"'{converted_pair}',")
+
+        converted_set.add(converted_pair)
+        converted_list.append(converted_pair)
+
     if return_type == "set":
         return converted_set
     elif return_type == "list":
         return converted_list
+    else:
+        raise ValueError(
+            f"Invalid return_type '{return_type}'. Must be 'set' or 'list'"
+        )
 
 
 if __name__ == "__main__":

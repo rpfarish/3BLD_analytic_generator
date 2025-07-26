@@ -8,6 +8,7 @@ def drill_piece_buffer(
     random_pairs: bool,
     buffer_order=None,
     file_comms=None,
+    letter_scheme=None,
 ):
     # todo somehow combine these two!?!
     if piece_type == "e":

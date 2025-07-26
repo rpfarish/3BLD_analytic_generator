@@ -3,7 +3,7 @@ from Cube.letterscheme import LetterScheme
 
 
 def drill_sticker(args: list, buffers):
-    """Drills a specific sticker from default buffers (UF/UFR)
+    """Drills a specific sticker from default buffers  e.g. UF/UFR
     (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional
     -i=<cycles to only include(secondsticker)>, -e=<edges filename>, -c=<corners filename>,
     -ex=<cycles to exclude(secondsticker)(must be last)>)

@@ -38,6 +38,8 @@ def main():
     # todo add settings to readme
 
     settings = Settings()
+    settings.letter_scheme
+
     # todo add current loadable buffers json file to each folder in /comms
     # todo make this loop over the .csv files in the folder instead of in settings?
     for i, comm_file_name in enumerate(settings.comm_files.copy()):
@@ -78,7 +80,7 @@ def main():
             # todo set this
 
         match mode:
-            case "h" | "help":
+            case "h" | "help" | "":
                 get_help()
 
             case "m" | "memo":
@@ -94,7 +96,7 @@ def main():
                     settings.buffer_order,
                 )
 
-            case "ls" | "letterscheme":
+            case "ls" | "ltrscm":
                 if not args:
                     print(set_letter_scheme.__doc__)
                     continue
@@ -109,14 +111,20 @@ def main():
                 last_mode = args[0]
                 print(args)
                 args = "".join(args)
-                Drill().drill_algs(args.split(","))
+                print(f"{args=}")
+                algs_list = [" ".join(alg.split()) for alg in args.split(",")]
+                print(algs_list)
+                Drill().drill_algs(algs_list)
 
             # do these two auto convert
             # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>,
             # -i=<cycles to only include(secondsticker)>, -file=<filename>)
-            case "s" | "sticker":
+            case "s" | "stkr":
                 # todo make this for floating too  ... hahahahaa
-
+                if not args:
+                    print(drill_sticker.__doc__)
+                    continue
+                args = [arg.upper() for arg in args]
                 drill_sticker(args, buffers=settings.buffers)
                 last_args = args
 
@@ -132,7 +140,14 @@ def main():
                 filename = "cache/drill_save.json"
                 # todo use default list? or maybe not if buffer list is incompatible
                 # use default comms at all if buffers are super different?
-                drill_buffer(args, filename, buffer, settings.buffer_order, file_comms)
+                drill_buffer(
+                    args,
+                    filename,
+                    buffer,
+                    settings.buffer_order,
+                    file_comms,
+                    settings.letter_scheme,
+                )
 
             case "q" | "quit" | "exit":
                 quit()
@@ -163,7 +178,7 @@ def main():
                 alg_count = int(args.pop())
                 alger(alg_count, buffer_order=settings.buffer_order)
 
-            case "f" | "float":
+            case "rb" | "rndbfr":
                 if not args:
                     print(cycle_break_float.__doc__)
                     continue
@@ -183,7 +198,7 @@ def main():
                     continue
                 drill_ltct(args)
 
-            case "rb":
+            case "arb":
                 get_rand_buff(settings.all_buffers_order)
 
             case "flip":
