@@ -1,0 +1,7 @@
+Unnamed: 0,RDB,BDL,BDR,LDB,DBR,DBL
+RDB,,"D' R': R' U' R, D'",,R D R' U: D'/R U R',,"B, l D' l'"
+BDL,"D' R': D', R' U' R",,"D' R' D, L",,l' U': D'/R U R',
+BDR,,"L, D' R' D",,"D' R: D2, R U R'",,l': D/R U' R'
+LDB,R D R' U: D/R U R',,"D' R: R U R', D2",,"B: B' R B R', D2",
+DBR,,l' U': D/R U R',,"B: D2, B' R B R'",,"R' U D: R U R', D"
+DBL,"l D' l', B",,l': D'/R U' R',,"R' U D2: R U R', D'",

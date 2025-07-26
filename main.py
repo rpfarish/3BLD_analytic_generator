@@ -17,7 +17,6 @@ from commands import (
     memo_cube,
     set_letter_scheme,
 )
-from comms.comms import COMMS as DEFAULT_COMMS
 from Cube import Drill
 from Settings.settings import Settings
 from Spreadsheets import ingest_spreadsheet
@@ -56,11 +55,6 @@ def main():
     for comm_file in settings.comm_files:
         file_comms = load_comms(settings.all_buffers_order, file_name=comm_file)
         file_comms_list.append(file_comms)
-
-    eli_comms = (
-        # load_comms(settings.all_buffers_order, file_name='eli_comms')
-        DEFAULT_COMMS
-    )
 
     last_args = ""
     last_mode = 1
@@ -160,7 +154,7 @@ def main():
                 get_comm_loop(
                     args,
                     file_comms_list,
-                    eli_comms,
+                    file_comms,
                     settings.comm_files,
                     settings.letter_scheme,
                 )

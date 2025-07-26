@@ -17,10 +17,10 @@ def get_comm(args, file_comms, eli_comms, comm_file_names, letterscheme: LetterS
             let1, let2 = a, b
         else:
             let1, let2 = cycle
-            print(
-                f"Eli {let1 + let2}:",
-                eli_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"),
-            )
+            # print(
+            #     f"Eli {let1 + let2}:",
+            #     eli_comms.get(buffer, {}).get(a, {}).get(b, "Not listed"),
+            # )
             for comm_file_name, comms in zip(comm_file_names, file_comms):
                 list_name_underscore, *_ = comm_file_name.split("_")
                 list_name_space, *_ = comm_file_name.split()
