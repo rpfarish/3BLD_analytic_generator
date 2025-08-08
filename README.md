@@ -72,103 +72,117 @@ sticker (this may not be necessary anymore).
 # CMD Commands List:
 
 ### Memo: `memo [scramble] [-l filename] [-s filename]`
-------------------------------------------------------------------------------------------------------------------------
+
+---
 
 - **Description:** This command allows you to memo the cube and provides options for loading and saving scrambles. Note:
   does not support
   wide move scrambles
 
 - **Options:**
-    - scramble: The scramble to memo.
-    - -l filename: Load scrambles from the FILENAME text file
-    - -s filename: Save the SCRAMBLE to the FILENAME text file
+
+  - scramble: The scramble to memo.
+  - -l filename: Load scrambles from the FILENAME text file
+  - -s filename: Save the SCRAMBLE to the FILENAME text file
 
 - **Usage Examples**:
-    - Memo the scramble
-      ```
-      memo U B2 D L2 B2 D' L2 R2 D' R2 D' B D2 U F' L2 U R' D' L' U2
-      ```
-    - Memo scramble(s) from text file
-      ```
-        memo -l saved_scrambles.txt
-      ```
-    - Memo the scramble and append it to the text file
-       ```
-       memo U2 M' U2 M -s new_scramble.txt
-       ```
+  - Memo the scramble
+    ```
+    memo U B2 D L2 B2 D' L2 R2 D' R2 D' B D2 U F' L2 U R' D' L' U2
+    ```
+  - Memo scramble(s) from text file
+    ```
+      memo -l saved_scrambles.txt
+    ```
+  - Memo the scramble and append it to the text file
+    ```
+    memo U2 M' U2 M -s new_scramble.txt
+    ```
 
 ### Letter Scheme: `ls [-d] [-l] [-c]`
-------------------------------------------------
+
+---
 
 - **Description:** Manage letter scheme options.
 
 - **Options:**
-    - -d: Dumps the current loaded letter scheme for the standard Singmaster notation
-    - -l: Loads the letter scheme from settings.json
-    - -c: prints the current letter scheme
+
+  - -d: Dumps the current loaded letter scheme for the standard Singmaster notation
+  - -l: Loads the letter scheme from settings.json
+  - -c: prints the current letter scheme
 
 - **Usage Examples**:
-    - Dump the letter scheme
 
-      ```
-      ls dump
-      ```
-    - Load the letter scheme
+  - Dump the letter scheme
 
-      ```
-      ls -load
-      ```
-    - Print the current letter scheme
+    ```
+    ls dump
+    ```
 
-      ```
-      ls -cur
-      ```
+  - Load the letter scheme
 
-### Sticker:  `s | sticker [sticker] [-t e | c] [[-e] | [-c]] [-ex XY ...]`
----------------------------------------------------------------------------
+    ```
+    ls -load
+    ```
+
+  - Print the current letter scheme
+
+    ```
+    ls -cur
+    ```
+
+### Sticker: `s | sticker [sticker] [-t e | c] [[-e] | [-c]] [-ex XY ...]`
+
+---
 
 - **Description**: Drill a sticker from default buffers or load pairs to drill from a text file which can be found in
   the drill_lists directory. Corner and edge pairs can only be drilled one at a time.
 
 - **Options:**
-    - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter
-      must be put first.
-    - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous.
-    - -edge: Loads letter pairs to drill from drill_list_edges.txt
-    - -corner: Loads letter pairs to drill from drill_list_corners.txt
-    - -exclude: Excludes letterpairs from being drilled and are entered one at a time with a space separating each of
-      then. This parameter must be put last.
 
+  - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter
+    must be put first.
+  - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous.
+  - -edge: Loads letter pairs to drill from drill_list_edges.txt
+  - -corner: Loads letter pairs to drill from drill_list_corners.txt
+  - -exclude: Excludes letterpairs from being drilled and are entered one at a time with a space separating each of
+    then. This parameter must be put last.
 
 - **Usage Examples**:
-    - Drill the corner sticker N (RUB)
 
-      ```
-      sticker N -type corner
-      ```
-    - Drill the corner sticker RUB
+  - Drill the corner sticker N (RUB)
 
-      ```
-      sticker RUB
-      ```
+    ```
+    sticker N -type corner
+    ```
+
+  - Drill the corner sticker RUB
+
+    ```
+    sticker RUB
+    ```
+
   - Drill the edges from drill_list_edges.txt
 
-      ```
-      sticker -e
-      ```
+    ```
+    sticker -e
+    ```
+
   - Drill the edge sticker UR but exclude the cycles UR RD, UR LB, and UR LF
 
-      ```
-      sticker UR -ex RD LB LF
-      ```
+    ```
+    sticker UR -ex RD LB LF
+    ```
+
   - Drill the edge sticker B (UR) but exclude the cycles BO, BH, and BF
 
-      ```
-      sticker B -t e -ex O H F
-      ```
+    ```
+    sticker B -t e -ex O H F
+    ```
 
 ### HELP: `help`
---------------------------------------------
+
+---
 
 - **Description:** Provides list of commands
 
@@ -178,105 +192,156 @@ sticker (this may not be necessary anymore).
   more. Note: all buffers can be saved to the same file
 
 - **Options:**
-    - -l <filename>: Load the current buffer drill file from JSON to allow multiple concurrent buffer drill sessions.
-      Note
-      that if you start a new session without -l, it will erase the existing save file.
-    - -r: Randomly generate cycles with no limit on repeating pairs.
+
+  - -l <filename>: Load the current buffer drill file from JSON to allow multiple concurrent buffer drill sessions.
+    Note
+    that if you start a new session without -l, it will erase the existing save file.
+  - -r: Randomly generate cycles with no limit on repeating pairs.
 
 - **Example Usages**:
 
-    - Drill the "UF" buffer with random pair generation:
+  - Drill the "UF" buffer with random pair generation:
 
-      ```
-         buffer UF -r
-      ```
+    ```
+       buffer UF -r
+    ```
 
-    - Load a previously saved buffer drill file named "saved_buffer.json" and continue the session:
+  - Load a previously saved buffer drill file named "saved_buffer.json" and continue the session:
 
-      ```
-         buffer UR -l saved_buffer.json
-      ```
+    ```
+       buffer UR -l saved_buffer.json
+    ```
 
-    - Start a new buffer drill session for "UB" without loading a previous file:
+  - Start a new buffer drill session for "UB" without loading a previous file:
 
-      ```
-         buffer UB
-      ```
+    ```
+       buffer UB
+    ```
 
-    - Load a previously saved default buffer drill file and continue the session
+  - Load a previously saved default buffer drill file and continue the session
 
-      ```
-         buffer UB -l
-      ```
+    ```
+       buffer UB -l
+    ```
 
 These examples demonstrate how to use the buffer command with various options.
 
 ### Quit: `quit`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Exits the program when in the main terminal and quits the current operation when running a command
 
 ### Comm: `comm [buffer] [pair | pairs...]`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Retrieve and display commutators.
 - **Options:**
-    - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
-    - -b: Selects a new buffer while in rapid mode
+
+  - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
+  - -b: Selects a new buffer while in rapid mode
 
 - **Example Usages**:
 
-    - Display commutators for the buffer UF with pairs AB and CD:
-        ```
-        comm UF AB CD
-        ```
+  - Display commutators for the buffer UF with pairs AB and CD:
 
-    - Enter rapid mode for buffer UR:
+    ```
+    comm UF AB CD
+    ```
 
-       ```
-       comm -r UR
-       ```
+  - Enter rapid mode for buffer UR:
 
-    - Switch buffer to DR while in rapid mode:
+    ```
+    comm -r UR
+    ```
 
-      ```
-      comm -b DR
-      ```
+  - Switch buffer to DR while in rapid mode:
+
+    ```
+    comm -b DR
+    ```
 
 ### Reload: `reload`
-----------------------------------------------------------------------------------
+
+---
+
 ### Time up: `timeup`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Time since program started.
 
 ### Alger: `alger [alg count]`
-----------------------------------------------------------------------------------
+
+---
+
 ### Cycle Break Float: `float [buffer]`
-----------------------------------------------------------------------------------
+
+---
+
 ### Twists: `twist [twist type]`
-----------------------------------------------------------------------------------
+
+---
 
 - **Options:**
 - `[twist type]` 2f: floating 2-twist, 3: 3-twist, or 3f: floating 3-twist
 
 ### Random Buffer: `rb`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Pick a random buffer from settings.json
 
 ### LTCT: `ltct [ltct type]`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Drills specified LTCT algs
 
 - **Options:**
-    - -s: Generates a full scramble with an ltct
-    - -u: Adds all UU LTCT to be drilled
-    - -ud: Adds some UD LTCT to be drilled
-    - -def: Adds default LTCT: UU and some UD
+  - -s: Generates a full scramble with an ltct
+  - -u: Adds all UU LTCT to be drilled
+  - -ud: Adds some UD LTCT to be drilled
+  - -def: Adds default LTCT: UU and some UD
 
 ### Flips: `flip`
-----------------------------------------------------------------------------------
+
+---
 
 - **Description:** Drills all 2 flips
+
+How to use dlin to check if scram can float.
+Check both if float is possible and count min alg count.
+
+are we just checking if we can float
+or are we calc min edge alg count
+what if we came up with types for each cycle
+
+then go through and count each of them and
+do math and counting, and try a case and subtract that
+type then see if the reciprocal type exists
+
+what are all the cycle types?
+
+Orientation
+Parity
+Is a flip/twist
+{'buffer': 'UF',
+'orientation': 0,
+'parity': 0,
+'targets': ['UR', 'FR', 'DR', 'BR'],
+'type': 'cycle'}
+for edges:
+there are 5 types
+
+1. 0 ori 0 parity 0
+2. 1 ori 0 parity 1 needs odd cycle
+3. 2 ori 1 parity 0 needs flipped cycle
+4. 3 ori 1 parity 1 needs both
+5. 4 misoriented is flipped
+
+sum counts of type 1 and 3 should be even
+sum counts of type 2, 3 and 4 should be even
+
+if cube has parity we assume UF-UR pseudoswap

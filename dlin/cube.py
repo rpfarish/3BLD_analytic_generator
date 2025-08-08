@@ -1,5 +1,6 @@
-import dlin.piece
 import numpy as np
+
+import dlin.piece
 
 FACES = {
     "L": {"axis": 0, "pos": 0},
@@ -74,11 +75,20 @@ class Cube:
     def do_move(self, move):
         clockwise = False if "'" in move else True
         face = move[0]
-        turn = lambda x: self.single_turn(face, clockwise)
+
+        def turn(x):
+            return self.single_turn(face, clockwise)
+
         if "x" in move or "y" in move or "z" in move:
-            turn = lambda x: self.rotation(face, clockwise)
+
+            def turn(x):
+                return self.rotation(face, clockwise)
+
         if "w" in move:
-            turn = lambda x: self.wide_turn(face, clockwise)
+
+            def turn(x):
+                return self.wide_turn(face, clockwise)
+
         if "2" in move:
             turn(face)
             turn(face)
@@ -87,8 +97,9 @@ class Cube:
         return
 
     def scramble_from_string(self, scram):
+        if not scram:
+            return
         self.scramble = scram
         moves = scram.split(" ")
         for move in moves:
             self.do_move(move)
-        return

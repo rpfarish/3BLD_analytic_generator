@@ -72,12 +72,13 @@
       "UBL",
       "UFL",
       "RDF",
-      "RDB"
+      "FDL"
     ]
   },
   "comm_files": [
     "Max Hilliard 3BLD",
-    "Elliott Full Floating + More.xlsx"
+    "Elliott Full Floating + More.xlsx", 
+    "Charlie Eggins's blind algs (Private Sheet).xlsx"
   ],
   "parity_swap_edges": "UF-UR"
 }
