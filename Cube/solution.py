@@ -380,6 +380,7 @@ def analyze_trace(trace, buffer_order=None):
 
     for i, result in enumerate(results, 1):
         print(f"\nGroup {i}:")
+        # print(f"  Primary Buffer: {result['primary_buffer']['buffer']}")
         print(f"  Buffers: {result['buffers']}")
         print(f"  Combination: {' + '.join(result['combination_path'])}")
         print(f"  Joins Required: {result['joins']}")
@@ -461,16 +462,15 @@ def find_optimal_combinations(edges, buffer_order):
 
     # Add type 0 cycles (no joins needed, but include buffer in targets)
     for cycle in type_0_cycles:
-        targets_with_buffer = [cycle["buffer"]] + cycle["targets"]
         results.append(
             {
                 "buffers": [cycle["buffer"]],
-                "targets": targets_with_buffer,
+                "targets": cycle["targets"],
                 "flips": [],
                 "joins": 0,
                 "final_type": 0,
                 "combination_path": [cycle["buffer"]],
-                "target_count": len(targets_with_buffer),
+                "target_count": len(cycle["targets"]),
             }
         )
 
@@ -554,7 +554,6 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
         return solutions
 
     solutions = backtrack(cycles, [], num_groups)
-
     # Convert to the expected format and sort by preference
     formatted_solutions = []
     for solution in solutions:
@@ -562,6 +561,8 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
         total_joins = 0
 
         for group in solution:
+            # print("Group")
+            # pprint(group)
             all_targets = []
             buffers = []
             flips = []  # Track misoriented edges separately
@@ -582,9 +583,8 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
             else:
                 all_targets.extend(primary_buffer["targets"])
 
-            # FIX: fix joins flipped here
             # Then add other buffers and their targets
-            for cycle in group:
+            for i, cycle in enumerate(group):
                 if cycle != primary_buffer:
                     buffers.append(cycle["buffer"])
                     if cycle["type"] == 4:  # misoriented - just a flip
@@ -594,25 +594,21 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
                         all_targets.append(cycle["buffer"])
                         all_targets.extend(cycle["targets"])
 
+                        return_piece = group[i]["buffer"]
+
+                        # Check if this cycle has flipped orientation
+                        if group[i]["edge"].get("orientation", 0) == 1:
+                            return_piece = flip_edge_piece(return_piece)
+
+                        all_targets.append(return_piece)
+
             joins_for_group = len(group) - 1  # n cycles need n-1 joins
-
-            # Add return pieces for each join
-            if joins_for_group > 0:
-                # For each join, we need to add the return piece back to targets
-                # The return piece is the buffer of the cycle we're joining TO
-                for i in range(1, len(group)):  # Skip the primary buffer
-                    return_piece = group[i]["buffer"]
-
-                    # Check if this cycle has flipped orientation
-                    if group[i]["edge"].get("orientation", 0) == 1:
-                        return_piece = flip_edge_piece(return_piece)
-
-                    all_targets.append(return_piece)
 
             total_joins += joins_for_group
 
             formatted_groups.append(
                 {
+                    # "primary_buffer": primary_buffer,
                     "buffers": buffers,
                     "targets": all_targets,
                     "flips": flips,
@@ -691,6 +687,7 @@ scrambles = [
     "R' D' B2 R2 F U2 R2 B' D2 F' U2 F R2 L' U2 B D' U' R' D' Rw' Uw2",
 ]
 
+# scrambles = ["L2 R2 U' F2 D' R2 D' B2 U B2 U' B2 L D L U2 F' U' R2 B2 R2 Rw2 Uw'"]
 print("=== Enhanced Edge Cycle Optimizer - Maximizing Groups ===")
 print("Now prioritizes solutions with MORE groups (smaller group sizes)\n")
 
