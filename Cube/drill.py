@@ -136,8 +136,40 @@ class Drill:
     #
     #         input()
 
-    @staticmethod
+    def get_no_cycle_break_memo_corners(
+        self, scramble, letter_scheme, format=True
+    ) -> list[str]:
+        cube = Memo(scramble, ls=letter_scheme)
+        # print("ls", cube.ls)
+        trace = cube.get_dlin_trace()
+        # print("trace", trace["corner"])
+
+        corner_cycles = trace["corner"]
+        corner_targets = None
+        for cycle in corner_cycles:
+            if cycle["buffer"] == "UFR" and cycle["targets"]:
+                corner_targets = cycle["targets"]
+                break
+
+        # print("corner targets", corner_targets)
+        if not corner_targets:
+            return []
+
+        if len(corner_targets) % 2 != 0:
+            corner_targets.pop()
+
+        if not corner_targets:
+            return []
+
+        if not format:
+            return corner_targets
+
+        no_cycle_break_corner_memo = cube.format_edge_memo(corner_targets).split(" ")
+
+        return no_cycle_break_corner_memo
+
     def drill_corner_sticker(
+        self,
         sticker_to_drill,
         invert=False,
         algs: set = None,
@@ -182,52 +214,120 @@ class Drill:
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         print("Running...")
         count = 2
-        inc_amt = 2
+        inc_amt = 3
         number = 0
         len_algs_to_drill = len(algs_to_drill)
+        tries = 0
+        max_tries = 3000
+        all_algs_to_drill = algs_to_drill.copy()
+
         while algs_to_drill:
-            scramble = get_scramble.get_scramble()
-            cube = Memo(scramble, ls=letter_scheme)
-            corner_memo = cube.format_corner_memo(cube.memo_corners()).split(" ")
-            no_cycle_break_corner_memo = set()
 
-            # if just the first target of the memo is the target eg: L then cycle break, this is bad
+            scramble = get_scramble.get_scramble_bld()
 
-            corner_buffers = cube.corner_memo_buffers
-            for pair in corner_memo:
-                if len(pair) == 4 or len(pair) == 2:
-                    pair_len_half = len(pair) // 2
-                    a = pair[:pair_len_half]
-                    b = pair[pair_len_half:]
-                else:
-                    a = pair
-                    b = ""
-                if a in corner_buffers or b in corner_buffers:
-                    break
-                no_cycle_break_corner_memo.add(pair)
-
+            no_cycle_break_corner_memo = self.get_no_cycle_break_memo_corners(
+                scramble, letter_scheme
+            )
+            no_cycle_break_corner_memo_list = no_cycle_break_corner_memo.copy()
+            no_cycle_break_corner_memo = set(no_cycle_break_corner_memo)
             alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
 
-            if algs_to_drill.intersection(no_cycle_break_corner_memo):
+            if tries == max_tries:
+                inc_amt -= 1
+                print("Trying less with alg count", inc_amt)
+                tries = 0
+
+            if len(alg_to_drill) < inc_amt and tries < max_tries:
+                tries += 1
+                continue
+
+            if alg_to_drill:
+                inc_amt = 3 if len(algs_to_drill) > 60 else 2
                 number += 1
-                print(f"Scramble {number}/{len_algs_to_drill}:", scramble)
+                tries = 0
+                print(f"Scramble {number}/{len_algs_to_drill}: {scramble}")
                 # todo make it so if you're no_repeat then allow to repeat the letter pairs
+                algs_used = all_algs_to_drill.intersection(no_cycle_break_corner_memo)
+                algs_used = [
+                    comm
+                    for comm in no_cycle_break_corner_memo_list
+                    if comm in algs_used
+                ]
+                algs_used = convert_letterpairs(
+                    algs_used,
+                    "loc_to_letter",
+                    letter_scheme,
+                    return_type="list",
+                )
+
+                algs_to_drill_used = convert_letterpairs(
+                    algs_to_drill,
+                    "loc_to_letter",
+                    letter_scheme,
+                    return_type="list",
+                )
+
+                input()
+                print(
+                    "Algs used:",
+                    ", ".join(
+                        [
+                            (f"'{i}'" if i not in algs_to_drill_used else i)
+                            for i in algs_used
+                        ]
+                    ),
+                )
+
                 response = input('Enter "r" to repeat letter pairs: ')
-                if response != "r":
-                    algs_to_drill = algs_to_drill.difference(alg_to_drill)
-                print()
+
                 if response == "q" or response == "quit":
                     return
 
-                alg_to_drill = alg_to_drill.pop()
-                algs_to_drill -= algs_to_drill.intersection(no_cycle_break_corner_memo)
-                # check if freq is < count and if so continue
-                if alg_freq_dist[alg_to_drill] < count:
-                    alg_freq_dist[alg_to_drill] += 1
-                elif len(set(alg_freq_dist.values())) == 1:
-                    count += inc_amt
+                if response != "r":
+                    algs_to_drill = algs_to_drill.difference(alg_to_drill)
+                    if len(alg_to_drill) > 1:
+                        len_algs_to_drill -= len(alg_to_drill) - 1
+
+                    alg_to_drill = alg_to_drill.pop()
+                    algs_to_drill -= algs_to_drill.intersection(
+                        no_cycle_break_corner_memo
+                    )
                 else:
-                    continue
+                    len_algs_to_drill += len(alg_to_drill)
+
+                print()
+
+    def drill_two_color_memo(
+        self,
+        letter_scheme=None,
+        buffer=None,
+    ):
+
+        print("Running...")
+        while True:
+            scramble = get_scramble.get_scramble()
+
+            no_cycle_break_corner_memo = self.get_no_cycle_break_memo_corners(
+                scramble, letter_scheme, format=False
+            )
+            DBR = "DBR", "BDR", "RDB"
+            DFL = "DFL", "FDL", "LDF"
+            DBL = "DBL", "BDL", "LDB"
+            DFR = "DFR", "FDR", "RDF"
+
+            for i in range(0, len(no_cycle_break_corner_memo) - 1, 2):
+                DBR_to_DFL = (
+                    no_cycle_break_corner_memo[i] in DBR
+                    and no_cycle_break_corner_memo[i + 1] in DFL
+                )
+                DBL_to_DFR = (
+                    no_cycle_break_corner_memo[i] in DBL
+                    and no_cycle_break_corner_memo[i + 1] in DFR
+                )
+                if DBR_to_DFL or DBL_to_DFR:
+                    print(scramble)
+                    input()
+                    break
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(
@@ -323,7 +423,7 @@ class Drill:
 
             if not return_list:
                 if random_pairs:
-                    print(f'Scramble: "{scramble}"')
+                    print(f"Scramble: {scramble}")
                 else:
                     print(f'Scramble {num}/{max_number_of_times}: "{scramble}"')
 
@@ -434,9 +534,9 @@ class Drill:
 
             if not return_list:
                 if random_pairs:
-                    print(f'Scramble: "{scramble}"')
+                    print(f"Scramble: {scramble}")
                 else:
-                    print(f'Scramble {num}/{max_number_of_times}: "{scramble}"')
+                    print(f"Scramble {num}/{max_number_of_times}: {scramble}")
 
                 with open(f"cache/drill_save.json", "r+") as f:
                     drill_list_json = json.load(f)

@@ -14,7 +14,6 @@ from .face_enum import EdgeFaceEnum as Edge
 DEBUG = True
 
 
-# TODO does not reorient the cube after scrambling.
 class Cube:
     def __init__(
         self,
@@ -536,14 +535,10 @@ class Cube:
             self._rotate_wide(move)
 
     def do_cube_rotation(self, rotation: str):
-        print(rotation)
         cube_rotation_map = {"x": ("r", "L"), "y": ("u", "D"), "z": ("f", "B")}
         rotation_move = rotation[:1]
         move_dir = rotation[1:]
         a, b = cube_rotation_map[rotation_move]
-        print(rotation_move, move_dir)
-        print(a, b)
-        print(a + move_dir, b + move_dir)
         self.do_move(a + move_dir)
         self.do_move(b + move_dir, invert_direction=True)
 

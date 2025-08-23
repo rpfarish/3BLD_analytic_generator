@@ -196,7 +196,7 @@ class Memo(Cube):
         return self.invert(s)
 
     # memo
-    def format_corner_memo(self, memo):
+    def format_corner_memo(self, memo) -> str:
         parity_target = memo.pop() if self.has_parity else ""
         memo = self.format_edge_memo(memo) + " " + parity_target
         return memo.strip()

@@ -96,6 +96,7 @@ def drill_sticker(args: list, buffers):
                 sticker_to_drill=None,
                 algs=algs,
                 cycles_to_exclude=cycles_to_exclude,
+                letter_scheme=LetterScheme(),
                 buffer=buffers["corner_buffer"],
             )
         return

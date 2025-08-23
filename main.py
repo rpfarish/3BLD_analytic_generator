@@ -1,4 +1,6 @@
+import atexit
 import os
+import readline
 import time
 
 from commands import (
@@ -27,6 +29,26 @@ from Spreadsheets import ingest_spreadsheet
 
 
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
+
+readline.parse_and_bind("C-p: previous-history")
+readline.parse_and_bind("C-n: next-history")
+
+# Set up history file
+histfile = os.path.join(os.path.expanduser("~"), ".bld_generator")
+try:
+    readline.read_history_file(histfile)
+    # Default history len is -1 (infinite), which may grow unruly
+    readline.set_history_length(1000)
+except FileNotFoundError:
+    pass
+
+# Save history on exit
+atexit.register(readline.write_history_file, histfile)
+
+
+def clear_screen():
+    """Clear the console screen"""
+    os.system("cls" if os.name == "nt" else "clear")
 
 
 def check_comm_sheets_exist(path) -> bool:
@@ -118,7 +140,7 @@ def main():
                 if not args:
                     print(drill_sticker.__doc__)
                     continue
-                args = [arg.upper() for arg in args]
+                args = [arg.lower() for arg in args]
                 drill_sticker(args, buffers=settings.buffers)
                 last_args = args
 
@@ -172,6 +194,9 @@ def main():
                 alg_count = int(args.pop())
                 alger(alg_count, buffer_order=settings.buffer_order)
 
+            case "tc":
+                Drill().drill_two_color_memo()
+
             case "rb" | "rndbfr":
                 if not args:
                     print(cycle_break_float.__doc__)
@@ -197,6 +222,9 @@ def main():
 
             case "flip":
                 drill_two_flips()
+
+            case "clear":
+                clear_screen()
 
             case _:
                 print("that option is not recognised")

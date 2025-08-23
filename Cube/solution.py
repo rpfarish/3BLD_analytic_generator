@@ -3,6 +3,7 @@ from itertools import combinations
 from pprint import pprint
 
 import dlin
+from Cube.dlin_float import find_optimal_combinations
 from Cube.memo import Memo
 
 
@@ -51,6 +52,7 @@ class Solution:
         # TODO add alg count
 
     def can_float_edges(self):
+        # TODO: change this into sandwich float detector or smth
         """
         ca cb = 2e2e
         ca bc = can float
@@ -58,19 +60,26 @@ class Solution:
         ac cb = same as doing ab
         :return:
         """
+
+        trace = self.get_dlin_trace()
+
+        buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]
+        results = find_optimal_combinations(trace["edge"], buffer_order)
+
+        buffer_count = [group for group in results if group["target_count"] != 0]
+        return len(buffer_count) >= 2 or not any("UF" in t["buffers"] for t in results)
+
         memo = self.edges
         buffers = self.edge_buffers
         if not self.cube.adj_edges:
             print("Edges are all solved")
             return
-        print(self.cube.adj_edges)
         # flips = self.number_of_edge_flips
         # print('buffers', buffers)
         for buffer in buffers:
 
             is_buffer_hit = False
             buffer_hit_parity = 0
-            print("memo", memo)
             for pair in memo:
                 if not pair:
                     continue
@@ -157,16 +166,16 @@ class Solution:
         # print(self.edges, len(self.edges), self.corners, len(self.corners), "FLIPS", self.number_of_edge_flips,
         #       "TWISTS", self.number_of_corner_twists, "FLOATS", number_of_floats)
         # Debug print statements for num_of_algs calculation
-        print(f"DEBUG: len(self.edges) = {len(self.edges)}")
-        print(f"DEBUG: len(self.corners) = {len(self.corners)}")
-        print(f"DEBUG: self.number_of_edge_flips = {self.number_of_edge_flips}")
-        print(
-            f"DEBUG: flips_to_alg.get({self.number_of_edge_flips}, {self.number_of_edge_flips}) = {flips_to_alg.get(self.number_of_edge_flips, self.number_of_edge_flips)}"
-        )
-        print(f"DEBUG: self.number_of_corner_twists = {self.number_of_corner_twists}")
-        print(
-            f"DEBUG: twists_to_alg.get({self.number_of_corner_twists}, {self.number_of_corner_twists // 2}) = {twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2)}"
-        )
+        # print(f"DEBUG: len(self.edges) = {len(self.edges)}")
+        # print(f"DEBUG: len(self.corners) = {len(self.corners)}")
+        # print(f"DEBUG: self.number_of_edge_flips = {self.number_of_edge_flips}")
+        # print(
+        #     f"DEBUG: flips_to_alg.get({self.number_of_edge_flips}, {self.number_of_edge_flips}) = {flips_to_alg.get(self.number_of_edge_flips, self.number_of_edge_flips)}"
+        # )
+        # print(f"DEBUG: self.number_of_corner_twists = {self.number_of_corner_twists}")
+        # print(
+        #     f"DEBUG: twists_to_alg.get({self.number_of_corner_twists}, {self.number_of_corner_twists // 2}) = {twists_to_alg.get(self.number_of_corner_twists, self.number_of_corner_twists // 2)}"
+        # )
 
         # Calculate intermediate sum before subtracting floats
         algs_before_floats = (
@@ -177,11 +186,11 @@ class Solution:
                 self.number_of_corner_twists, self.number_of_corner_twists // 2
             )
         )
-        print(f"DEBUG: algs_before_floats = {algs_before_floats}")
-        print(f"DEBUG: number_of_floats = {number_of_floats}")
+        # print(f"DEBUG: algs_before_floats = {algs_before_floats}")
+        # print(f"DEBUG: number_of_floats = {number_of_floats}")
 
         num_of_algs = algs_before_floats - number_of_floats
-        print(f"DEBUG: final num_of_algs = {num_of_algs}")
+        # print(f"DEBUG: final num_of_algs = {num_of_algs}")
         return num_of_algs
 
     def get_solution(self):
@@ -208,13 +217,14 @@ class Solution:
 
     def display(self):
         solution = self.get_solution()
-        print("Can float edges:", self.can_float_edges)
+        print("=" * 20, "MEMO", "=" * 20)
         print("Scramble", self.scramble)
         print(f"Parity:", solution["parity"])
-        print(f"Edges:", solution["edges"])
+        print("Can float edges:", self.can_float_edges)
+        print(f"Edges:", " ".join(solution["edges"]))
+        print("Corners:", " ".join(solution["corners"]))
         print(f"Flipped Edges:", solution["flipped_edges"])
         print("Edge Buffers:", solution["edge_buffers"])
-        print("Corners:", solution["corners"])
         print("Twisted Corners:", self.cube.twisted_corners)
         print("Alg count:", solution["number_of_algs"])
         # corner_memo = solution['corners']
@@ -223,9 +233,34 @@ class Solution:
         corner_buffers = solution["corner_buffers"]
         print(corner_buffers)
 
+        DEFAULTBUFFERS = {
+            "corner": ["UFR", "UFL", "UBL", "UBR", "DFR", "DFL", "DBR", "DBL"],
+            "edge": [
+                "UF",
+                "UB",
+                "UR",
+                "UL",
+                "DF",
+                "DB",
+                "FR",
+                "FL",
+                "DR",
+                "DL",
+                "BR",
+                "BL",
+            ],
+        }
+
         swap = ("UF", "UR") if self.parity else None
-        trace = dlin.trace(self.scramble, swap=swap)
-        self.get_dlin_trace_type_count_edges(trace)
+        trace = dlin.trace(self.scramble, buffers=DEFAULTBUFFERS, swap=swap)
+
+        buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]
+        results = find_optimal_combinations(trace["edge"], buffer_order)
+        print("=" * 20, "Dlin combine floats", "=" * 20)
+        pprint(results)
+        # self.get_dlin_trace_type_count_edges(trace)
+
+        print("=" * 20, "Dlin trace", "=" * 20)
         pprint(trace)
 
     def get_dlin_trace_type_count_edges(self, trace) -> dict[int, int]:
@@ -250,23 +285,25 @@ class Solution:
                 case (1, 1):  # Type 3: both (needs both odd and flipped)
                     edge_types[3] += 1
 
-        print(f"Edge types count: {edge_types}")
+        # print(f"Edge types count: {edge_types}")
         # Validation checks
         sum_type_1_and_3 = edge_types[1] + edge_types[3]
         sum_type_2_3_and_4 = edge_types[2] + edge_types[3] + edge_types[4]
 
-        print(
-            f"Sum of type 1 and 3: {sum_type_1_and_3} (should be even: {sum_type_1_and_3 % 2 == 0})"
-        )
-        print(
-            f"Sum of type 2, 3, and 4: {sum_type_2_3_and_4} (should be even: {sum_type_2_3_and_4 % 2 == 0})"
-        )
+        # print(
+        #     f"Sum of type 1 and 3: {sum_type_1_and_3} (should be even: {sum_type_1_and_3 % 2 == 0})"
+        # )
+        # print(
+        #     f"Sum of type 2, 3, and 4: {sum_type_2_3_and_4} (should be even: {sum_type_2_3_and_4 % 2 == 0})"
+        # )
 
         # Overall validation
-        if sum_type_1_and_3 % 2 == 0 and sum_type_2_3_and_4 % 2 == 0:
-            print("✓ All validation checks passed!")
-        else:
-            print("✗ Validation failed!")
+
+        # if sum_type_1_and_3 % 2 == 0 and sum_type_2_3_and_4 % 2 == 0:
+        #     print("✓ All validation checks passed!")
+        # else:
+        #     print("✗ Validation failed!")
+        #
         return edge_types
 
 

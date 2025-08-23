@@ -3,37 +3,25 @@ from itertools import combinations
 import dlin
 
 
-def combine_types(type_a, type_b):
+def combine_types(type_a: int, type_b: int) -> int:
     """Combine two edge types using bitwise XOR on (orientation, parity)"""
-    # Type mapping: 0:(0,0), 1:(0,1), 2:(1,0), 3:(1,1), 4:misoriented(1,0)
-    # Note: misoriented (type 4) is treated as flipped, so same as type 2
-    type_to_bits = {0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1), 4: (1, 0)}
-    bits_to_type = {(0, 0): 0, (0, 1): 1, (1, 0): 2, (1, 1): 3}
+    # Convert type 4 to type 2 (both represent flipped orientation)
+    if type_a == 4:
+        type_a = 2
+    if type_b == 4:
+        type_b = 2
 
-    bits_a = type_to_bits[type_a]
-    bits_b = type_to_bits[type_b]
-
-    # Bitwise XOR (addition in GF(2))
-    result_bits = (bits_a[0] ^ bits_b[0], bits_a[1] ^ bits_b[1])
-    return bits_to_type[result_bits]
+    # Direct XOR and clamp to valid range [0,3]
+    return (type_a ^ type_b) & 3
 
 
-def get_edge_type(edge):
+def get_edge_type(edge: dict[str, int]) -> int:
     """Get the type (0-4) of an edge based on orientation and parity"""
     if edge.get("type") == "misoriented":
         return 4
 
-    orientation = edge["orientation"]
-    parity = edge["parity"]
-
-    if (orientation, parity) == (0, 0):
-        return 0  # Type 0: normal cycle
-    elif (orientation, parity) == (0, 1):
-        return 1  # Type 1: odd cycle
-    elif (orientation, parity) == (1, 0):
-        return 2  # Type 2: flipped cycle
-    elif (orientation, parity) == (1, 1):
-        return 3  # Type 3: both odd and flipped
+    # Direct bit packing: orientation is bit 1, parity is bit 0
+    return (edge["orientation"] << 1) | edge["parity"]
 
 
 def analyze_trace(trace, buffer_order=None):
@@ -49,32 +37,33 @@ def analyze_trace(trace, buffer_order=None):
     """
 
     if buffer_order is None:
-        # Extract buffer order from the trace data
-        buffer_order = [edge["buffer"] for edge in trace["edge"]]
+        print("Warning no buffer order provided...")
+        buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]
+        print("Defaulting to:", buffer_order)
 
     # Analyze edge types first
-    print("=== Edge Type Analysis ===")
+    # print("=== Edge Type Analysis ===")
     edge_types = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0}
     for edge in trace["edge"]:
         edge_type = get_edge_type(edge)
         edge_types[edge_type] += 1
-        orientation = edge.get("orientation", "N/A")
-        parity = edge.get("parity", "N/A")
-        print(
-            f"Buffer {edge['buffer']}: Type {edge_type} (orientation={orientation}, parity={parity})"
-        )
+        # orientation = edge.get("orientation", "N/A")
+        # parity = edge.get("parity", "N/A")
+        # print(
+        #     f"Buffer {edge['buffer']}: Type {edge_type} (orientation={orientation}, parity={parity})"
+        # )
 
-    print(f"\nEdge types count: {edge_types}")
+    # print(f"\nEdge types count: {edge_types}")
 
     # Validation checks
     sum_type_1_and_3 = edge_types[1] + edge_types[3]
     sum_type_2_3_and_4 = edge_types[2] + edge_types[3] + edge_types[4]
-    print(
-        f"Sum of type 1 and 3 (odd cycles): {sum_type_1_and_3} (should be even: {sum_type_1_and_3 % 2 == 0})"
-    )
-    print(
-        f"Sum of type 2, 3, and 4 (flipped): {sum_type_2_3_and_4} (should be even: {sum_type_2_3_and_4 % 2 == 0})"
-    )
+    # print(
+    #     f"Sum of type 1 and 3 (odd cycles): {sum_type_1_and_3} (should be even: {sum_type_1_and_3 % 2 == 0})"
+    # )
+    # print(
+    #     f"Sum of type 2, 3, and 4 (flipped): {sum_type_2_3_and_4} (should be even: {sum_type_2_3_and_4 % 2 == 0})"
+    # )
 
     is_valid = sum_type_1_and_3 % 2 == 0 and sum_type_2_3_and_4 % 2 == 0
     if is_valid:
@@ -84,7 +73,7 @@ def analyze_trace(trace, buffer_order=None):
         return None
 
     # Find optimal combinations
-    print("\n=== Optimal Cycle Combinations ===")
+    # print("\n=== Optimal Cycle Combinations ===")
     results = find_optimal_combinations(trace["edge"], buffer_order)
 
     total_joins = 0
@@ -92,30 +81,30 @@ def analyze_trace(trace, buffer_order=None):
     total_flips = 0
 
     for i, result in enumerate(results, 1):
-        print(f"\nGroup {i}:")
-        # print(f"  Primary Buffer: {result['primary_buffer']['buffer']}")
-        print(f"  Buffers: {result['buffers']}")
-        print(f"  Combination: {' + '.join(result['combination_path'])}")
-        print(f"  Joins Required: {result['joins']}")
-        print(f"  Final Type: {result['final_type']}")
-        print(f"  Target Count: {result['target_count']}")
-        print(f"  Targets: {result['targets']}")
+        # print(f"\nGroup {i}:")
+        # # print(f"  Primary Buffer: {result['primary_buffer']['buffer']}")
+        # print(f"  Buffers: {result['buffers']}")
+        # print(f"  Combination: {' + '.join(result['combination_path'])}")
+        # print(f"  Joins Required: {result['joins']}")
+        # print(f"  Final Type: {result['final_type']}")
+        # print(f"  Target Count: {result['target_count']}")
+        # print(f"  Targets: {result['targets']}")
         if "flips" in result and result["flips"]:
-            print(f"  Flips: {result['flips']}")
+            # print(f"  Flips: {result['flips']}")
             total_flips += len(result["flips"])
 
         total_joins += result["joins"]
         total_targets += result["target_count"]
 
-    print(f"\n=== Summary ===")
-    print(f"Total Groups: {len(results)}")
-    print(f"Total Joins: {total_joins}")
-    print(f"Total Targets: {total_targets}")
-    print(f"Total Flips: {total_flips}")
-    print(f"Buffer count: {len([b for result in results for b in result['buffers']])}")
+    # print(f"\n=== Summary ===")
+    # print(f"Total Groups: {len(results)}")
+    # print(f"Total Joins: {total_joins}")
+    # print(f"Total Targets: {total_targets}")
+    # print(f"Total Flips: {total_flips}")
+    # print(f"Buffer count: {len([b for result in results for b in result['buffers']])}")
 
     # List all targets in order
-    print(f"\n=== All Targets in Order ===")
+    # print(f"\n=== All Targets in Order ===")
     all_targets = []
     all_flips = []
     for result in results:
@@ -123,9 +112,9 @@ def analyze_trace(trace, buffer_order=None):
         if "flips" in result:
             all_flips.extend(result["flips"])
 
-    print(f"Target sequence: {all_targets}")
-    if all_flips:
-        print(f"Flip sequence: {all_flips}")
+    # print(f"Target sequence: {all_targets}")
+    # if all_flips:
+    #     print(f"Flip sequence: {all_flips}")
 
     return {
         "edge_types": edge_types,
@@ -163,13 +152,13 @@ def find_optimal_combinations(edges, buffer_order):
     type_0_cycles = [e for e in edge_data if e["type"] == 0]
     non_type_0_cycles = [e for e in edge_data if e["type"] != 0]
 
-    print(f"Type 0 cycles (already solved): {[e['buffer'] for e in type_0_cycles]}")
+    # print(f"Type 0 cycles (already solved): {[e['buffer'] for e in type_0_cycles]}")
     formatted_cycles = []
     for e in non_type_0_cycles:
         buffer = e["buffer"]
         type_ = e["type"]
         formatted_cycles.append(f"{buffer}(t{type_})")
-    print("Non-type 0 cycles to combine:", formatted_cycles)
+    # print("Non-type 0 cycles to combine:", formatted_cycles)
 
     results = []
 
@@ -210,14 +199,14 @@ def find_maximum_groups(cycles, buffer_order):
     for num_groups in range(n, 0, -1):  # Count DOWN from max groups to 1
         solutions = find_groupings_with_n_groups(cycles, num_groups, buffer_order)
         if solutions:
-            print(f"Found solution with {num_groups} groups (maximizing group count)")
+            # print(f"Found solution with {num_groups} groups (maximizing group count)")
             # Return the first valid solution
             return solutions[0]
 
     return []
 
 
-def flip_edge_piece(piece):
+def flip_edge_piece(piece: str) -> str:
     """Flip an edge piece (UB -> BU, UR -> RU, etc.)"""
     if len(piece) == 2:
         return piece[1] + piece[0]
@@ -295,23 +284,26 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
                 all_targets.extend(primary_buffer["targets"])
 
             # Then add other buffers and their targets
-            for i, cycle in enumerate(group):
-                if cycle != primary_buffer:
-                    buffers.append(cycle["buffer"])
-                    if cycle["type"] == 4:  # misoriented - just a flip
-                        flips.append(cycle["buffer"])
-                    else:
-                        # Add buffer to targets
-                        all_targets.append(cycle["buffer"])
-                        all_targets.extend(cycle["targets"])
+            for cycle in group:
+                if cycle == primary_buffer:
+                    continue
 
-                        return_piece = group[i]["buffer"]
+                buffers.append(cycle["buffer"])
+                if cycle["type"] == 4:
+                    flips.append(cycle["buffer"])
+                    continue
 
-                        # Check if this cycle has flipped orientation
-                        if group[i]["edge"].get("orientation", 0) == 1:
-                            return_piece = flip_edge_piece(return_piece)
+                # Add buffer to targets
+                all_targets.append(cycle["buffer"])
+                all_targets.extend(cycle["targets"])
 
-                        all_targets.append(return_piece)
+                return_piece = cycle["buffer"]
+
+                # Check if this cycle has flipped orientation
+                if cycle["edge"].get("orientation", 0) == 1:
+                    return_piece = flip_edge_piece(return_piece)
+
+                all_targets.append(return_piece)
 
             joins_for_group = len(group) - 1  # n cycles need n-1 joins
 
@@ -339,7 +331,7 @@ def find_groupings_with_n_groups(cycles, num_groups, buffer_order):
     return [sol[0] for sol in formatted_solutions]
 
 
-def group_combines_to_type_0(group):
+def group_combines_to_type_0(group) -> bool:
     """Check if a group of cycles combines to type 0"""
     if not group:
         return False

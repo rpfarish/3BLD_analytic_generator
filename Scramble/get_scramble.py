@@ -1,13 +1,47 @@
 import random
 
 
-def get_scramble(requires_parity: bool = False):
+def get_scramble(requires_parity: bool = False) -> str:
     if requires_parity:
         pass
     return gen_premove(20, 21, requires_parity=requires_parity)
 
 
-def gen_premove(min_len: int = 1, max_len: int = 3, requires_parity: bool = False):
+def get_scramble_bld(requires_parity: bool = False):
+
+    random_orientation = [
+        "",
+        "Rw",
+        "Fw",
+        "Fw Uw",
+        "Rw2 Uw'",
+        "Uw'",
+        "Rw' Uw2",
+        "Rw' Uw'",
+        "Rw Uw'",
+        "Fw' Uw",
+        "Rw'",
+        "Rw Uw",
+        "Rw2 Uw",
+        "Fw Uw2",
+        "Rw2",
+        "Rw2 Uw2",
+        "Fw'",
+        "Rw Uw2",
+        "Uw",
+        "Fw' Uw'",
+        "Fw' Uw2",
+        "Fw Uw'",
+        "Rw' Uw",
+        "Uw2",
+    ]
+
+    return f"{get_scramble()} {random.choice(random_orientation)}".strip()
+
+
+def gen_premove(
+    min_len: int = 1, max_len: int = 3, requires_parity: bool = False
+) -> str:
     faces = ["U", "L", "F", "R", "B", "D"]
     directions = ["", "'", "2"]
     turns = []
