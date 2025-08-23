@@ -213,8 +213,7 @@ class Drill:
         # algs_to_drill = {"NS"}
         alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         print("Running...")
-        count = 2
-        inc_amt = 3
+        cycle_count = 3
         number = 0
         len_algs_to_drill = len(algs_to_drill)
         tries = 0
@@ -233,16 +232,15 @@ class Drill:
             alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
 
             if tries == max_tries:
-                inc_amt -= 1
-                print("Trying less with alg count", inc_amt)
+                cycle_count -= 1
                 tries = 0
 
-            if len(alg_to_drill) < inc_amt and tries < max_tries:
+            if len(alg_to_drill) < cycle_count and tries < max_tries:
                 tries += 1
                 continue
 
             if alg_to_drill:
-                inc_amt = 3 if len(algs_to_drill) > 60 else 2
+                cycle_count = 3 if len(algs_to_drill) > 60 else 2
                 number += 1
                 tries = 0
                 print(f"Scramble {number}/{len_algs_to_drill}: {scramble}")
