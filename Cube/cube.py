@@ -39,6 +39,7 @@ class Cube:
         else:
             ls: letter_scheme = LetterScheme(ls, use_default=use_default_letter_scheme)
             self.ls: LetterScheme = ls
+
         self.slices: str = "MSE"
 
         self.directions: list[str] = ["", "'", "2"]

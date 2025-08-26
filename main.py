@@ -1,6 +1,6 @@
 import atexit
 import os
-import readline
+import sys
 import time
 
 from commands import (
@@ -30,20 +30,64 @@ from Spreadsheets import ingest_spreadsheet
 
 # todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
 
-readline.parse_and_bind("C-p: previous-history")
-readline.parse_and_bind("C-n: next-history")
 
-# Set up history file
-histfile = os.path.join(os.path.expanduser("~"), ".bld_generator")
+# Set up history file with cross-platform compatibility
 try:
-    readline.read_history_file(histfile)
-    # Default history len is -1 (infinite), which may grow unruly
-    readline.set_history_length(1000)
-except FileNotFoundError:
-    pass
+    import readline
 
-# Save history on exit
-atexit.register(readline.write_history_file, histfile)
+    readline_available = True
+except ImportError:
+    # readline is not available on Windows by default
+    readline_available = False
+    try:
+        # Try pyreadline3 as an alternative for Windows
+        import pyreadline3 as readline
+
+        readline_available = True
+    except ImportError:
+        pass
+
+if readline_available:
+    # Use platform-appropriate config directory
+    if sys.platform == "win32":
+        # Windows: Try APPDATA, then USERPROFILE, then fallback
+        config_dir = (
+            os.environ.get("APPDATA")
+            or os.environ.get("USERPROFILE")
+            or os.path.expanduser("~")
+        )
+        histfile = os.path.join(config_dir, "bld_generator_history")
+    elif sys.platform == "darwin":
+        # macOS: Use ~/Library/Application Support
+        config_dir = os.path.expanduser("~/Library/Application Support")
+        histfile = os.path.join(config_dir, "bld_generator_history")
+    else:
+        # Linux and other Unix-like: Use XDG or fallback to home
+        config_dir = os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config"))
+        histfile = os.path.join(config_dir, "bld_generator_history")
+
+    # Ensure the directory exists
+    os.makedirs(os.path.dirname(histfile), exist_ok=True)
+
+    try:
+        readline.parse_and_bind("C-p: previous-history")
+        readline.parse_and_bind("C-n: next-history")
+    except OSError:
+        pass
+
+    try:
+        readline.read_history_file(histfile)
+        readline.set_history_length(1000)
+    except (FileNotFoundError, PermissionError):
+        # File doesn't exist, no permissions, or binding not supported
+        pass
+    # Register cleanup function to save history on exit
+    import atexit
+
+    atexit.register(lambda: readline.write_history_file(histfile))
+else:
+    print("Warning: readline not available. Command history will not be saved.")
+    histfile = None
 
 
 def clear_screen():
@@ -132,10 +176,7 @@ def main():
                 print(algs_list)
                 Drill().drill_algs(algs_list)
 
-            # do these two auto convert
-            # (s/sticker, <piece type(e/edge, c/corner)>, sticker name, optional -e=<cycles to exclude(secondsticker)>,
-            # -i=<cycles to only include(secondsticker)>, -file=<filename>)
-            case "s" | "stkr":
+            case "d" | "drill":
                 # todo make this for floating too  ... hahahahaa
                 if not args:
                     print(drill_sticker.__doc__)

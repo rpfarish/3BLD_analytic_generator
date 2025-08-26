@@ -1,3 +1,6 @@
+// Comment out a line like this
+// Use a * to drill all the possible pairs with the other letter
+// e.g. A* (Generates all 18 cases starting with A) or *A
 EB
 CZ
 HW

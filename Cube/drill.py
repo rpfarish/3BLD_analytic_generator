@@ -3,6 +3,7 @@ import json
 import random
 import time
 
+import dlin
 from comms.comms import COMMS
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
@@ -137,17 +138,21 @@ class Drill:
     #         input()
 
     def get_no_cycle_break_memo_corners(
-        self, scramble, letter_scheme, format=True
+        self, scramble, letter_scheme, buffer, format=True
     ) -> list[str]:
-        cube = Memo(scramble, ls=letter_scheme)
-        # print("ls", cube.ls)
-        trace = cube.get_dlin_trace()
-        # print("trace", trace["corner"])
+
+        if (len(scramble.split()) - scramble.count("2")) % 2 == 1:
+            swap = ("UF", "UR")
+        else:
+            swap = None
+
+        trace = dlin.trace(scramble, swap=swap)
 
         corner_cycles = trace["corner"]
         corner_targets = None
         for cycle in corner_cycles:
-            if cycle["buffer"] == "UFR" and cycle["targets"]:
+            # TODO: add buffer from settings and load buffer order from settings
+            if cycle["buffer"] == buffer and cycle["targets"]:
                 corner_targets = cycle["targets"]
                 break
 
@@ -164,114 +169,104 @@ class Drill:
         if not format:
             return corner_targets
 
-        no_cycle_break_corner_memo = cube.format_edge_memo(corner_targets).split(" ")
-
-        return no_cycle_break_corner_memo
+        return " ".join(
+            f"{corner_targets[i]}{corner_targets[i + 1]}"
+            for i in range(0, len(corner_targets) - 1, 2)
+        ).split(" ")
 
     def drill_corner_sticker(
         self,
-        sticker_to_drill,
-        invert=False,
-        algs: set = None,
-        cycles_to_exclude: set = None,
+        algs_to_drill: set,
         letter_scheme=None,
         buffer=None,
+        random_pairs: bool = False,
+        freq: int = -1,
     ):
 
-        def remove_piece(target_list, piece, ltr_scheme):
-            piece_adj1, piece_adj2 = Cube(ls=ltr_scheme).adj_corners[piece]
-            target_list.remove(piece)
-            target_list.remove(piece_adj1)
-            target_list.remove(piece_adj2)
-            return target_list
+        # if algs is not None:
+        #     algs_to_drill = algs
+        # else:
+        #     algs_to_drill = self.generate_drill_list(
+        #         letter_scheme, buffer, sticker_to_drill
+        #     )
+        #
+        # if cycles_to_exclude is not None:
+        #     algs_to_drill -= cycles_to_exclude
 
-        def generate_drill_list(ltr_scheme: LetterScheme, buffer, target):
-            all_targets = LetterScheme(use_default=True).get_corners()
-            remove_piece(all_targets, buffer, ltr_scheme)
-
-            target_list = all_targets[:]
-            # remove buffer stickers
-            remove_piece(target_list, target, ltr_scheme)
-
-            # generate random pairs
-            # generate specific pairs
-            # generate target groups e.g. just Z or H and k
-            # generate inverse target groups
-            # specify buffer
-            return {target + i for i in target_list}
-
-        sticker_to_drill = sticker_to_drill
-
-        if algs is not None:
-            algs_to_drill = algs
-        else:
-            algs_to_drill = generate_drill_list(letter_scheme, buffer, sticker_to_drill)
-        if cycles_to_exclude is not None:
-            algs_to_drill -= cycles_to_exclude
-
-        # fixme drill just one sticker with s XY -onlypairIwanttodrill
-        # algs_to_drill = {"NS"}
-        alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
         print("Running...")
-        cycle_count = 3
         number = 0
-        len_algs_to_drill = len(algs_to_drill)
+
         tries = 0
         max_tries = 3000
+
         all_algs_to_drill = algs_to_drill.copy()
+        remaining_algs = algs_to_drill.copy()
+        len_remaining_algs = len(algs_to_drill)
 
-        while algs_to_drill:
+        cycle_count = 3 if len(remaining_algs) > 60 else 2
+        cycle_count = 1 if len(remaining_algs) < 20 else cycle_count
 
+        # Initialize timing lists before the while loop
+        memo_times = []
+
+        start = time.perf_counter()
+        while remaining_algs:
+
+            # todo maybe increase scramble length to 26?
             scramble = get_scramble.get_scramble_bld()
 
-            no_cycle_break_corner_memo = self.get_no_cycle_break_memo_corners(
-                scramble, letter_scheme
-            )
-            no_cycle_break_corner_memo_list = no_cycle_break_corner_memo.copy()
-            no_cycle_break_corner_memo = set(no_cycle_break_corner_memo)
-            alg_to_drill = algs_to_drill.intersection(no_cycle_break_corner_memo)
+            memo = self.get_no_cycle_break_memo_corners(scramble, letter_scheme, buffer)
 
-            if tries == max_tries:
+            # Time intersection
+            cycles_to_drill = remaining_algs.intersection(set(memo))
+
+            if tries == max_tries or (
+                (time.perf_counter() - start) > 2 and cycle_count > 2
+            ):
                 cycle_count -= 1
                 tries = 0
 
-            if len(alg_to_drill) < cycle_count and tries < max_tries:
+            if len(cycles_to_drill) < cycle_count and tries < max_tries:
                 tries += 1
                 continue
 
-            if alg_to_drill:
-                cycle_count = 3 if len(algs_to_drill) > 60 else 2
+            if cycles_to_drill:
+                memo_times.append(time.perf_counter() - start)
+
+                print(memo_times[-1])
+                # TODO: make heuristic better
+                cycle_count = 3 if len(remaining_algs) > 60 else 2
+                cycle_count = 1 if len(remaining_algs) < 20 else cycle_count
+
                 number += 1
                 tries = 0
-                print(f"Scramble {number}/{len_algs_to_drill}: {scramble}")
-                # todo make it so if you're no_repeat then allow to repeat the letter pairs
-                algs_used = all_algs_to_drill.intersection(no_cycle_break_corner_memo)
-                algs_used = [
-                    comm
-                    for comm in no_cycle_break_corner_memo_list
-                    if comm in algs_used
-                ]
-                algs_used = convert_letterpairs(
-                    algs_used,
+                print(f"Scramble {number}/{len_remaining_algs}: {scramble}")
+
+                algs_used_ls = convert_letterpairs(
+                    [comm for comm in memo if comm in all_algs_to_drill],
                     "loc_to_letter",
                     letter_scheme,
                     return_type="list",
                 )
 
-                algs_to_drill_used = convert_letterpairs(
-                    algs_to_drill,
+                remaining_algs_ls = convert_letterpairs(
+                    remaining_algs,
                     "loc_to_letter",
                     letter_scheme,
                     return_type="list",
                 )
 
-                input()
+                response = input()
+
+                if response == "q" or response == "quit":
+                    return
+
                 print(
                     "Algs used:",
                     ", ".join(
                         [
-                            (f"'{i}'" if i not in algs_to_drill_used else i)
-                            for i in algs_used
+                            (f"'{i}'" if i not in remaining_algs_ls else i)
+                            for i in algs_used_ls
                         ]
                     ),
                 )
@@ -281,19 +276,22 @@ class Drill:
                 if response == "q" or response == "quit":
                     return
 
-                if response != "r":
-                    algs_to_drill = algs_to_drill.difference(alg_to_drill)
-                    if len(alg_to_drill) > 1:
-                        len_algs_to_drill -= len(alg_to_drill) - 1
+                if response == "r":
+                    len_remaining_algs += len(cycles_to_drill)
+                    print()
+                    continue
 
-                    alg_to_drill = alg_to_drill.pop()
-                    algs_to_drill -= algs_to_drill.intersection(
-                        no_cycle_break_corner_memo
-                    )
-                else:
-                    len_algs_to_drill += len(alg_to_drill)
+                remaining_algs = remaining_algs.difference(cycles_to_drill)
+                if len(cycles_to_drill) > 1:
+                    len_remaining_algs -= len(cycles_to_drill) - 1
 
+                remaining_algs -= remaining_algs.intersection(set(memo))
                 print()
+                start = time.perf_counter()
+
+        print(
+            f"Memo - Avg: {sum(memo_times)/len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
+        )
 
     def drill_two_color_memo(
         self,

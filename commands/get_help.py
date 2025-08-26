@@ -9,7 +9,7 @@ c  | comm  : Retrieve and display commutators.
 m  | memo  : Generates memorization and info for the input scramble
 ls | ltrscm: Load and unload letterscheme 
 
-s  | stkr  : Drill sticker from default buffers.
+d  | drill : Drill a list of letterpairs from text file until all pairs are drilled.
 b  | buffer: Drill all floating cycles for the input buffer with edge or corner only scrambles
 rb | rndbfr: Like Buffer but random with cycle breaks and flips 
 
