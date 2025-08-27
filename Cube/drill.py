@@ -922,6 +922,7 @@ class Drill:
             "U2 R2 D' r U2 r' D R U2 R U'",
             "U' L' U' L U' R U' L' U R' U2' L",
         ]
+        # TODO: this list is not complete
         ltct_ud = [
             "U R D R' U R D' R2' U R U2 R' U R U'",
             "R D R' U R D' R2' U R U R' U2' R",
@@ -947,8 +948,6 @@ class Drill:
         # we are now going to pretent that we know what we are dioing
         # todo this is where drill ltct goes
         # todo add args for which LTCTs are filtered for
-        # you enter in the name of the ltct in your letterscheme eg: ao and then enter
-        algs_done = set()
         while True:
             while True:
                 # get parity scramble
@@ -965,10 +964,9 @@ class Drill:
                 ):
                     break
             print(scramble, end="")
-            while (alg := input().lower()) == "" or len(alg) != 2:
-                continue
-            algs_done.add(alg.strip())
-            print(len(algs_done))
+            response = input()
+            if response in ("q", "quit"):
+                return
 
     def parallel_cancel(self, pre_move: list, solution: list):
         sol = solution.copy()
@@ -1201,7 +1199,7 @@ class Drill:
                 num += 1
                 last_solution = solution
                 response = input("")
-                if response == "quit":
+                if response == "q" or response == "quit":
                     return
                 elif response.startswith("a"):
                     print("Alg:", a, "\n")

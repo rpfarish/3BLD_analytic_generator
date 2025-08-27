@@ -112,6 +112,8 @@ def main():
 
     # todo add current loadable buffers json file to each folder in /comms
     # todo make this loop over the .csv files in the folder instead of in settings?
+    # TODO: When loading a sheet double check that the algs are correct
+    # TODO: Figure out how to deal with different buffer orders and RDF vs DFR
     for i, comm_file_name in enumerate(settings.comm_files.copy()):
         if not check_comm_sheets_exist(f"comms/{comm_file_name}/{comm_file_name}.json"):
             file_path = Path(f"Spreadsheets/{comm_file_name}")
@@ -152,7 +154,7 @@ def main():
             # todo set this
 
         match mode:
-            case "h" | "help" | "":
+            case "h" | "help" | "?":
                 get_help()
 
             case "m" | "memo":
@@ -202,7 +204,7 @@ def main():
                 last_args = args
                 # todo what if I wanted to use this like eil's trainer (with UB UFL -r)
                 if not args:
-                    print("Syntax: <buffer> [-l --Load]")
+                    print("Syntax: b <buffer> [-l --Load]")
                     continue
                 buffer, *args = args
                 buffer = buffer.upper()
