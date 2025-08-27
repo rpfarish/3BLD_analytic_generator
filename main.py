@@ -1,7 +1,7 @@
-import atexit
 import os
 import sys
 import time
+from pathlib import Path
 
 from commands import (
     alger,
@@ -84,9 +84,14 @@ if readline_available:
     # Register cleanup function to save history on exit
     import atexit
 
+    try:
+        import atexitmain
+    except OSError:
+        pass
+
     atexit.register(lambda: readline.write_history_file(histfile))
 else:
-    print("Warning: readline not available. Command history will not be saved.")
+    # print("Warning: readline not available. Command history will not be saved.")
     histfile = None
 
 
@@ -109,6 +114,13 @@ def main():
     # todo make this loop over the .csv files in the folder instead of in settings?
     for i, comm_file_name in enumerate(settings.comm_files.copy()):
         if not check_comm_sheets_exist(f"comms/{comm_file_name}/{comm_file_name}.json"):
+            file_path = Path(f"Spreadsheets/{comm_file_name}")
+            if not file_path.exists():
+                print(f"Warning: '{comm_file_name}' does not exist")
+                print("Skipping file...")
+                settings.comm_files.pop(i)
+                continue
+
             response = input(
                 f"Do you want to import {comm_file_name} ? (y | n): "
             ).lower()

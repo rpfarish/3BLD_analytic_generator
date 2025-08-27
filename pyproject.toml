@@ -1,13 +1,12 @@
 [project]
-name = "3bldanalyticgenerator"
+name = "3bld-analytic-generator"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "dlin~=0.1.0",
-    "kociemba==1.2.1",
-    "numpy==1.26.2",
+    "kociemba>=1.2.1",
+    "numpy>=2.3.2",
     "openpyxl>=3.1.5",
-    "pandas>=2.3.1",
+    "pandas>=2.3.2",
 ]
