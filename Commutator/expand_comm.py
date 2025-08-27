@@ -3,7 +3,7 @@ import re
 from .invert_solution import invert_solution as inv
 
 
-def expand_comm(comm):
+def expand_comm(comm, recurse=False):
     if not comm or not any(sym in comm for sym in [",", "*", ":", "/"]):
         return comm
     comm = comm.replace("[", "").replace("]", "")
@@ -12,21 +12,32 @@ def expand_comm(comm):
     a, b, num = "", "", 0
     if "," in comm:
         a, b = ab.split(",")
-        exp_comm = f"{c}{a}{b} {inv(a)} {inv(b)} {inv(c)}"
+        if "/" in b:
+            b = expand_comm(b)
+        if "/" in a:
+            a = expand_comm(a)
+
+        exp_comm = f"{c} {a} {b} {inv(a)} {inv(b)} {inv(c)}"
+
     elif "/" in comm:
         a, b = ab.split("/")
-        exp_comm = f"{c} {a} {b} {a} {a} {inv(b)} {a} {inv(c)}"
+        exp_comm = f" {c} {a} {b} {a} {a} {inv(b)} {a} {inv(c)} "
     elif "*" in comm:
-        a = "".join([i for i in ab if i not in "()*" and not i.isdigit()])
+        # a = "".join([i for i in ab if i not in "()*" and not i.isdigit()])
+        paren_match = re.search(r"\(([^)]*)\)", ab)
+        if paren_match:
+            a = paren_match.group(1)
         int_match = re.search(r"\*\s*(\d+)", comm)
         if int_match:
             num = int(int_match.group(1))
-        exp_comm = f"{c}{' ' + a * num + ' '}{inv(c)}"
+        repeated_a = " ".join([a] * num)
+        exp_comm = f"{c} {repeated_a} {inv(c)}"
     else:
         exp_comm = f"{c} {ab} {inv(c)}"
     if "[" in exp_comm or "/" in exp_comm:
         print(exp_comm)
     print("COMM:", exp_comm)
+
     return " ".join(exp_comm.split())
 
 
@@ -42,8 +53,12 @@ if __name__ == "__main__":
     print(expand_comm("r' U' E' : L/E"))
     print(expand_comm("U' x' : R U R', E"))
     print(expand_comm("(M' U) * 4"))
+    print(expand_comm("U', R/E'"))
+    print(expand_comm("(R' f2 R2 U' R')*2"))
 
     def test_expand_comm():
+        assert expand_comm("(R' f2 R2 U' R')*2") == "R' f2 R2 U' R' R' f2 R2 U' R'"
+        assert expand_comm("U', R/E'") == "U' R E' R R E R U R' E' R' R' E R'"
         assert expand_comm("[R U R', D']") == "R U R' D' R U' R' D"
         assert (
             expand_comm("[R U' D' : [R' U R , D2]]")

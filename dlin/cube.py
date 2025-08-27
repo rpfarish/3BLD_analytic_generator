@@ -84,6 +84,11 @@ class Cube:
             def turn(x):
                 return self.rotation(face, clockwise)
 
+        if move.islower() and face not in ("x", "y", "z"):
+
+            def turn(x):
+                return self.wide_turn(face.upper(), clockwise)
+
         if "w" in move:
 
             def turn(x):

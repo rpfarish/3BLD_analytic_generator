@@ -524,7 +524,10 @@ class Cube:
 
         face_turn = move[:1]
 
-        if has_wide_move and face_turn in self.faces:
+        if face_turn in ("x", "y", "z"):
+            self.do_cube_rotation(face_turn)
+
+        elif has_wide_move and face_turn in self.faces:
             self._rotate_wide(move.lower())
         elif face_turn in self.faces:
             side = self.moves_map.get(face_turn)

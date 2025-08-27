@@ -19,6 +19,7 @@ from commands import (
     memo_cube,
     set_letter_scheme,
 )
+from Commutator.validate_comms import validate_comms
 from Cube import Drill
 from Settings.settings import Settings
 from Spreadsheets import ingest_spreadsheet
@@ -114,6 +115,7 @@ def main():
     # todo make this loop over the .csv files in the folder instead of in settings?
     # TODO: When loading a sheet double check that the algs are correct
     # TODO: Figure out how to deal with different buffer orders and RDF vs DFR
+    # TODO: Properly format sheets that are split (list only half of the cases)
     for i, comm_file_name in enumerate(settings.comm_files.copy()):
         if not check_comm_sheets_exist(f"comms/{comm_file_name}/{comm_file_name}.json"):
             file_path = Path(f"Spreadsheets/{comm_file_name}")
@@ -128,12 +130,17 @@ def main():
             ).lower()
             if response.startswith("y"):
                 ingest_spreadsheet(f"{comm_file_name}", settings)
+                # validate_comms()
             else:
                 settings.comm_files.pop(i)
     # check file_comms usage and switch some of them to default comms which I haven't made yet
+    # TODO: redownload max xlsx
     file_comms_list = []
-    for comm_file in settings.comm_files:
+    for i, comm_file in enumerate(settings.comm_files):
         file_comms = load_comms(settings.all_buffers_order, file_name=comm_file)
+        # print(file_comms.keys())
+        # for buffer in file_comms:
+        #     validate_comms(file_comms, buffer, i)
         file_comms_list.append(file_comms)
 
     last_args = ""
