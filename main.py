@@ -86,7 +86,7 @@ if readline_available:
 
     try:
         import atexitmain
-    except OSError:
+    except ModuleNotFoundError:
         pass
 
     atexit.register(lambda: readline.write_history_file(histfile))
