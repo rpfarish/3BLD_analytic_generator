@@ -147,7 +147,7 @@ class Memo(Cube):
 
     # memo
     @staticmethod
-    def format_edge_memo(memo):
+    def format_edge_memo(memo: list[str]):
         return " ".join(f"{memo[i]}{memo[i + 1]}" for i in range(0, len(memo) - 1, 2))
 
     @staticmethod

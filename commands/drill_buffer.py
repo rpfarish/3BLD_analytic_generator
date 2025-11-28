@@ -5,7 +5,20 @@ from commands.drill_piece_buffer import drill_piece_buffer
 
 
 def drill_buffer(args, filename, buffer, buffer_order, file_comms, letter_scheme):
-    """Syntax: <buffer> [-l --Load] e.g. buffer UF -l"""
+    """Buffer: buffer [buffer] [-l]
+    Description: Drill all floating cycles for the input buffer
+        with edge or corner only scrambles. Progress is saved to
+        a file, and can be loaded using -l.
+    Options:
+        -l Loads the comm progress from a .json file
+    Aliases:
+        b
+        buff
+        buffer
+    Usage:
+        buff UFR
+        b UL -l
+    """
     drill_set = None
     random_pairs = False
     if not os.path.exists(filename):

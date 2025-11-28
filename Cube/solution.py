@@ -14,7 +14,7 @@ class Solution:
         scramble,
         letter_scheme=None,
         buffers=None,
-        parity_swap_edges=None,
+        parity_swap_edges: str = None,
         buffer_order=None,
         inc_floats=True,
     ):
@@ -40,10 +40,16 @@ class Solution:
         self.corner_buffers = list(self.cube.corner_memo_buffers)
         self.can_float_corners = None
 
+        if parity_swap_edges is not None:
+            self.parity_swap_edges = tuple(parity_swap_edges.split("-"))
+        else:
+            self.parity_swap_edges = None
+
         self.number_of_edge_flips = len(self.flipped_edges) // 2
         self.number_of_corner_twists = len(self.twisted_corners) // 3
         self.number_of_algs = self.count_number_of_algs(inc_floats=inc_floats)
         self.edge_float_buffers = []
+        # FIX: rename this
         self.can_float_edges = self.can_float_edges()
         self.inc_floats = inc_floats
         # TODO support wide moves
@@ -51,7 +57,7 @@ class Solution:
         # TODO return twists with top or bottom color
         # TODO add alg count
 
-    def can_float_edges(self):
+    def can_float_edges(self) -> bool:
         # TODO: change this into sandwich float detector or smth
         """
         ca cb = 2e2e
@@ -134,7 +140,7 @@ class Solution:
 
     def get_dlin_trace(self):
         if self.parity:
-            swap = ("UF", "UR")
+            swap = self.parity_swap_edges
         else:
             swap = None
 
@@ -158,7 +164,6 @@ class Solution:
         return float_count
 
     def count_number_of_algs(self, inc_floats=True) -> int:
-        # TODO: do I need to tell Dlin that I'm psudo swapping UF-UR?
         number_of_floats = self.count_sandwich_floats() if inc_floats else 0
 
         twists_to_alg = {1: 1, 2: 1, 3: 2, 4: 2, 5: 3, 6: 3, 7: 4}
@@ -251,7 +256,7 @@ class Solution:
             ],
         }
 
-        swap = ("UF", "UR") if self.parity else None
+        swap = self.parity_swap_edges if self.parity else None
         trace = dlin.trace(self.scramble, buffers=DEFAULTBUFFERS, swap=swap)
 
         buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]

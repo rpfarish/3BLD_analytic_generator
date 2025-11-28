@@ -1,0 +1,9 @@
+first/last,DR,DL,RB,RD,LB,LD,BR,BL,,,,
+DR,,"[r' U' L : [E, L2]]","[l UE R : [E', R2]]",,"[S' D' R' : [E', R2]]","[S', R' B R]","[R' : [U' M U, R']]","[M U R : [E', R2]]",,PROGRESS (48 TOTAL),48,
+DL,"[r' U' L' : [E, L2]]",,"[S D L : [E, L2]]","[S, L B' L']","[r U'E' L' : [E, L2]]",,"[M U' L' : [E, L2]]","[L : [U M U', L]]",,,,
+RB,"[l UE R' : [E', R2]]","[S D L' : [E, L2]]",,"[R' : [R', U M2 U']]","[R' D' R' : [E', R2]]","[M2 U L : [E, L2]]",,"[l U' l', E]",,comms w/ RS 4 mover,2,0.04166666667
+RD,,"[L B' L', S]","[R' : [U M2 U', R']]",,"[M2 U' R : [E', R2]]","[M2 U' : [R2, S']]","[S' : [R', U' M U]]","[R' E' R, D']",,comms w/ LS 4 mover,0,0
+LB,"[S' D' R : [E', R2]]","[r U'E' L : [E, L2]]","[R' D' R : [E', R2]]","[M2 U' R' : [E', R2]]",,"[L : [L, U' M2 U]]","[r' U r, E']",,,comms w/ LE 4 mover,10,0.2083333333
+LD,"[R' B R, S']",,"[M2 U L' : [E, L2]]","[M2 U' : [S', R2]]","[L : [U' M2 U, L]]",,"[L E L', D]","[S : [L, U M U']]",,comms w/ RE 4 mover,10,0.2083333333
+BR,"[R' : [R', U' M U]]","[M U' L : [E, L2]]",,"[S' : [U' M U, R']]","[E', r' U r]","[D, L E L']",,"[r' : [r' E2 r, U]]",,comms w/ MU 4 mover,0,0
+BL,"[M U R' : [E', R2]]","[L : [L, U M U']]","[E, l U' l']","[D', R' E' R]",,"[S : [U M U', L]]","[r' : [U, r' E2 r]]",,,comms w/ MD 4 mover,0,0

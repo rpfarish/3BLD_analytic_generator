@@ -1,0 +1,7 @@
+Unnamed: 0,LD,LB,RB,BL,BR,DL
+LD,,,,,,
+LB,"[l, E' R' E]",,,,,
+RB,"[S, L B2 L']","[u' L' : [S, L2]]",,,,
+BL,"[R' E' R' : [S', R2]]",,"[l U' u' R' : [E', R2]]",,"[S u R : [S', R2]]",
+BR,"[E l E', R']","[R, S l' S']",,"[E R2 E, R']",,
+DL,,"[S' R : [E', R2]]","[S L : [E, L2]]","[l', S' R2 S]","[S R2 S, R]",

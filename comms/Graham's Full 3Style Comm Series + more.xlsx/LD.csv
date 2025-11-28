@@ -1,0 +1,5 @@
+first/last,RB,LB,BR,BL,,,,
+RB,,"[L U' L' U L' : [E, L2]]",,"[R S' R' : [E', R2]]",,PROGRESS (8 TOTAL),8,
+LB,"[L U' L' U L : [E, L2]]",,"[l', S' R S]",,,,,
+BR,,"[S' R S, l']",,"[u R' : [S', R2]]",,comms w/ RS 4 mover,2,0.25
+BL,"[R S' R : [E', R2]]",,"[u R : [S', R2]]",,,comms w/ LS 4 mover,0,0

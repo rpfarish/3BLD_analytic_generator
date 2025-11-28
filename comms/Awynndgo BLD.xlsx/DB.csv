@@ -1,0 +1,9 @@
+Unnamed: 0,LD,LB,RB,RD,BL,BR,DR,DL
+LD,,,,,,,,
+LB,"[L2 : [U M U', L']]",,,,,,,
+RB,"[M U' L : [E, L2]]","[r2 : [E2, r U r']]",,,,,,
+RD,"[M U : [R2, S']]","[M U R : [E', R2]]","[R' : [U' M U, R']]",,,,,
+BL,"[r' U' E' L : [E, L2]]",,"[r' U r, E']","[D' R' F' : [R2, E']]",,,,
+BR,"[D L F : [L2, E]]","[l U' l', E]",,"[l U E R' : [E', R2]]","[R' D' R' : [E', R2]]",,,
+DR,"[L B' L', S]","[R' E' R, D']","[D2 : [L E L', D']]",,"[L S2 L', D']","[D2 : [R' S2 R, D']]",,"[D' R2 D' : [S', R2]]"
+DL,,"[D2 : [R' E' R, D]]","[L E L', D]","[R' B R, S']","[D2 : [L S2 L', D]]","[R' S2 R, D]","[D' R2 D : [S', R2]]",

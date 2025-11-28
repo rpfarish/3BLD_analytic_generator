@@ -1,0 +1,10 @@
+Unnamed: 0,LDF,LDB,FDL,RDB,BDL,BDR,DFL,DBR,DBL
+LDF,,,,,,,,,
+LDB,"[L2 : [L U' L' U, F2]]",,,,,,,,
+FDL,,"[R U R' D2 : [R U' R, D']]",,,,,,,
+RDB,"[R' U D' : [R U R', D2]]","[R U' D' : [R' U' R, D2]]","[R U : [D, R U' R']]",,,,,,
+BDL,"[R' F D2 : [R U' R', D]]",,"[D R' : [R' U' R, D2]]","[D' R : [R U R', D]]",,,,,
+BDR,"[R' : [R' U' R, D2]]","[R U R' D2 : [R U' R', D]]","[R' F' R : [D', R U R']]",,"[R' : [R' U' R, D']]",,,,
+DFL,,"[f' : [D2, R U R']]",,"[F', R D' R' D]","[B : [F', R' B' R]]","[R : [R U R', D]]",,,
+DBR,"[R : [D, R2 U R2 U' R2]]","[R U' D' R' : [R' D R, U]]","[D R : [D2, R U R']]",,"[R' : [R2 U' R2 U R2, D']]",,"[R' U D R : [U', R D' R']]",,
+DBL,"[r U D L' : [F2, L U' L' U]]",,"[D R : [D, R U R']]","[R' D' R U : [D', R U' R']]",,"[R : [R U R', D2]]","[R' B R, F']","[D' R' : [D2, R' U' R]]",

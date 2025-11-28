@@ -3,6 +3,14 @@ from commands.memo import memo
 
 def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):
     """Memo: memo [scramble] [-l filename] [-s filename]
+    Description:
+        Describes memorization for a scramble in the given
+        letter scheme and provides analysis like approximate
+        alg count, dlin trace, or dlin optimal combination
+        (Currently only available for edges).
+        For scrambles with parity, UF-UR swap is done
+        (or whatever swap is specified in settings).
+        Swap must preserve F/B edge orientation.
     Options:
         -l filename loads scrambles from FILENAME text file
         -s filename saves SCRAMBLE to FILENAME text file

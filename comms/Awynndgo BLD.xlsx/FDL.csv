@@ -1,0 +1,7 @@
+Unnamed: 0,LDB,RDB,BDL,BDR,DBR,DBL
+LDB,,,,,,
+RDB,"[l' D : [R U' R', D2]]",,,,,
+BDL,,"[D' R : [R U R', D2]]",,,,
+BDR,"[R' U D : [R U R', D]]",,"[B : [D2, B' R B R']]",,,
+DBR,"[B, R F' R']",,"[R D R' U D' : [R U R', D2]]",,,
+DBL,,"[D' R' D, L]",,"[l' U' D' : [R U R', D2]]","[D' R' : [D', R' U' R]]",

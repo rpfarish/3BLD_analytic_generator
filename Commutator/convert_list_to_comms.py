@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from collections import deque
 
 from Cube import Cube
@@ -9,7 +10,17 @@ from Cube import Cube
 from .expand_comm import expand_comm
 
 
+def add_spaces(moves):
+    pattern = r"(?<=[UDFBRLESMudfbrl\'2])(?=[UDFBRLESMudfbrl])"
+    result = re.sub(pattern, " ", moves)
+    result = re.sub(r"\s+", " ", result)
+
+    return result.strip()
+
+
 # todo make this take a spreadsheet and csv
+
+
 def _convert(buffer, file_name="max_comms"):
     comms = {}
     with open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile:
@@ -23,7 +34,7 @@ def _convert(buffer, file_name="max_comms"):
             if len(buffer) + num > 24:
                 break
             if len(second_target) > 3:
-                raise ValueError(buffer, second_target, "second_target is too long")
+                continue
 
             for first_target in row:
                 if (
@@ -34,11 +45,14 @@ def _convert(buffer, file_name="max_comms"):
                 ):
                     continue
                 if len(first_target) > 3:
-                    raise ValueError(buffer, first_target, "first_target is too long")
+                    continue
                 # comm2 = row[first_target]
-                print(row[first_target])
-                comm = expand_comm(row[first_target])
-                print(comm)
+                # print(row[first_target])
+
+                comm = row[first_target]
+                comm = add_spaces(comm)
+                comm = expand_comm(comm)
+                # print(comm)
                 if comms.get(first_target, None) is None:
                     comms[first_target] = {second_target: comm}
                 else:
@@ -129,17 +143,15 @@ def fill_in_buffers(file_comms):
     # take letterpair rotate it and then insert that into file_comms
     # then rotate / flip the pair and repeat
     file_comms |= comms
-    print(len(file_comms))
-    print(len(file_comms["UB"]))
-    print(len(file_comms["UB"]["UR"]))
 
-    with open(f"testing.json", "w+") as f:
+    with open("testing.json", "w+") as f:
         json.dump(file_comms, f, indent=4)
     return file_comms
 
 
 def update_comm_list(buffers=None, file="max_comms"):
     # todo import from settings
+    print(f"{buffers=}")
     if buffers is None:
         buffers = [
             "UF",
@@ -159,6 +171,7 @@ def update_comm_list(buffers=None, file="max_comms"):
             "RDF",
             "RDB",
         ]
+
     elif len(buffers) != 16:
         raise ValueError("Please include all of the buffers in settings.json")
     comms = {}

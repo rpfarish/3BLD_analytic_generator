@@ -1,69 +1,72 @@
 import json
+from typing import Optional
 
-letter_scheme = dict(
-    # -------EDGES--------
-    # U Face
-    UB="A",
-    UR="B",
-    UF="U",
-    UL="D",
-    # L Face
-    LU="E",
-    LF="F",
-    LD="G",
-    LB="H",
-    # F Face
-    FU="K",
-    FR="J",
-    FD="I",
-    FL="L",
-    # R Face
-    RU="M",
-    RB="N",
-    RD="O",
-    RF="P",
-    # B Face
-    BU="Z",
-    BL="R",
-    BD="S",
-    BR="T",
-    # D Face
-    DF="C",
-    DR="V",
-    DB="W",
-    DL="X",
-    # -------CORNERS--------
-    # U Face
-    UBL="A",
-    UBR="B",
-    UFR="U",
-    UFL="D",
-    # L Face
-    LUB="J",
-    LUF="F",
-    LDF="G",
-    LDB="H",
-    # F Face
-    FUL="E",
-    FUR="I",
-    FDR="K",
-    FDL="L",
-    # R Face
-    RUF="X",
-    RUB="N",
-    RDB="O",
-    RDF="P",
-    # B Face
-    BUR="R",
-    BUL="M",
-    BDL="S",
-    BDR="T",
-    # D Face
-    DFL="C",
-    DFR="V",
-    DBR="W",
-    DBL="Z",
-)
+# letter_scheme = dict(
+#     # -------EDGES--------
+#     # U Face
+#     UB="A",
+#     UR="B",
+#     UF="U",
+#     UL="D",
+#     # L Face
+#     LU="E",
+#     LF="F",
+#     LD="G",
+#     LB="H",
+#     # F Face
+#     FU="K",
+#     FR="J",
+#     FD="I",
+#     FL="L",
+#     # R Face
+#     RU="M",
+#     RB="N",
+#     RD="O",
+#     RF="P",
+#     # B Face
+#     BU="Z",
+#     BL="R",
+#     BD="S",
+#     BR="T",
+#     # D Face
+#     DF="C",
+#     DR="V",
+#     DB="W",
+#     DL="X",
+#     # -------CORNERS--------
+#     # U Face
+#     UBL="A",
+#     UBR="B",
+#     UFR="U",
+#     UFL="D",
+#     # L Face
+#     LUB="J",
+#     LUF="F",
+#     LDF="G",
+#     LDB="H",
+#     # F Face
+#     FUL="E",
+#     FUR="I",
+#     FDR="K",
+#     FDL="L",
+#     # R Face
+#     RUF="X",
+#     RUB="N",
+#     RDB="O",
+#     RDF="P",
+#     # B Face
+#     BUR="R",
+#     BUL="M",
+#     BDL="S",
+#     BDR="T",
+#     # D Face
+#     DFL="C",
+#     DFR="V",
+#     DBR="W",
+#     DBL="Z",
+# )
+#
+#
 
 
 class PieceId:
@@ -74,7 +77,7 @@ class PieceId:
         self.type = "c" if len(pos) == 3 else "e"
 
     def __repr__(self):
-        return f"{self.pos}: {self.name}"  # Type: {self.type}'
+        return f"'PieceId: {self.pos} => {self.name}'"  # Type: {self.type}'
 
     def __str__(self):
         return self.name
@@ -84,13 +87,14 @@ class PieceId:
 
 
 class LetterScheme:
-
-    def __init__(self, ltr_scheme: dict[str, str] | None = None, use_default=False):
+    def __init__(self, ltr_scheme: Optional[dict[str, str]] = None, use_default=False):
         self.is_default = use_default
         if ltr_scheme is None:
             with open("settings.json") as f:
                 settings = json.loads(f.read())
                 ltr_scheme = settings["letter_scheme"]
+            if ltr_scheme is None:
+                raise ValueError("letter_scheme not found in settings.json")
 
         if len(ltr_scheme) != 48:
             raise ValueError(
@@ -169,13 +173,14 @@ class LetterScheme:
         if self.scheme[pos].type == "e":
             self.reverse_scheme_edges[name] = pos
 
-    def convert_to_pos(self, buffer, piece, piece_type=None):
+    def convert_to_pos(self, buffer, piece, piece_type=None) -> str:
         if self.scheme.get(piece) is not None:
             return piece
         elif self.scheme[buffer].type == "c" or piece_type == "corner":
             return self.reverse_scheme_corners[piece]
         elif self.scheme[buffer].type == "e" or piece_type == "edge":
             return self.reverse_scheme_edges[piece]
+        raise ValueError(f"piece '{piece}' or piece_type '{piece_type}' is not valid")
 
     def convert_to_pos_from_type(self, piece, piece_type) -> str:
         if self.scheme.get(piece) is not None:
@@ -184,8 +189,9 @@ class LetterScheme:
             return self.reverse_scheme_corners[piece]
         elif piece_type == "edge":
             return self.reverse_scheme_edges[piece]
+        raise ValueError(f"piece '{piece}' or piece_type '{piece_type}' is not valid")
 
-    def convert_pair_to_pos(self, buffer, pair):
+    def convert_pair_to_pos(self, buffer, pair) -> tuple[str, str]:
         a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
         return self.convert_to_pos(buffer, a), self.convert_to_pos(buffer, b)
 
@@ -246,6 +252,7 @@ def convert_letterpairs(
     for pair in to_convert:
         # Split the pair in half
         a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+        converted_a, converted_b = "", ""
 
         if direction == "loc_to_letter":
             # Convert location to letter using the scheme
@@ -268,6 +275,10 @@ def convert_letterpairs(
             raise ValueError(
                 f"Invalid direction '{direction}'. Must be 'loc_to_letter' or 'letter_to_loc'"
             )
+
+        if not converted_a or not converted_b:
+            print(f"{letter_scheme=}, {piece_type=}, {pair=}")
+            raise ValueError("Converted a and converted b must be nonempty")
 
         if display:
             print(f"'{converted_pair}',")

@@ -187,7 +187,7 @@ def find_optimal_combinations(edges, buffer_order):
     return results
 
 
-def find_maximum_groups(cycles, buffer_order):
+def find_maximum_groups(cycles, buffer_order, all_sol=False):
     """Find maximum number of groups where each group combines to type 0 (prioritize smaller groups)"""
 
     n = len(cycles)
@@ -201,6 +201,8 @@ def find_maximum_groups(cycles, buffer_order):
         if solutions:
             # print(f"Found solution with {num_groups} groups (maximizing group count)")
             # Return the first valid solution
+            if len(solutions) > 1:
+                print(solutions[1:])
             return solutions[0]
 
     return []
@@ -402,6 +404,7 @@ if __name__ == "__main__":
         "L2 U' R2 U' R2 U2 B2 F2 L2 U R2 B F' L F R2 F' U2 R2 F U' Rw' Uw'",
         "R' D' B2 R2 F U2 R2 B' D2 F' U2 F R2 L' U2 B D' U' R' D' Rw' Uw2",
     ]
+    scrambles = ["R2 U2 B2 R F2 B2 L' B2 D2 R2 D F2 B2 U' R2 L2"]
 
     # scrambles = ["L2 R2 U' F2 D' R2 D' B2 U B2 U' B2 L D L U2 F' U' R2 B2 R2 Rw2 Uw'"]
     print("=== Enhanced Edge Cycle Optimizer - Maximizing Groups ===")
@@ -419,7 +422,7 @@ if __name__ == "__main__":
         print(f"{has_parity=}")
         print(f"{swap=}")
         scramble = joined_scramble
-        trace = dlin.trace(scramble, buffers=DEFAULTBUFFERS, swap=swap)
+        trace = dlin.trace(scramble, trace="edges", buffers=DEFAULTBUFFERS, swap=swap)
         result = analyze_trace(trace, standard_buffer_order)
 
         if result:

@@ -1,5 +1,4 @@
-{
-  "buffers": [
+possible_buffers = [
     "UF",
     "UB",
     "UR",
@@ -23,6 +22,5 @@
     "DFR",
     "DFL",
     "FDR",
-    "FDL"
-  ]
-}
+    "FDL",
+]

@@ -2,6 +2,8 @@
 
 ## Generates 3BLD specific scrambles to drill various algsets
 
+- This README is out of date. Please just use 'help' command instead.
+
 table of contents
 
 - Memo

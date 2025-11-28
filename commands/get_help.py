@@ -6,8 +6,8 @@ Simple commands with no options have no extra info.
 
 h  | help  : Display help information about commands
 c  | comm  : Retrieve and display commutators.
-m  | memo  : Generates memorization and info for the input scramble
-ls | ltrscm: Load and unload letterscheme 
+m  | memo  : Show memorization and info for the given scramble(s)
+ls | ltrscm: Load and display letterscheme 
 
 d  | drill : Drill a list of letterpairs from text file until all pairs are drilled.
 b  | buffer: Drill all floating cycles for the input buffer with edge or corner only scrambles
@@ -19,8 +19,9 @@ flip: Drill 2 flips
 
 alger : Generate a scramble with a specified number of algs. (Needs fine tuning)
 arb   : Pick a random buffer from settings.json
+clear : Clears the screen.
 reload: Reload settings and letter scheme.
-timeup | time: Display the elapsed time.
+timeup | time: Display the elapsed time since startup.
 exit   | quit: Exit the program
 
 -- Broken --

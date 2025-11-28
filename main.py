@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -7,6 +8,7 @@ from commands import (
     alger,
     cycle_break_float,
     drill_buffer,
+    drill_cycle_break,
     drill_ltct,
     drill_sticker,
     drill_twists,
@@ -25,12 +27,6 @@ from Settings.settings import Settings
 from Spreadsheets import ingest_spreadsheet
 
 # todo how to ingest a new comm sheet esp full floating
-
-# todo use ! to repeat inputs
-
-
-# todo have it use -e for excluding letter pairs and specify if only ones are wanted by listing them after
-
 
 # Set up history file with cross-platform compatibility
 try:
@@ -79,7 +75,7 @@ if readline_available:
     try:
         readline.read_history_file(histfile)
         readline.set_history_length(1000)
-    except (FileNotFoundError, PermissionError):
+    except (FileNotFoundError, PermissionError, OSError):
         # File doesn't exist, no permissions, or binding not supported
         pass
     # Register cleanup function to save history on exit
@@ -101,6 +97,34 @@ def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
 
+def format_duration(seconds):
+    """
+    Format duration in seconds to a readable string.
+    Displays only non-zero time units.
+    """
+    seconds = round(seconds, 2)
+
+    if seconds < 60:
+        return f"{seconds}s"
+
+    days = int(seconds // 86400)
+    hours = int((seconds % 86400) // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = round(seconds % 60, 2)
+
+    parts = []
+    if days > 0:
+        parts.append(f"{days}d")
+    if hours > 0:
+        parts.append(f"{hours}h")
+    if minutes > 0:
+        parts.append(f"{minutes}m")
+    if secs > 0:
+        parts.append(f"{secs}s")
+
+    return " ".join(parts)
+
+
 def check_comm_sheets_exist(path) -> bool:
     return os.path.isfile(path)
 
@@ -108,40 +132,52 @@ def check_comm_sheets_exist(path) -> bool:
 def main():
     # todo add settings to readme
 
-    settings = Settings()
-    settings.letter_scheme
+    try:
+        settings = Settings()
+        settings.letter_scheme
+    except json.decoder.JSONDecodeError as e:
+        print(
+            "Error: Please ensure settings.json has commas at the end of lines where appropriate\n"
+            "Could not decode settings.json"
+        )
+        print(e)
+        quit()
 
     # todo add current loadable buffers json file to each folder in /comms
     # todo make this loop over the .csv files in the folder instead of in settings?
     # TODO: When loading a sheet double check that the algs are correct
     # TODO: Figure out how to deal with different buffer orders and RDF vs DFR
     # TODO: Properly format sheets that are split (list only half of the cases)
-    for i, comm_file_name in enumerate(settings.comm_files.copy()):
-        if not check_comm_sheets_exist(f"comms/{comm_file_name}/{comm_file_name}.json"):
-            file_path = Path(f"Spreadsheets/{comm_file_name}")
-            if not file_path.exists():
-                print(f"Warning: '{comm_file_name}' does not exist")
-                print("Skipping file...")
-                settings.comm_files.pop(i)
-                continue
 
-            response = input(
-                f"Do you want to import {comm_file_name} ? (y | n): "
-            ).lower()
-            if response.startswith("y"):
-                ingest_spreadsheet(f"{comm_file_name}", settings)
-                # validate_comms()
-            else:
-                settings.comm_files.pop(i)
+    for name, data in settings.comm_files.items():
+        # Path("Spreadsheets/mycoolcoms.txt")
+        # Construct the path: comms/mycoolcoms.txt/mycoolcoms.txt.json
+        comm_file_name = data["spreadsheet"]
+        check_path = Path("comms") / comm_file_name / f"{comm_file_name}.json"
+
+        if check_path.exists():
+            continue
+
+        response = input(f"Do you want to import {comm_file_name} ? (y | n): ").lower()
+        if response.startswith("y"):
+            ingest_spreadsheet(comm_file_name, settings, data["cols_first"])
+            # create_full_buffer_comms()
+            # validate_comms()
+
     # check file_comms usage and switch some of them to default comms which I haven't made yet
     # TODO: redownload max xlsx
+
     file_comms_list = []
-    for i, comm_file in enumerate(settings.comm_files):
-        file_comms = load_comms(settings.all_buffers_order, file_name=comm_file)
-        # print(file_comms.keys())
-        # for buffer in file_comms:
-        #     validate_comms(file_comms, buffer, i)
-        file_comms_list.append(file_comms)
+    for i, (name, data) in enumerate(settings.comm_files.items()):
+        print("=" * 30, name, "=" * 30)
+        comm_file = data["spreadsheet"]
+        file_comms = load_comms(file_name=comm_file)
+        directory = Path(f"comms/{comm_file}")
+        buffers = [csv_file.stem for csv_file in directory.glob("*.csv")]
+
+        for buffer in file_comms:
+            validate_comms(file_comms, buffer, i, name)
+        file_comms_list.append((name, file_comms))
 
     last_args = ""
     last_mode = 1
@@ -211,7 +247,7 @@ def main():
                 last_args = args
                 # todo what if I wanted to use this like eil's trainer (with UB UFL -r)
                 if not args:
-                    print("Syntax: b <buffer> [-l --Load]")
+                    print(drill_buffer.__doc__)
                     continue
                 buffer, *args = args
                 buffer = buffer.upper()
@@ -233,21 +269,25 @@ def main():
             case "c" | "comm":
                 # todo option to input in using letterscheme but output pos notation
                 if not args:
-                    print("e.g. comm UF AB -e")
+                    print(get_comm_loop.__doc__)
                     continue
                 get_comm_loop(
                     args,
                     file_comms_list,
-                    file_comms,
-                    settings.comm_files,
                     settings.letter_scheme,
                 )
+
+            case "cb" | "cyclebreak":
+                if not args:
+                    print("helps drill cycle breaks\ne.g. cb -c")
+                drill_cycle_break(args, settings.buffers)
 
             case "reload":
                 settings.reload()
 
             case "timeup" | "time":
-                print(time.time() - start_time)
+                secs = time.time() - start_time
+                print(format_duration(secs))
 
             case "alger":
                 if not args:

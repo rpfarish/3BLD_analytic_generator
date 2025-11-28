@@ -1,0 +1,7 @@
+first/last,DBR,DBL,RDB,LDB,BDL,BDR,,PARITY:,,,
+DBR,,"[D' R' : [R' U' R, D']]",,"[B, R F' R']","[l'R' U'D' R : [U, R D' R']]",,,DU2 R D' R' U2 R U'D' R' D R' D' R2 D R' UD R' D',,PROGRESS (18 TOTAL):,18
+DBL,"[D' R' : [D', R' U' R]]",,"[D' R' D, L]",,,"[l' U'D' : [R U R', D2]]",,z U' R' D' R U' R' D R2 U R2' U'D' R U R' D R2 U,,,
+RDB,,"[L, D' R' D]",,"[l' D : [R U' R', D2]]","[D' R : [D2, R U R']]",,,D R' D' R U' R' D R' D' R2 U R U'D R' UD' R',,,
+LDB,"[R F' R', B]",,"[l' D' : [R U' R', D2]]",,,"[F D' : [R U' R', D']]",,L2' U L U2 L' U2' L F' L' U' L U L F,,,
+BDL,"[l'R' U'D' R : [R D' R', U]]",,"[D' R : [R U R', D2]]",,,"[R' UD' R D : [R' U' R, D2]]",,D R' U'D R D' R D R' U R' D' R D' R U' R' D R UD',,,
+BDR,,"[l' U'D : [R U R', D2]]",,"[F D' : [D', R U' R']]","[R' UD' R D' : [R' U' R, D2]]",,,D R U'D' R U R2' U' R D R' U R' U' R U R D',,,

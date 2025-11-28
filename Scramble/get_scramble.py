@@ -36,7 +36,7 @@ def get_scramble_bld(requires_parity: bool = False):
         "Uw2",
     ]
 
-    return f"{get_scramble()} {random.choice(random_orientation)}".strip()
+    return f"{get_scramble(requires_parity=requires_parity)} {random.choice(random_orientation)}".strip()
 
 
 def gen_premove(
@@ -88,3 +88,5 @@ def gen_premove(
         )
     if requires_parity and has_parity:
         return joined_scramble
+
+    return ""

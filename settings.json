@@ -54,31 +54,36 @@
     "corner_buffer": "UFR"
   },
   "buffer_order": {
-    "edges": [
-      "UF",
-      "UB",
-      "UR",
-      "UL",
-      "DF",
-      "DB",
-      "FR",
-      "FL",
-      "DR",
-      "DL"
-    ],
-    "corners": [
-      "UFR",
-      "UBR",
-      "UBL",
-      "UFL",
-      "RDF",
-      "RDB"
-    ]
+    "edges": ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"],
+    "corners": ["UFR", "UBR", "UBL", "UFL", "RDF", "RDB"]
   },
-  "comm_files": [
-    "Max Hilliard 3BLD.xlsx",
-    "Elliott Full Floating + More.xlsx", 
-    "Charlie Eggins's blind algs (Private Sheet).xlsx"
-  ],
+  "comm_files": {
+    "Max": {
+      "name": "Max",
+      "spreadsheet": "Max Hilliard 3BLD.xlsx",
+      "cols_first": true
+    },
+    "Charlie": {
+      "name": "Charlie",
+      "spreadsheet": "Charlie Eggins's blind algs (Private Sheet).xlsx",
+      "cols_first": true
+    },
+    "Elliott": {
+      "name": "Elliott",
+      "spreadsheet": "Elliott Full Floating + More.xlsx",
+      "cols_first": true
+    },
+    "Graham": {
+      "name": "Graham",
+      "spreadsheet": "Graham's Full 3Style Comm Series + more.xlsx",
+      "cols_first": false
+    },
+    "Andy": {
+      "name": "Andy",
+      "spreadsheet": "Awynndgo BLD.xlsx",
+      "cols_first": true
+    }
+  },
+  "floating_comms_sheet_name": "Elliott",
   "parity_swap_edges": "UF-UR"
 }
