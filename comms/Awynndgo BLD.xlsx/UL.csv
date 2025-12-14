@@ -2,7 +2,7 @@ Unnamed: 0,LF,LD,LB,FR,FD,FL,RB,RD,RF,BL,BD,BR,DF,DR,DB,DL
 LF,,,,,,,,,,,,,,,,
 LD,"[U L U', S']",,,,,,,,,,,,,,,
 LB,"[S L : [S', L2]]","[S', U L' U']",,,,,,,,,,,,,,
-FR,"[u' : [R' U' R, E']]","[L F2 L', S]","[u R' : [U, R' E R]]",,,,,,,,,,,,,
+FR,"[u' : [R U' R', E']]","[L F2 L', S]","[u R' : [U, R' E R]]",,,,,,,,,,,,,
 FD,"[M' U' : [R' E R, U']]","[L F L', S]","[M' U' : [R E' R', U']]","[U' : [M', U' R U]]",,,,,,,,,,,,
 FL,,"[L' U : [L U' L', E']]","[u' : [L' U L, E']]","[U' R' U' R : [E, R2]]","[L', U' M' U]",,,,,,,,,,,
 RB,"[u' R' U' R' : [E', R2]]","[S', L B2 L']","[E' R : [S, R2]]","[U : [R U R', E']]","[l' : [E, L U L']]","[S R' S', l']",,,,,,,,,,

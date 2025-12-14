@@ -3,7 +3,7 @@ import re
 from .invert_solution import invert_solution as inv
 
 
-def expand_comm(comm, recurse=False):
+def expand_comm(comm):
     if not comm or not any(sym in comm for sym in [",", "*", ":", "/", "(", ")"]):
         return comm
     comm = comm.replace("[", "").replace("]", "")

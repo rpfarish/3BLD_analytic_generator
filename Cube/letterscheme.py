@@ -1,72 +1,5 @@
 import json
-from typing import Optional
-
-# letter_scheme = dict(
-#     # -------EDGES--------
-#     # U Face
-#     UB="A",
-#     UR="B",
-#     UF="U",
-#     UL="D",
-#     # L Face
-#     LU="E",
-#     LF="F",
-#     LD="G",
-#     LB="H",
-#     # F Face
-#     FU="K",
-#     FR="J",
-#     FD="I",
-#     FL="L",
-#     # R Face
-#     RU="M",
-#     RB="N",
-#     RD="O",
-#     RF="P",
-#     # B Face
-#     BU="Z",
-#     BL="R",
-#     BD="S",
-#     BR="T",
-#     # D Face
-#     DF="C",
-#     DR="V",
-#     DB="W",
-#     DL="X",
-#     # -------CORNERS--------
-#     # U Face
-#     UBL="A",
-#     UBR="B",
-#     UFR="U",
-#     UFL="D",
-#     # L Face
-#     LUB="J",
-#     LUF="F",
-#     LDF="G",
-#     LDB="H",
-#     # F Face
-#     FUL="E",
-#     FUR="I",
-#     FDR="K",
-#     FDL="L",
-#     # R Face
-#     RUF="X",
-#     RUB="N",
-#     RDB="O",
-#     RDF="P",
-#     # B Face
-#     BUR="R",
-#     BUL="M",
-#     BDL="S",
-#     BDR="T",
-#     # D Face
-#     DFL="C",
-#     DFR="V",
-#     DBR="W",
-#     DBL="Z",
-# )
-#
-#
+from typing import Literal, Optional
 
 
 class PieceId:
@@ -77,7 +10,7 @@ class PieceId:
         self.type = "c" if len(pos) == 3 else "e"
 
     def __repr__(self):
-        return f"'PieceId: {self.pos} => {self.name}'"  # Type: {self.type}'
+        return f"'PieceId: {self.pos} => {self.name}'"
 
     def __str__(self):
         return self.name
@@ -222,7 +155,7 @@ class LetterScheme:
 
 def convert_letterpairs(
     to_convert,
-    direction,
+    direction: Literal["letter_to_loc", "loc_to_letter"],
     letter_scheme,
     piece_type=None,
     display=False,
@@ -294,6 +227,13 @@ def convert_letterpairs(
         raise ValueError(
             f"Invalid return_type '{return_type}'. Must be 'set' or 'list'"
         )
+
+
+def sort_face_precedence(cell):
+    name = list(cell)
+    face_precedence = {"U": 0, "D": 0, "F": 1, "B": 1, "R": 2, "L": 2, "": 3}
+    name[1:] = sorted(name[1:], key=lambda x: face_precedence[x])
+    return "".join(name)
 
 
 if __name__ == "__main__":

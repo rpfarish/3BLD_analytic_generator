@@ -7,46 +7,70 @@ from datetime import datetime
 
 import dlin
 from comms.comms import COMMS
+from Commutator.comm_shift import comm_shift
 from Cube import Cube
 from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
 from Scramble import get_scramble
+from Settings.settings import Settings
 
 DEBUG = 0
 
 
+def input_with_quit(message: str = "") -> str:
+    try:
+        response = input(message)
+        if response.lower().startswith("q"):
+            return "return"
+        return response
+    except KeyboardInterrupt:
+        quit()
+
+
 class Drill:
 
-    def __init__(self, memo: Memo = None, buffer_order=None, letter_scheme=None):
+    def __init__(
+        self,
+        memo: Memo = None,
+        buffer_order=None,
+        letter_scheme=None,
+        cur_settings=None,
+    ):
         if memo is not None:
             self.cube_memo: Memo = memo
         else:
             self.cube_memo: Memo = Memo(buffer_order=buffer_order)
 
-        if letter_scheme is None:
-            self.letter_scheme = LetterScheme()
-            # raise Exception("Panic there is no letterscheme set in drill")
-        else:
-            self.letter_scheme = letter_scheme
+        self.letter_scheme: LetterScheme = (
+            LetterScheme() if letter_scheme is None else letter_scheme
+        )
+
+        self.settings: Settings = Settings() if cur_settings is None else cur_settings
 
         self.max_cycles_per_buffer = {
-            buffer: (8 - i) // 2
+            "".join(sorted(buffer)): (8 - i) // 2
             for i, buffer in enumerate(self.cube_memo.corner_buffer_order, 1)
         }
         self.max_cycles_per_buffer |= {
-            buffer: (12 - i) // 2
+            "".join(sorted(buffer)): (12 - i) // 2
             for i, buffer in enumerate(self.cube_memo.edge_buffer_order, 1)
         }
 
         self.total_cases_per_edge_buffer = [i * (i - 2) for i in range(22, 2, -2)]
         self.total_cases_per_corner_buffer = [i * (i - 3) for i in range(21, 3, -3)]
         self.total_cases_per_buffer = {
-            buffer: num
+            "".join(sorted(buffer)): num
             for buffer, num in zip(
                 self.cube_memo.edge_buffer_order + self.cube_memo.corner_buffer_order,
                 self.total_cases_per_edge_buffer + self.total_cases_per_corner_buffer,
             )
         }
+
+    def get_dlin_trace(self, scramble):
+        has_parity = (len(scramble.split()) - scramble.count("2")) % 2 == 1
+        swap = self.settings.parity_swap_edges.split("-") if has_parity else None
+
+        return dlin.trace(scramble, swap=swap, buffers=self.settings.dlin_buffers)
 
     # memo
     def generate_drill_list(self, ltr_scheme: LetterScheme, buffer, target):
@@ -56,13 +80,8 @@ class Drill:
         all_targets = ltr_scheme.get_corners()
         self.remove_piece(all_targets, buffer)
 
-        # random_list = []
-        # # generate random pair
-        # for _ in range(18):
-        #     target_list = all_targets[:]
-        #     random_list.append(generate_random_pair(target_list, ltr_scheme))
-
         target_list = all_targets[:]
+
         # remove buffer stickers
         self.remove_piece(target_list, target)
 
@@ -111,54 +130,19 @@ class Drill:
         else:
             return self.get_target_scramble(algs_to_drill)
 
-    # memo
-    # def drill_corner_sticker(self, sticker_to_drill):
-    #     #             # todo make it so if you're no_repeat then allow to repeat the letter pairs
-    #     #     return scrambles
-    #     # todo fix buffer thing
-    #     algs_to_drill = self.generate_drill_list(self.cube_memo.ls, self.cube_memo.default_corner_buffer,
-    #                                              sticker_to_drill)
-    #
-    #     alg_freq_dist = {str(pair): 0 for pair in algs_to_drill}
-    #     # print(type(alg_freq_dist))
-    #     # print('Running...')
-    #     count = 2
-    #     inc_amt = 2
-    #     while True:
-    #         scramble, alg_to_drill = self.get_target_scramble(algs_to_drill)
-    #         # check if freq is < count and if so continue
-    #         if alg_freq_dist[alg_to_drill] < count:
-    #             alg_freq_dist[alg_to_drill] += 1
-    #         elif len(set(alg_freq_dist.values())) == 1:
-    #             print("Increasing count")
-    #             count += inc_amt
-    #         else:
-    #             continue
-    #
-    #         print(scramble, end="")
-    #
-    #         input()
-
     def get_no_cycle_break_memo_corners(
         self, scramble, letter_scheme, buffer, format=True
     ) -> list[str]:
 
-        if (len(scramble.split()) - scramble.count("2")) % 2 == 1:
-            swap = ("UF", "UR")
-        else:
-            swap = None
-
-        trace = dlin.trace(scramble, swap=swap)
+        trace = self.get_dlin_trace(scramble)
 
         corner_cycles = trace["corner"]
         corner_targets = None
         for cycle in corner_cycles:
-            # TODO: add buffer from settings and load buffer order from settings
             if cycle["buffer"] == buffer and cycle["targets"]:
                 corner_targets = cycle["targets"]
                 break
 
-        # print("corner targets", corner_targets)
         if not corner_targets:
             return []
 
@@ -180,22 +164,15 @@ class Drill:
         self, scramble, letter_scheme, buffer, format=True
     ) -> list[str]:
 
-        if (len(scramble.split()) - scramble.count("2")) % 2 == 1:
-            swap = ("UF", "UR")
-        else:
-            swap = None
-
-        trace = dlin.trace(scramble, swap=swap)
+        trace = self.get_dlin_trace(scramble)
 
         edge_cycles = trace["edge"]
         edge_targets = None
         for cycle in edge_cycles:
-            # TODO: add buffer from settings and load buffer order from settings
             if cycle["buffer"] == buffer and cycle["targets"]:
                 edge_targets = cycle["targets"]
                 break
 
-        # print("corner targets", corner_targets)
         if not edge_targets:
             return []
 
@@ -251,7 +228,7 @@ class Drill:
         start = time.perf_counter()
         while remaining_algs:
 
-            # todo maybe increase scramble length to 26?
+            # TODO::::::::::::::::::: maybe increase scramble length to 26?
             scramble = get_scramble.get_scramble_bld()
 
             memo = self.get_no_cycle_break_memo_corners(scramble, letter_scheme, buffer)
@@ -273,7 +250,7 @@ class Drill:
                 memo_times.append(time.perf_counter() - start)
 
                 # print(memo_times[-1])
-                # TODO: make heuristic better
+                # TODO:::::::::::::::::::: make heuristic better
                 cycle_count = 3 if len(remaining_algs) > 60 else 2
                 cycle_count = 1 if len(remaining_algs) < 20 else cycle_count
 
@@ -295,9 +272,8 @@ class Drill:
                     return_type="list",
                 )
 
-                response = input()
-
-                if response == "q" or response == "quit":
+                message = "Press q to exit:\n"
+                if (response := input_with_quit(message)) == "return":
                     return
 
                 print(
@@ -310,9 +286,8 @@ class Drill:
                     ),
                 )
 
-                response = input('Enter "r" to repeat letter pairs: ')
-
-                if response == "q" or response == "quit":
+                message = "Enter 'r' to repeat letter pairs: "
+                if (response := input_with_quit(message)) == "return":
                     return
 
                 if response == "r":
@@ -343,7 +318,7 @@ class Drill:
             scramble = get_scramble.get_scramble()
 
             no_cycle_break_corner_memo = self.get_no_cycle_break_memo_corners(
-                scramble, letter_scheme, format=False
+                scramble, letter_scheme, buffer=buffer, format=False
             )
             DBR = "DBR", "BDR", "RDB"
             DFL = "DFL", "FDL", "LDF"
@@ -361,8 +336,8 @@ class Drill:
                 )
                 if DBR_to_DFL or DBL_to_DFR:
                     print(scramble)
-                    input()
-                    break
+                    if input_with_quit() == "return":
+                        return
 
     def drill_edge_buffer_cycle_breaks(self, edge_buffer: str):
         edges = self.cube_memo.remove_irrelevant_edge_buffers(
@@ -381,8 +356,7 @@ class Drill:
         cube = Cube()
         for pair in rand_edges:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-            buffer = COMMS[str(edge_buffer)]
-            comm = buffer[a][b]
+            comm = comm_shift(COMMS, edge_buffer, a, b)
             cube.scramble_cube(comm)
 
         scram = cube.solve(max_depth=19)
@@ -405,8 +379,7 @@ class Drill:
         cube = Cube()
         for pair in rand_corners:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-            buffer = COMMS[str(corner_buffer)]
-            comm = buffer[a][b]
+            comm = comm_shift(COMMS, corner_buffer, a, b)
             cube.scramble_cube(comm)
 
         scram = cube.solve(max_depth=19)
@@ -416,18 +389,21 @@ class Drill:
     # memo
     def drill_edge_buffer(
         self,
+        file_comms,
         edge_buffer: str,
         exclude_from_memo=None,
         return_list=False,
         translate_memo=False,
         drill_set: set | None = None,
         random_pairs=False,
-        file_comms=None,
+        number_of_scrambles=0,
     ):
-        # todo add edge flips hahaha
+        # TODO::::::::::::::::::: add edge flips hahaha
         scrams = {}
-        total_cases = self.total_cases_per_buffer[edge_buffer]
-        max_number_of_times = total_cases // self.max_cycles_per_buffer[edge_buffer]
+        total_cases = self.total_cases_per_buffer["".join(sorted(edge_buffer))]
+        max_number_of_times = (
+            total_cases // self.max_cycles_per_buffer["".join(sorted(edge_buffer))]
+        )
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
 
         edges = self.cube_memo.remove_irrelevant_edge_buffers(
@@ -448,7 +424,9 @@ class Drill:
         num = (
             1
             if drill_set is None
-            else len(exclude_from_memo) // self.max_cycles_per_buffer[edge_buffer] + 1
+            else len(exclude_from_memo)
+            // self.max_cycles_per_buffer["".join(sorted(edge_buffer))]
+            + 1
         )
 
         while len(exclude_from_memo) < total_cases or random_pairs:
@@ -466,10 +444,9 @@ class Drill:
                     drill_list_json = json.load(f)
                 with open(f"cache/drill_save.json", "w") as f:
                     drill_list_json[edge_buffer] = list(all_edges - exclude_from_memo)
-                    json.dump(drill_list_json, f, indent=4)
+                    json.dump(drill_list_json, f, indent=2)
 
-                response = input().lower()
-                if response.startswith("q"):
+                if input_with_quit() == "return":
                     return
 
                 if translate_memo:
@@ -490,7 +467,8 @@ class Drill:
                 else:
                     print(memo)
 
-            print()
+                print()
+
             comms = []
             for pair, pair_letters in zip(
                 memo.split(),
@@ -506,41 +484,51 @@ class Drill:
             ):
                 exclude_from_memo.add(pair)
                 a, b = pair[:2], pair[2:]
-                if (
-                    file_comms[edge_buffer].get(a) is None
-                    or file_comms[edge_buffer][a].get(b) is None
-                ):
-                    raise ValueError(
-                        "Error the current Buffer order/values for edges in settings.json does not match the currently loaded comm sheet."
-                    )
-                comm = file_comms[edge_buffer][a][b]
+
+                # if (
+                #     file_comms[edge_buffer].get(a) is None
+                #     or file_comms[edge_buffer][a].get(b) is None
+                # ):
+                #     raise ValueError(
+                #         "Error the current Buffer order/values for edges in settings.json does not match the currently loaded comm sheet."
+                #     )
+
+                comm = comm_shift(file_comms, edge_buffer, a, b)
+
                 comms.append(comm)
                 if not return_list:
+                    comm = comm if comm else "Not listed"
                     print(f"{pair_letters}:", comm)
 
             scrams[num] = [scramble, memo, comms]
 
             num += 1
-            print("-" * 25)
+
+            if return_list and random_pairs and num >= number_of_scrambles + 1:
+                break
 
             if not return_list:
-                if input() == "quit":
-                    return
+                print("-" * 25)
 
-        # Current datetime
-        now = datetime.now()
-        cur_date_time = now.strftime("%m-%d-%Y-%H-%M-%S")
-        os.makedirs("scrams", exist_ok=True)
-        with open(f"scrams/buffer-{edge_buffer}-{cur_date_time}.txt", "w") as f:
-            for scram, memo, comms in scrams.values():
-                print(scram, file=f)
+            if not return_list and input_with_quit() == "return":
+                return
+
+        if return_list:
+            now = datetime.now()
+            cur_date_time = now.strftime("%m-%d-%Y-%H-%M-%S")
+            os.makedirs("scrams", exist_ok=True)
+            file_name = f"scrams/buffer-{edge_buffer}-{cur_date_time}.txt"
+            with open(file_name, "w") as f:
+                for scram, memo, comms in scrams.values():
+                    print(scram, file=f)
+            print("Scrambles saved to", file_name)
 
         print("Finished")
         with open(f"cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
         with open(f"cache/drill_save.json", "w") as f:
             drill_list_json[edge_buffer] = []
-            json.dump(drill_list_json, f, indent=4)
+            json.dump(drill_list_json, f, indent=2)
         return scrams
 
     def drill_corner_buffer(
@@ -551,16 +539,23 @@ class Drill:
         drill_set: set = None,
         random_pairs=False,
         file_comms=None,
+        number_of_scrambles=0,
     ):
-        # todo add edge flips hahaha
+        # TODO::::::::::::::::::: add edge flips hahaha
         scrams = {}
-        total_cases = self.total_cases_per_buffer[corner_buffer]
-        max_number_of_times = total_cases // self.max_cycles_per_buffer[corner_buffer]
+        total_cases = self.total_cases_per_buffer["".join(sorted(corner_buffer))]
+        max_number_of_times = (
+            total_cases // self.max_cycles_per_buffer["".join(sorted(corner_buffer))]
+        )
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
+        print(self.total_cases_per_buffer, total_cases)
+        print(self.max_cycles_per_buffer, max_number_of_times)
 
         corners = self.cube_memo.remove_irrelevant_corner_buffers(
             self.cube_memo.adj_corners.copy(), corner_buffer
         )
+
+        print("CORNERS", corners)
         all_corners = set(
             i + j
             for i, j in itertools.permutations(corners, 2)
@@ -575,7 +570,9 @@ class Drill:
         num = (
             1
             if drill_set is None
-            else len(exclude_from_memo) // self.max_cycles_per_buffer[corner_buffer] + 1
+            else len(exclude_from_memo)
+            // self.max_cycles_per_buffer["".join(sorted(corner_buffer))]
+            + 1
         )
 
         while len(exclude_from_memo) < total_cases or random_pairs:
@@ -595,10 +592,9 @@ class Drill:
                     drill_list_json[corner_buffer] = list(
                         all_corners - exclude_from_memo
                     )
-                    json.dump(drill_list_json, f, indent=4)
+                    json.dump(drill_list_json, f, indent=2)
 
-                response = input().lower()
-                if response.startswith("q"):
+                if input_with_quit() == "return":
                     return
 
                 print(
@@ -614,8 +610,8 @@ class Drill:
                         )
                     ),
                 )
+                print()
 
-            print()
             comms = []
             for pair, pair_letters in zip(
                 memo.split(),
@@ -631,28 +627,41 @@ class Drill:
             ):
                 exclude_from_memo.add(pair)
                 a, b = pair[:3], pair[3:]
-                comm = file_comms[corner_buffer][a][b]
-                if not comm:
-                    comm = COMMS[corner_buffer][a][b]
+                comm = comm_shift(file_comms, corner_buffer, a, b)
                 comms.append(comm)
                 if not return_list:
+                    comm = comm if comm else "Not listed"
                     print(f"{pair_letters}:", comm)
 
             scrams[num] = [scramble, memo, comms]
 
             num += 1
-            print("-" * 25)
+
+            if return_list and random_pairs and num >= number_of_scrambles + 1:
+                break
 
             if not return_list:
-                if input() == "quit":
-                    return
+                print("-" * 25)
+
+            if not return_list and input_with_quit() == "return":
+                return
+
+        if return_list:
+            now = datetime.now()
+            cur_date_time = now.strftime("%m-%d-%Y-%H-%M-%S")
+            os.makedirs("scrams", exist_ok=True)
+            file_name = f"scrams/buffer-{corner_buffer}-{cur_date_time}.txt"
+            with open(file_name, "w") as f:
+                for scram, memo, comms in scrams.values():
+                    print(scram, file=f)
+            print("Scrambles saved to", file_name)
 
         print("Finished")
         with open(f"cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
         with open(f"cache/drill_save.json", "w") as f:
             drill_list_json[corner_buffer] = []
-            json.dump(drill_list_json, f, indent=4)
+            json.dump(drill_list_json, f, indent=2)
         return scrams
         # memo
 
@@ -661,7 +670,6 @@ class Drill:
         edges,
         edge_buffer=None,
         exclude_from_memo=None,
-        translate_memo=False,
         random_pairs=False,
     ):
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
@@ -674,7 +682,9 @@ class Drill:
             edges = list(edges)
             random.shuffle(edges)
         else:
-            edges = edges - exclude_from_memo
+            edges = list(edges - exclude_from_memo)
+            random.shuffle(edges)
+
         for pair in edges:
             edge, edge2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
 
@@ -698,9 +708,6 @@ class Drill:
         # get scramble
         scramble = self.cube_memo.scramble_edges_from_memo(memo, str(edge_buffer))
 
-        if translate_memo:
-            memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
-
         return scramble, self.cube_memo.format_edge_memo(memo)
 
     def generate_random_corner_memo(
@@ -708,7 +715,6 @@ class Drill:
         corners: set,
         corner_buffer=None,
         exclude_from_memo: set = None,
-        translate_memo=False,
         random_pairs=False,
     ):
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
@@ -719,14 +725,17 @@ class Drill:
         )
         memo = []
         memo_set = set()
+
+        # Convert to list and shuffle for randomness
         if random_pairs:
             corners = list(corners)
             random.shuffle(corners)
         else:
-            corners = corners - exclude_from_memo
+            corners = list(corners - exclude_from_memo)  # Convert to list
+            random.shuffle(corners)  # Shuffle it!
+
         for pair in corners:
             corner, corner2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-
             corner_adj1, corner_adj2 = self.cube_memo.adj_corners[corner]
             corner2_adj1, corner2_adj2 = self.cube_memo.adj_corners[corner2]
             if memo_set.intersection(
@@ -738,16 +747,15 @@ class Drill:
 
             memo_set |= {corner, corner2}
 
-            if len(memo) == (2 * self.max_cycles_per_buffer[corner_buffer]):
+            if len(memo) == (
+                2 * self.max_cycles_per_buffer["".join(sorted(corner_buffer))]
+            ):
                 break
 
         if len(memo) % 2 == 1:
             memo.pop()
 
         scramble = self.cube_memo.scramble_corners_from_memo(memo, str(corner_buffer))
-
-        if translate_memo:
-            memo = self.cube_memo.translate_letter_scheme(memo, translate_type="name")
 
         return scramble, self.cube_memo.format_corner_memo(memo)
 
@@ -788,7 +796,7 @@ class Drill:
             else:
                 return {i + target for i in target_list}
 
-        # todo support starting from any buffer
+        # TODO::::::::::::::::::: support starting from any buffer
         # support default certain alternate pseudo edge swaps depending on last corner target
         print("Running...")
         number = 0
@@ -809,7 +817,7 @@ class Drill:
         start = time.perf_counter()
         while remaining_algs:
 
-            # todo maybe increase scramble length to 26?
+            # TODO::::::::::::::::::: maybe increase scramble length to 26?
             scramble = get_scramble.get_scramble_bld()
 
             memo = self.get_no_cycle_break_memo_edges(scramble, letter_scheme, buffer)
@@ -831,7 +839,7 @@ class Drill:
                 memo_times.append(time.perf_counter() - start)
 
                 # print(memo_times[-1])
-                # TODO: make heuristic better
+                # TODO:::::::::::::::::::: make heuristic better
                 cycle_count = 3 if len(remaining_algs) > 60 else 2
                 cycle_count = 1 if len(remaining_algs) < 20 else cycle_count
 
@@ -853,9 +861,7 @@ class Drill:
                     return_type="list",
                 )
 
-                response = input()
-
-                if response == "q" or response == "quit":
+                if input_with_quit() == "return":
                     return
 
                 print(
@@ -868,9 +874,8 @@ class Drill:
                     ),
                 )
 
-                response = input('Enter "r" to repeat letter pairs: ')
-
-                if response == "q" or response == "quit":
+                message = "Enter 'r' to repeat letter pairs: "
+                if (response := input_with_quit(message)) == "return":
                     return
 
                 if response == "r":
@@ -890,26 +895,6 @@ class Drill:
             f"Memo - Avg: {sum(memo_times)/len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
         )
 
-    # memo
-    def reduce_scramble(self, scramble, disp_time_taken=False):
-        if disp_time_taken:
-            print("--------______---------")
-            print("Now reducing scramble")
-        start = time.time()
-
-        reduced_scramble = self.cube_memo.get_solution(
-            max_depth=min(len(scramble.split()), 20)
-        )
-
-        end = time.time()
-        if disp_time_taken:
-            print(f"Time: {end - start:.3f}")
-            print("--------______---------")
-            print("Done")
-
-        # print(len(scramble.split()), len(reduced_scramble.split()))
-        return self.cube_memo.invert_solution(reduced_scramble)
-
     def remove_piece(self, target_list, piece):
         piece_adj1, piece_adj2 = self.cube_memo.adj_corners[piece]
         target_list.remove(piece)
@@ -917,14 +902,8 @@ class Drill:
         target_list.remove(piece_adj2)
         return target_list
 
-    # memo
-    def generate_random_pair(self, target_list):
-        first = random.choice(target_list)
-        self.remove_piece(target_list, first)
-        second = random.choice(target_list)
-        return first + second
-
     def get_all_buffer_targets(self, buffer, piece_type="is this really needed idk"):
+        # TODO:::::::::::::::::::: Is this for floating?
         if piece_type == "corners":
             corner_buffer = buffer
             corners = self.cube_memo.remove_irrelevant_corner_buffers(
@@ -953,72 +932,12 @@ class Drill:
             raise Exception('put "corners" or "edges" in params pls')
 
     def drill_ltct(self, args):
-        algs = []
-        ltct_u = [
-            "U R U R2' D' R U R' D R2 U2' R'",
-            "R' D' R U R' D R2 U' R' U R U R' U' R U R' U",
-            "U' R' U2 R U R2' D' R U R' D R2 U2'",
-            "U R U R' U R2 D R' U' R D' R' U' R'",
-            "R' D R' U R D' R' U R2 U' R2' U' R2 U'",
-            "U R' D' R U R' D R2 U R' U2 R U R' U'",
-            "R2 U R' D' R U R' D R' U' R2 U' R2' U'",
-            "D R2' U' R U R U' R D' U R U' R' U",
-            "U R' D' R U' R' D R U2 R U R' U2 R U R' U'",
-            "U' R' U2 R U R2' F' R U R U' R' F R U'",
-            "U' f R' F' R U2 R U2' R' U2 S'",
-            "U R' U R U R' U' R' D' R U' R' D R2",
-            "U' R2 D R' U' R D' R' U' R' U R U R' U2",
-            "U R U R' U2 L U' R U L' U R'",
-            "U2' R' U2 L U' R U L' U R' U R U'",
-            "R' U' R U D' R U' R U R U' R2' D U",
-            "U R U R' U' R U R2' D' R U2 R' D R2 U2' R' U",
-            "U' R' U' R U R' U' R2 D R' U R D' R' U2 R' U R U'",
-            "U' R D R' U' R D' R2' U R U' R' U' R U R' U' R",
-            "U2 R' U' R2 D R' U' R D' R2' U2' R U",
-            "R U R D R' U R D' R2' U' R U' R' U'",
-            "U' R U' R' U R U' R' U' R U R2' D' R U' R' D R",
-            "U R U' R' U2 R U' R2' D' R U' R' D R U'",
-            "R U2 R' U' R2 D R' U' R D' R2' U'",
-            "D' U R2 D' R U R' D R2 U R' U2 R D",
-            "R2' D' R U R' D R U R U' R' U' R U'",
-            "U R' F' R U R' U' R' F R2 U' R' U2 R U",
-            "R U R' U' R U R2' D' R U' R' D R U2 R U' R' U2",
-            "U R U2' R' U' F' R U R' U' R' F R2 U' R'",
-            "U' R U R' U' R' U R' U' D R' U R D' R",
-            "U R U' R' U2 R U' R' U2 R' D' R U R' D R U'",
-            "U R' U' R U2 R D R' U' R D' R2' U R U' R' U R U",
-            "D' U' R2 U R' U' R' U R' U' D R' U R",
-            "U2 R U' R' U' R U R D R' U R D' R2' U",
-            "U' R' U L' U R2 U R2' U R2 U2' R' L",
-            "U2 R2 D' r U2 r' D R U2 R U'",
-            "U' L' U' L U' R U' L' U R' U2' L",
-        ]
-        # TODO: this list is not complete
-        ltct_ud = [
-            "U R D R' U R D' R2' U R U2 R' U R U'",
-            "R D R' U R D' R2' U R U R' U2' R",
-            "D U R2 D' R U R' D R2 U R' U2 R D'",
-            "D R' U2 R U' R2 D' R U' R' D R2 U' D'",
-            "D U R' U' R U2 R' U' R2 D R' U' R D' R' U' D'",
-            "R' U2 R U' R2 D' R U' R' D R2 U'",
-            "U R' U' R U2 R' U' R2 D R' U' R D' R' U'",
-            "D' R' U2 R U' R2 D' R U' R' D R2 U' D",
-            "D' U R' U' R U2 R' U' R2 D R' U' R D' R' U' D",
-        ]
-
-        if "-u" in args:
-            algs += ltct_u
-        if "-ud" in args:
-            algs += ltct_ud
-        if "-def" in args:
-            algs += ltct_u + ltct_ud
-
-        self.drill_algs(algs)
+        print("Currently not available")
 
     def drill_ltct_scramble(self):
         # we are now going to pretent that we know what we are dioing
-        # todo this is where drill ltct goes
-        # todo add args for which LTCTs are filtered for
+        # TODO::::::::::::::::::: this is where drill ltct goes
+        # TODO::::::::::::::::::: add args for which LTCTs are filtered for
         while True:
             while True:
                 # get parity scramble
@@ -1035,16 +954,16 @@ class Drill:
                 ):
                     break
             print(scramble, end="")
-            response = input()
-            if response in ("q", "quit"):
+            if input_with_quit() == "return":
                 return
 
     def parallel_cancel(self, pre_move: list, solution: list):
+        # TODO:::::::::::::::::::: Is this for simplifying comms?
         sol = solution.copy()
         pre_move_len = len(pre_move)
 
         solution = pre_move + solution
-        # todo figure out why this is needed
+        # TODO::::::::::::::::::: figure out why this is needed
         # post_move = "F' D2 R'"
         # k_sol = "R D2 F2 R2 F' U' B U' B U' L2 F2 U' R2 U F2 D' L2 U'"
         if "" in solution:
@@ -1067,7 +986,7 @@ class Drill:
             third_turn = solution[i + 2]
             if first_layer == third_layer and first_layer == opp[second_layer]:
                 canceled_cube = Cube(first_turn + " " + third_turn)
-                # todo convert to using combined rotation and simplifying
+                # TODO::::::::::::::::::: convert to using combined rotation and simplifying
                 kociemba_solution = canceled_cube.solve(invert=True).split()
                 if DEBUG:
                     print("k sol", kociemba_solution)
@@ -1096,7 +1015,7 @@ class Drill:
         return pre_move, sol
 
     def cancel(self, pre_move, solution):
-        # todo find a way to also cancel U D U moves
+        # TODO::::::::::::::::::: find a way to also cancel U D U moves
         # aka check for parallel cancellations
         solution = solution.rstrip("\n").strip().split(" ")[:]
         pre_move = pre_move.rstrip("\n").strip().split(" ")[:]
@@ -1146,7 +1065,7 @@ class Drill:
             # partial cancel
             elif pre[0] == s[0] and depth < 1:
                 canceled_cube = Cube(pre + " " + s)
-                # todo convert to using combined rotation and simplifying
+                # TODO::::::::::::::::::: convert to using combined rotation and simplifying
                 kociemba_solution = canceled_cube.solve(invert=True).split()
                 if DEBUG:
                     print("k sol", kociemba_solution)
@@ -1230,7 +1149,7 @@ class Drill:
         no_repeat = True
         num = 1
         len_algs = len(algs)
-        # TODO support wide moves
+        # TODO::::::::::::::::::: support wide moves
         while algs:
 
             if DEBUG:
@@ -1269,10 +1188,9 @@ class Drill:
                 print(f"Num {num}/{len_algs}:", solution)
                 num += 1
                 last_solution = solution
-                response = input("")
-                if response == "q" or response == "quit":
+                if (response := input_with_quit()) == "return":
                     return
-                elif response.startswith("a"):
+                if response.startswith("a"):
                     print("Alg:", a, "\n")
                     algs_help_num += 1
                     algs_help.append(a)
@@ -1371,8 +1289,7 @@ class Drill:
 
             if cycle_breaks:
                 print(scram)
-                response = input()
-                if "q" in response:
+                if input_with_quit() == "return":
                     return
 
     def cycle_break_floats_corners(self, buffer, buffer_order=None):
@@ -1383,7 +1300,12 @@ class Drill:
         while True:
             drill = Drill(buffer_order=buffer_order)
             scram = drill.drill_corner_buffer_cycle_breaks(buffer)
-            cube = Cube(scram, can_parity_swap=False)
+            cube = Cube(
+                scram,
+                can_parity_swap=False,
+                parity_swap_edges=self.settings.parity_swap_edges,
+            )
+
             if buffer in cube.solved_corners or len(cube.twisted_corners) > 3:
                 continue
             cube_trace = cube.get_dlin_trace()
@@ -1402,8 +1324,7 @@ class Drill:
 
             if cycle_breaks:
                 print(scram)
-                response = input()
-                if "q" in response:
+                if input_with_quit() == "return":
                     return
 
     def drill_cycle_break_corners(self, buffer, sticker_to_drill):
@@ -1411,7 +1332,7 @@ class Drill:
         while True:
 
             scramble = get_scramble.get_scramble()
-            trace = dlin.trace(scramble)["corner"]
+            trace = self.get_dlin_trace(scramble)["corner"]
             buffer_cycle = None
             for corner in trace:
                 if corner["buffer"] == buffer:
@@ -1428,87 +1349,15 @@ class Drill:
             ):
                 print(scramble)
 
-                response = input("Press q to exit:\n")
-                if "q" in response:
+                message = "Press q to exit:\n"
+                if input_with_quit(message) == "return":
                     return
 
     def drill_two_flips(self):
-        two_flips = {
-            "[U , R' E2 R2 E' R']": "U R' E2 R2 E' R' U' R E R2' E2' R",
-            "[U' : [S , R' F' R]] [U2' , M']": "U' S R' F' R S' R' F R U' M' U2 M",
-            "[U' , L E2' L2' E L]": "U' L E2' L2' E L U L' E' L2 E2 L'",
-            "[L' E2' L , U'] [U' , L E' L']": "L' E2' L U' L' E2 L2 E' L' U L E L'",
-            "[R E2 R' , U] [U , R' E R]": "R E2 R' U R E2' R2' E R U' R' E' R",
-            "[R' E2 R , U] [U , R E' R']": "R' E2 R U R' E2' R2 E' R' U' R E R'",
-            "[L E2' L' , U'] [U' , L' E L]": "L E2' L' U' L E2 L2' E L U L' E' L",
-            "[M' , U2] [U : [S , R' F' R]]": "M' U2 M U' S R' F' R S' R' F R U'",
-            "[U' : [R E R' , U2]] [U : [S , R2']]": "U' R E R' U2 R E' R' S R2' S' R2 U'",
-            "[M U' : [S , R' F' R]] [M , U2]": "M U' S R' F' R S' R' F R U' M' U2'",
-            "[U : [L' E' L , U2']] [U' : [S' , L2]]": "U L' E' L U2' L' E L S' L2 S L2' U",
-            "[R' E2 R2 E' R' , U']": "R' E2 R2 E' R' U' R E R2' E2' R U",
-            "[S , R' F' R] [U' : [M' , U2]]": "S R' F' R S' R' F R U' M' U2 M U'",
-            "[U R : [U' , R' E' R2 E2 R']]": "U R U' R' E' R2 E2 R' U R E2' R2' E U'",
-            "[U , R' E R] [R E2 R' , U]": "U R' E R U' R' E' R2 E2 R' U R E2' R' U'",
-            "[R E' R2' : [F2 , R S' R']] [R : [E' , R2']]": "R E' R2' F2 R S' R' F2' R S R' E R",
-            "[U : [L' E L , U]] [U2 : [L E2' L' , U']]": "U L' E L U L' E' L2 E2' L' U' L E2 L' U'",
-            "[U' : [M' , U2]] [S , R' F' R]": "U' M' U2 M U' S R' F' R S' R' F R",
-            "[R' F' R , S'] [S' U' : [M' , U2]]": "R' F' R S' R' F R U' M' U2 M U' S",
-            "[U' M U' : [S , R' F' R]] [U' : [M , U2]]": "U' M U' S R' F' R S' R' F R U' M' U'",
-            "[R2' , S'] [S' : [U2 , R E R']]": "R2' S' R2 U2 R E R' U2' R E' R' S",
-            "[L E2' L2' E L , U]": "L E2' L2' E L U L' E' L2 E2 L' U'",
-            "[L E' L' , U] [U , L' E2' L]": "L E' L' U L E L2' E2' L U' L' E2 L",
-            "[R' E R , U'] [U' , R E2 R']": "R' E R U' R' E' R2 E2 R' U R E2' R'",
-            "[R E' R' , U'] [U' , R' E2 R]": "R E' R' U' R E R2' E2 R U R' E2' R",
-            "[L' E L , U] [U , L E2' L']": "L' E L U L' E' L2 E2' L' U' L E2 L'",
-            "[U2 , M'] [U' : [S , R' F' R]]": "U2 M' U2' M U' S R' F' R S' R' F R U",
-            "[U : [R E R' , U2]] [U' : [S , R2']]": "U R E R' U2 R E' R' S R2' S' R2 U",
-            "[U2 M U' : [S , R' F' R]] [U2 , M]": "U2 M U' S R' F' R S' R' F R U' M'",
-            "[U' : [L' E' L , U2']] [U : [S' , L2']]": "U' L' E' L U2' L' E L S' L2' S L2 U'",
-            "[U' , L E' L'] [L' E2' L , U']": "U' L E' L' U L E L2' E2' L U' L' E2 L U",
-            "[U' : [R' E R , U']] [U2' : [R E2 R' , U]]": "U' R' E R U' R' E' R2 E2 R' U R E2' R' U",
-            "[U' : [R E' R' , U']] [U2' : [R' E2 R , U]]": "U' R E' R' U' R E R2' E2 R U R' E2' R U",
-            "[L' E L2 : [F2' , L' S L]] [L' : [E , L2]]": "L' E L2 F2' L' S L F2 L' S' L E' L'",
-            "[U : [M' , U2']] [S' , L F L']": "U M' U2' M U S' L F L' S L F' L'",
-            "[S , R2'] [U2 , R E R']": "S R2' S' R2 U2 R E R' U2' R E' R'",
-            "[U M U' : [S , R' F' R]] [U : [M , U2']]": "U M U' S R' F' R S' R' F R U' M' U",
-            "[L F L' , S] [S U : [M' , U2']]": "L F L' S L F' L' U M' U2' M U S'",
-            "[R S R' F2 : [R2 , E]] [R S R' , F2]": "R S R' F2 R2 E R2' E' R S' R' F2'",
-            "[R2 , E'] [E' : [F2 , R S' R']]": "R2 E' R2' F2 R S' R' F2' R S R' E",
-            "[R2 , E] [R S' R' , F2]": "R2 E R2' E' R S' R' F2 R S R' F2'",
-            "[R U' : [M' , U2]] [R S R' , F']": "R U' M' U2 M U' S R' F' R S' R' F",
-            "[S L : [E' , L2']] [r , E' L' E]": "S L E' L2' E L S' r E' L' E r' E' L E",
-            "[M : [L' E2' L , U']] [M : [U' , L E' L']]": "M L' E2' L U' L' E2 L2 E' L' U L E L' M'",
-            "[L : [E' , L2']] [L F2' L' , S]": "L E' L2' E L2 F2' L' S L F2 L' S'",
-            "[L2' , E'] [L' S L , F2']": "L2' E' L2 E L' S L F2' L' S' L F2",
-            "[E , R2] [F2 , R S' R']": "E R2 E' R2' F2 R S' R' F2' R S R'",
-            "[M' : [R' E R , U']] [M' : [U' , R E2 R']]": "M' R' E R U' R' E' R2 E2 R' U R E2' R' M",
-            "[R' : [E , R2]] [R' F2 R , S']": "R' E R2 E' R2' F2 R S' R' F2' R S",
-            "[M : [R E2 R' , U]] [M : [U , R' E R]]": "M R E2 R' U R E2' R2' E R U' R' E' R M'",
-            "[S' R' : [E , R2]] [l' , E R E']": "S' R' E R2 E' R' S l' E R E' l E R' E'",
-            "[R2' , E'] [E' R' : [S' , R' F2 R]]": "R2' E' R S' R' F2 R S R' F2' R2 E",
-            "[r : [E' , R' U' R]] [M' : [U' , R' E2 R]]": "r E' R' U' R E R' U R r' M' U' R' E2 R U R' E2' R M",
-            "[l : [S , R2']] [l U2 l' , S']": "l S R2' S' R2 U2 l' S' l U2' l' S",
-            "[r' : [E2 , R U R']] [M : [U , R E' R']]": "r' E2 R U R' E2' R U' R' r M U R E' R' U' R E R' M'",
-            "[S' R : [E' , R2']] [l , E' R' E]": "S' R E' R2' E R S l E' R' E l' E' R E",
-            "[R' U' : [M' , U2]] [R' : [S , R' F' R]]": "R' U' M' U2 M U' S R' F' R S' R' F R2",
-            "[S L' : [E , L2]] [r' , E L E']": "S L' E L2 E' L' S' r' E L E' r E L' E'",
-            "[l : [E2' , L' U' L]] [M : [U' , L' E L]]": "l E2' L' U' L E2 L' U L l' M U' L' E L U L' E' L M'",
-            "[r' : [S' , L2]] [r' U2' r , S]": "r' S' L2 S L2' U2' r S r' U2 r S'",
-            "[S , R F' R'] [S' , R' F' R]": "S R F' R' S' R F R' S' R' F' R S R' F R",
-            "[M2 U' : [S , R' F' R]] [M2 : [U2 , M']]": "M2 U' S R' F' R S' R' F R U' M' U2' M'",
-            "[S' , L' F L] [S , L F L']": "S' L' F L S L' F' L S L F L' S' L F' L'",
-            "[S2' , r' U' r] [r' : [U' , L' E L]]": "S2' r' U' r S2 r' L' E L U L' E' L r",
-            "[U' : [R2' , S']] [R F R' , S']": "U' R2' S' R2 S U R F R' S' R F' R' S",
-            "[S2 , l U l'] [l : [U , R E' R']]": "S2 l U l' S2' l R E' R' U' R E R' l'",
-        }
-        algs = list(two_flips.values())
-        random.shuffle(algs)
-        self.drill_algs(algs)
+        print("Currently not available")
 
 
 if __name__ == "__main__":
-    # todo add translate UR to B and B to UR function
-
     drill = Drill()
     s = drill.drill_edge_buffer_cycle_breaks("UB")
     print(s)

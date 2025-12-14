@@ -1,11 +1,35 @@
+from typing import TypedDict
+
 import dlin.cube
-import numpy as np
+
+
+class EdgeTrace(TypedDict):
+    type: str
+    buffer: str
+    targets: list[str]
+    orientation: int
+    parity: int
+
+
+class CornerTrace(TypedDict):
+    type: str
+    buffer: str
+    targets: list[str]
+    orientation: int
+    parity: int
+
+
+class Tracing(TypedDict):
+    edge: list[EdgeTrace]
+    corner: list[CornerTrace]
+    scramble: str
+    rotation: list[str]
 
 
 class Tracer(dlin.cube.Cube):
     def __init__(self, buffers, trace="both"):
         super().__init__()
-        self.tracing = {"edge": [], "corner": []}
+        self.tracing: Tracing = {"edge": [], "corner": [], "scramble": ""}
         self.buffers = buffers
         self.loopcube = []
         for x in range(3):
@@ -275,7 +299,12 @@ class Tracer(dlin.cube.Cube):
         )
 
     def trace_cube(self):
-        self.tracing = {"edge": [], "corner": [], "scramble": self.scramble}
+        self.tracing = {
+            "edge": [],
+            "corner": [],
+            "scramble": self.scramble,
+            "rotation": [],
+        }
         self.rotate_into_orientation()
         if self.trace_corners:
             self.trace_all("corner", self.buffers["corner"])

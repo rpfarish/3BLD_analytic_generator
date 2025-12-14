@@ -81,7 +81,7 @@ def drill_sticker(args: list, buffers):
     #         }
     #
     # letter_scheme = LetterScheme(use_default=True)
-    # # todo specify some cycles you want to drill more than others
+    # # TODO::: specify some cycles you want to drill more than others
     # if "-e" in args or "-edge" in args:
     #     with open("drill_lists/drill_list_edges.txt") as f:
     #         algs = f.readlines()
@@ -320,7 +320,7 @@ def drill_sticker(args: list, buffers):
     #     print("sticker must not be a buffer")
     #
     # if piece_type == "edge":
-    #     # todo fix so it can parse args properly
+    #     # TODO::: fix so it can parse args properly
     #     cycles_to_exclude = cycles_to_exclude if cycles_to_exclude is not None else ""
     #     cycles_to_exclude = {sticker + piece for piece in cycles_to_exclude}
     #     Drill().drill_edge_sticker(

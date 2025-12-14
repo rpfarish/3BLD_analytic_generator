@@ -61,27 +61,36 @@
     "Max": {
       "name": "Max",
       "spreadsheet": "Max Hilliard 3BLD.xlsx",
-      "cols_first": true
+      "cols_first": true,
+      "enabled": false
     },
+
     "Charlie": {
       "name": "Charlie",
       "spreadsheet": "Charlie Eggins's blind algs (Private Sheet).xlsx",
-      "cols_first": true
+      "cols_first": true,
+      "enabled": true
     },
+
     "Elliott": {
       "name": "Elliott",
       "spreadsheet": "Elliott Full Floating + More.xlsx",
-      "cols_first": true
+      "cols_first": true,
+      "enabled": true
     },
+
     "Graham": {
       "name": "Graham",
       "spreadsheet": "Graham's Full 3Style Comm Series + more.xlsx",
-      "cols_first": false
+      "cols_first": false,
+      "enabled": true
     },
-    "Andy": {
+
+    "Zeph": {
       "name": "Andy",
       "spreadsheet": "Awynndgo BLD.xlsx",
-      "cols_first": true
+      "cols_first": true,
+      "enabled": true
     }
   },
   "floating_comms_sheet_name": "Elliott",

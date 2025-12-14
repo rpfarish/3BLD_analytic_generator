@@ -1,6 +1,14 @@
+from typing import TypedDict
+
 from dlin.tracer import Tracer
 
-DEFAULTBUFFERS = {
+
+class DefaultBuffers(TypedDict):
+    corner: list[str]
+    edge: list[str]
+
+
+DEFAULTBUFFERS: DefaultBuffers = {
     "corner": ["UFR", "UFL", "UBL", "UBR", "DFR", "DFL", "DBR", "DBL"],
     "edge": ["UF", "UB", "UR", "UL", "FR", "FL", "DF", "DB", "DR", "DL", "BR", "BL"],
 }

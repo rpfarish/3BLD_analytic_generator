@@ -1,7 +1,11 @@
 from commands.memo import memo
+from Settings.settings import BufferOrder, Buffers
 
 
-def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):
+def memo_cube(
+    scramble,
+    settings,
+):
     """Memo: memo [scramble] [-l filename] [-s filename]
     Description:
         Describes memorization for a scramble in the given
@@ -26,13 +30,7 @@ def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order)
         with open(file_name) as f:
             for num, scram in enumerate(f.readlines(), 1):
                 # print("Scramble number:", num)
-                memo(
-                    scram.strip("\n").strip().strip('"'),
-                    letter_scheme,
-                    buffers,
-                    parity_swap_edges,
-                    buffer_order,
-                )
+                memo(scram.strip("\n").strip().strip('"'), settings)
         return
 
     elif "-s" in scramble:
@@ -48,10 +46,4 @@ def memo_cube(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order)
             f.write("\n")
             f.close()
 
-    memo(
-        scramble.strip('"'),
-        letter_scheme,
-        buffers,
-        parity_swap_edges,
-        buffer_order=buffer_order,
-    )
+    memo(scramble.strip('"'), settings)

@@ -6,9 +6,12 @@ import kociemba
 
 import dlin
 from comms.comms import COMMS
+from Commutator.comm_shift import comm_shift
 from Cube.letterscheme import LetterScheme
+from Settings.settings import Buffers, Settings
 
 from .face_enum import CornerFaceEnum as Corner
+from .face_enum import EdgeFaceEnum
 from .face_enum import EdgeFaceEnum as Edge
 
 DEBUG = True
@@ -21,9 +24,10 @@ class Cube:
         can_parity_swap: bool = False,
         auto_scramble: bool = True,
         ls: Optional[LetterScheme] = None,
-        buffers: Optional[dict[str, str]] = None,
+        buffers: Optional[Buffers] = None,
         parity_swap_edges: Optional[str] = None,
         buffer_order: Optional[dict[str, list[str]]] = None,
+        settings=None,
     ):
 
         self.scramble: list[str] = s.rstrip("\n").strip().split()
@@ -39,6 +43,8 @@ class Cube:
         else:
             ls: letter_scheme = LetterScheme(ls, use_default=use_default_letter_scheme)
             self.ls: LetterScheme = ls
+
+        self.settings: Settings = settings if settings is not None else Settings()
 
         self.slices: str = "MSE"
 
@@ -91,17 +97,8 @@ class Cube:
             BL,
         ]
 
-        if buffer_order is not None:
-            self.buffer_order: dict[str, list[str]] = buffer_order
-            self.corner_buffer_order: list[str] = [
-                ls[buffer] for buffer in buffer_order["corners"]
-            ]
-            self.edge_buffer_order: list[str] = [
-                ls[buffer] for buffer in buffer_order["edges"]
-            ]
-        else:
-            self.corner_buffer_order = [UFR, UBR, UBL, UFL, RDF, RDB]
-            self.edge_buffer_order = [UF, UB, UR, UL, DF, DB, FR, FL, DR, DL]
+        self.corner_buffer_order = self.settings.buffer_order["corners"]
+        self.edge_buffer_order = self.settings.buffer_order["edges"]
 
         self.U_edges = deque([UB, UR, UF, UL])
         self.L_edges = deque([LU, LF, LD, LB])
@@ -455,40 +452,99 @@ class Cube:
             ),
         }
 
+        self.parity_swap_edges = (
+            parity_swap_edges.upper() if parity_swap_edges is not None else "UF-UR"
+        )
         # UF-UR swap
         if can_parity_swap:
-            self.parity_swap(parity_swap_edges)
+            self.parity_swap()
 
         if auto_scramble:
             self.scramble_cube()
 
+    def get_piece_map(self, piece) -> tuple[deque[str], EdgeFaceEnum]:
+        return {
+            "UB": (self.U_edges, Edge.UP),
+            "UR": (self.U_edges, Edge.RIGHT),
+            "UF": (self.U_edges, Edge.DOWN),
+            "UL": (self.U_edges, Edge.LEFT),
+            "LU": (self.L_edges, Edge.UP),
+            "LF": (self.L_edges, Edge.RIGHT),
+            "LD": (self.L_edges, Edge.DOWN),
+            "LB": (self.L_edges, Edge.LEFT),
+            "FU": (self.F_edges, Edge.UP),
+            "FR": (self.F_edges, Edge.RIGHT),
+            "FD": (self.F_edges, Edge.DOWN),
+            "FL": (self.F_edges, Edge.LEFT),
+            "RU": (self.R_edges, Edge.UP),
+            "RB": (self.R_edges, Edge.RIGHT),
+            "RD": (self.R_edges, Edge.DOWN),
+            "RF": (self.R_edges, Edge.LEFT),
+            "BU": (self.B_edges, Edge.UP),
+            "BR": (self.B_edges, Edge.RIGHT),
+            "BD": (self.B_edges, Edge.DOWN),
+            "BL": (self.B_edges, Edge.LEFT),
+            "DF": (self.D_edges, Edge.UP),
+            "DR": (self.D_edges, Edge.RIGHT),
+            "DB": (self.D_edges, Edge.DOWN),
+            "DL": (self.D_edges, Edge.LEFT),
+        }[piece]
+
     # memo
-    def parity_swap(self, parity_swap_edges="UF-UR"):
+
+    def parity_swap(self):
+        # FIXME: this should support more than just UF-UR and UL-UB
         if not self.has_parity:
             return
 
-        if (
-            parity_swap_edges == "UF-UR"
-            or parity_swap_edges == "UR-UF"
-            or parity_swap_edges is None
-        ):
-            self.U_edges[Edge.RIGHT], self.U_edges[Edge.DOWN] = (
-                self.U_edges[Edge.DOWN],
-                self.U_edges[Edge.RIGHT],
+        swap = (
+            self.parity_swap_edges
+            if self.parity_swap_edges is not None
+            else self.settings.parity_swap_edges
+        )
+
+        piece_a, piece_b = swap.split("-")
+        a, b = self.get_piece_map(piece_a), self.get_piece_map(piece_b)
+        if a is None or b is None:
+            raise ValueError(
+                "Parity swap is an invalid value: {self.parity_swap_edges}"
             )
-            self.F_edges[Edge.UP], self.R_edges[Edge.UP] = (
-                self.R_edges[Edge.UP],
-                self.F_edges[Edge.UP],
+
+        piece_a_adj, piece_b_adj = piece_a[::-1], piece_b[::-1]
+        a_adj, b_adj = self.get_piece_map(piece_a_adj), self.get_piece_map(piece_b_adj)
+        if a_adj is None or b_adj is None:
+            raise ValueError(
+                "Parity swap is an invalid value: {self.parity_swap_edges}"
             )
-        elif parity_swap_edges == "UL-UB" or parity_swap_edges == "UB-UL":
-            self.U_edges[Edge.UP], self.U_edges[Edge.LEFT] = (
-                self.U_edges[Edge.LEFT],
-                self.U_edges[Edge.UP],
-            )
-            self.B_edges[Edge.UP], self.L_edges[Edge.UP] = (
-                self.L_edges[Edge.UP],
-                self.B_edges[Edge.UP],
-            )
+
+        a_face, b_face = piece_a[0], piece_b[0]
+        a_face_adj, b_face_adj = piece_a_adj[0], piece_b_adj[0]
+
+        a_faces, a_dir = a
+        b_faces, b_dir = b
+
+        a_faces_adj, a_dir_adj = a_adj
+        b_faces_adj, b_dir_adj = b_adj
+
+        new_a = a_faces.copy()
+        new_a[a_dir] = b_faces[b_dir]
+        setattr(self, f"{a_face}_edges", new_a)
+
+        b_faces, b_dir = self.get_piece_map(piece_b)
+
+        new_b = b_faces.copy()
+        new_b[b_dir] = a_faces[a_dir]
+        setattr(self, f"{b_face}_edges", new_b)
+
+        new_a_adj = a_faces_adj.copy()
+        new_a_adj[a_dir_adj] = b_faces_adj[b_dir_adj]
+        setattr(self, f"{a_face_adj}_edges", new_a_adj)
+
+        b_faces_adj, b_dir_adj = self.get_piece_map(piece_b_adj)
+
+        new_b_adj = b_faces_adj.copy()
+        new_b_adj[b_dir_adj] = a_faces_adj[a_dir_adj]
+        setattr(self, f"{b_face_adj}_edges", new_b_adj)
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -761,7 +817,7 @@ class Cube:
 
         return self.solve()
 
-    def scramble_corners_from_memo(self, memo, corner_buffer=None):
+    def scramble_corners_from_memo(self, memo, corner_buffer: Optional[str] = None):
         corner_buffer = (
             self.default_corner_buffer if corner_buffer is None else corner_buffer
         )
@@ -770,8 +826,8 @@ class Cube:
         for target in iter_memo:
             a = str(target)
             b = str(next(iter_memo))
-            buffer = COMMS[str(corner_buffer)]
-            comm = buffer[a][b]
+
+            comm = comm_shift(COMMS, corner_buffer, a, b)
             self.scramble_cube(comm)
 
         return self.solve()
@@ -792,16 +848,16 @@ class Cube:
 
     def get_dlin_trace(self):
         if self.has_parity:
-            swap = ("UF", "UR")
+            swap = self.parity_swap_edges.split("-")
         else:
             swap = None
         scram = (
             " ".join(self.scramble) if type(self.scramble) is list else self.scramble
         )
-        return dlin.trace(scramble=scram, swap=swap)
+        return dlin.trace(scramble=scram, swap=swap, buffers=self.settings.dlin_buffers)
 
     def solve(self, max_depth=20, invert=False):
-        # todo fix this to accept both letter schemes
+        # TODO:::: fix this to accept both letter schemes
         if not self.ls.is_default:
             raise Exception("letter scheme must be default in order to solve cube")
         if not invert:
@@ -813,7 +869,14 @@ class Cube:
 
 
 if __name__ == "__main__":
-    with open("../settings.json") as f:
+    from pathlib import Path
+
+    # Get the directory containing this file
+    module_dir = Path(__file__).parent
+    # Go up one level to root and find settings.json
+    settings_path = module_dir.parent / "settings.json"
+
+    with open(settings_path) as f:
         settings = json.loads(f.read())
         letter_scheme = settings["letter_scheme"]
     #     buffers = settings['buffers']
@@ -822,17 +885,21 @@ if __name__ == "__main__":
     # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
     #
     # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    scram = "R U R' U' " * 6
+    # scram = "R U R' U' " * 6
     # scram += "F4 B4 L4 R4 D4 R4 B4 U4 R4 L4 S4 E4 M4 S4 L4 F4 U4"
+    scram = "R U R'"
+    scram = "D"
 
-    cube = Cube(scram, ls=letter_scheme)
+    cube = Cube(
+        scram, ls=letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
+    )
     print(scram)
     # # print(c.adj_corners)
     cube.display_cube()
     print(cube.get_faces_colors())
     # print(cube.solve(invert=False))
     # print(cube.solve(invert=True))
-    # # # todo adapt for different versions of FDR ie FRD
+    # # # TODO:::: adapt for different versions of FDR ie FRD
     # # # c.drill_corner_sticker('FDR')
-    # # # todo letter scheme for below is a dependency for working
+    # # # TODO:::: letter scheme for below is a dependency for working
     # # c.drill_edge_buffer("DF")

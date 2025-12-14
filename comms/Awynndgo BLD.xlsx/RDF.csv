@@ -1,7 +1,7 @@
 Unnamed: 0,LDF,LDB,FDL,RDB,BDL,BDR,DFL,DBR,DBL
 LDF,,,,,,,,,
 LDB,"[L2 : [L U' L' U, F2]]",,,,,,,,
-FDL,,"[R U R' D2 : [R U' R, D']]",,,,,,,
+FDL,,"[R U R' D2 : [R U' R', D']]",,,,,,,
 RDB,"[R' U D' : [R U R', D2]]","[R U' D' : [R' U' R, D2]]","[R U : [D, R U' R']]",,,,,,
 BDL,"[R' F D2 : [R U' R', D]]",,"[D R' : [R' U' R, D2]]","[D' R : [R U R', D]]",,,,,
 BDR,"[R' : [R' U' R, D2]]","[R U R' D2 : [R U' R', D]]","[R' F' R : [D', R U R']]",,"[R' : [R' U' R, D']]",,,,

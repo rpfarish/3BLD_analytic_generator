@@ -1,3 +1,4 @@
+from functools import reduce
 from itertools import combinations
 
 import dlin
@@ -338,9 +339,8 @@ def group_combines_to_type_0(group) -> bool:
     if not group:
         return False
 
-    current_type = group[0]["type"]
-    for cycle in group[1:]:
-        current_type = combine_types(current_type, cycle["type"])
+    types = [cycle["type"] for cycle in group]
+    current_type = reduce(combine_types, types)
 
     return current_type == 0
 
@@ -422,6 +422,7 @@ if __name__ == "__main__":
         print(f"{has_parity=}")
         print(f"{swap=}")
         scramble = joined_scramble
+        # TODO: put this in a test module or something
         trace = dlin.trace(scramble, trace="edges", buffers=DEFAULTBUFFERS, swap=swap)
         result = analyze_trace(trace, standard_buffer_order)
 

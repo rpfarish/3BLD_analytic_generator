@@ -1,15 +1,9 @@
 from Cube.solution import Solution
 
 
-def memo(scramble, letter_scheme, buffers, parity_swap_edges, buffer_order):
+def memo(scramble, settings):
     if not scramble:
         return
-    # todo cleanup memo output
-    s = Solution(
-        scramble,
-        letter_scheme=letter_scheme,
-        buffers=buffers,
-        parity_swap_edges=parity_swap_edges,
-        buffer_order=buffer_order,
-    )
+    # TODO:: cleanup memo output
+    s = Solution(scramble, settings)
     s.display()

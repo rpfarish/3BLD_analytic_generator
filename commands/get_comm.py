@@ -2,8 +2,6 @@ from Commutator.comm_shift import _get_comm, comm_shift
 from Commutator.invert_solution import invert_solution
 from Cube.letterscheme import LetterScheme, sort_face_precedence
 
-# from Spreadsheets.possible_buffers import possible_buffers
-
 
 def get_comm(args, file_comms, letterscheme: LetterScheme):
     # capitalization is good
@@ -11,10 +9,6 @@ def get_comm(args, file_comms, letterscheme: LetterScheme):
     buffer = buffer.upper()
     buffer = sort_face_precedence(buffer)
 
-    # if buffer not in possible_buffers:
-    #     print(f"Error: '{buffer}' is not a possible buffer!")
-    #     return None
-    #
     # Name person, comm name: comm notation, expanded comm?
     # prob comm lists should be json lol
 

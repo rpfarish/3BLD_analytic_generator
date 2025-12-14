@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from Settings.settings import Settings
+from Cube.letterscheme import sort_face_precedence
 
 
-def ingest_spreadsheet(file_name: Path, s: Settings, cols_first: bool):
+def ingest_spreadsheet(file_name: Path, cols_first: bool):
     print("\n=== Starting ingest_spreadsheet ===")
     print(f"File: {file_name}")
     print(f"cols_first: {cols_first}")
@@ -30,31 +30,54 @@ def ingest_spreadsheet(file_name: Path, s: Settings, cols_first: bool):
     ]
 
     all_valid_buffers = {
-        "UF",
         "UB",
         "UR",
+        "UF",
         "UL",
-        "DF",
-        "DB",
-        "DR",
-        "DL",
+        "LU",
+        "LF",
+        "LD",
+        "LB",
+        "FU",
         "FR",
+        "FD",
         "FL",
+        "RU",
+        "RB",
+        "RD",
+        "RF",
+        "BU",
+        "BL",
+        "BD",
+        "BR",
+        "DF",
+        "DR",
+        "DB",
+        "DL",
+        "UBL",
+        "UBR",
         "UFR",
         "UFL",
-        "UBR",
-        "UBL",
-        "DFR",
-        "RDF",
+        "LUB",
+        "LUF",
+        "LDF",
+        "LDB",
+        "FUL",
+        "FUR",
         "FDR",
-        "RDB",
-        "DFL",
         "FDL",
-        "FD",
-        "RD",
-        "BD",
-        "LD",
-        "RFD",
+        "RUF",
+        "RUB",
+        "RDB",
+        "RDF",
+        "BUR",
+        "BUL",
+        "BDL",
+        "BDR",
+        "DFL",
+        "DFR",
+        "DBR",
+        "DBL",
     }
     sorted_buffers = sorted(all_valid_buffers, key=len, reverse=True)
     buffers_regex = "|".join(re.escape(buf) for buf in sorted_buffers)
@@ -83,8 +106,11 @@ def ingest_spreadsheet(file_name: Path, s: Settings, cols_first: bool):
 
         match = buffer_pattern.search(sheet_name)
         if match:
-            buffer_name = match.group(1)
-            print(f"  - Pattern matched: '{buffer_name}'")
+            buffer_name = match.group(1).upper()
+            buffer_name = sort_face_precedence(buffer_name)  # Normalize it
+            print(
+                f"  - Pattern matched: '{match.group(1)}' -> normalized to '{buffer_name}'"
+            )
             if buffer_name in all_valid_buffers:
                 try:
                     data_frame = xl_file.parse(sheet_name)
@@ -139,10 +165,12 @@ def ingest_spreadsheet(file_name: Path, s: Settings, cols_first: bool):
             return ""
         cell = str(cell).strip()
         match = sticker_pattern.search(cell)
-        if match is not None:
-            return match.group()
-        else:
-            return cell
+        cell = cell if match is None else match.group().upper()
+
+        if len(cell) == 3:
+            return sort_face_precedence(cell)
+
+        return cell
 
     def parse_header(header):
         if not header:

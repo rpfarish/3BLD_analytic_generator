@@ -1,23 +1,36 @@
 import json
 from pathlib import Path
-from typing import Dict, List, TypedDict
+from typing import List, TypedDict
 
+import dlin
 from Commutator.convert_list_to_comms import update_comm_list
-from Cube.letterscheme import LetterScheme
+from Cube.letterscheme import LetterScheme, sort_face_precedence
 
 
 class CommFile(TypedDict):
     name: str
     spreadsheet: Path
     cols_first: bool
+    enabled: bool
+
+
+class Buffers(TypedDict):
+    edge_buffer: str
+    corner_buffer: str
+
+
+class BufferOrder(TypedDict):
+    edges: list[str]
+    corners: list[str]
 
 
 class Settings:
     def __init__(self, file: str = "settings.json"):
         self.file: str = file
         self.letter_scheme: LetterScheme = LetterScheme()
-        self.buffers: Dict[str, str] = {"edge_buffer": "", "corner_buffer": ""}
-        self.buffer_order: Dict[str, List[str]] = {"edges": [""], "corners": [""]}
+        self.buffers: Buffers = {"edge_buffer": "", "corner_buffer": ""}
+        self.buffer_order: BufferOrder = {"edges": [""], "corners": [""]}
+        self.dlin_buffers: dlin.DefaultBuffers = dlin.DefaultBuffers(edge=[], corner=[])
         self.all_buffers_order: List[str] = [""]
         self.comm_files: dict[str, CommFile] = {}
         self.parity_swap_edges: str = ""
@@ -38,30 +51,92 @@ class Settings:
             "BL",
         ]
 
-        self.reload(True)
+        self.reload(first=True)
 
     def reload(self, first=False):
         if not first:
             print("Loading Settings...")
         with open(self.file) as f:
             settings = json.loads(f.read())
-            self.letter_scheme: LetterScheme = LetterScheme(
-                ltr_scheme=settings["letter_scheme"]
+            ls = {
+                sort_face_precedence(buffer).upper(): name.upper()
+                for buffer, name in settings["letter_scheme"].items()
+            }
+
+            self.letter_scheme: LetterScheme = LetterScheme(ltr_scheme=ls)
+
+            self.buffers: Buffers = settings["buffers"]
+            self.buffers["edge_buffer"] = self.buffers["edge_buffer"].upper()
+            self.buffers["corner_buffer"] = sort_face_precedence(
+                self.buffers["corner_buffer"].upper()
             )
-            self.buffers: Dict[str, str] = settings["buffers"]
-            self.buffer_order: Dict[str, List[str]] = settings["buffer_order"]
+
+            self.dlin_buffers = self.get_dlin_default_buffers()
+
+            self.buffer_order: BufferOrder = settings["buffer_order"]
+            self.buffer_order["corners"] = [
+                sort_face_precedence(buffer).upper()
+                for buffer in self.buffer_order["corners"]
+            ]
+
+            self.buffer_order["edges"] = [
+                buffer.upper() for buffer in self.buffer_order["edges"]
+            ]
             self.all_buffers_order: List[str] = (
                 self.buffer_order["edges"] + self.buffer_order["corners"]
             )
             self.comm_files: dict[str, CommFile] = settings["comm_files"]
 
-            self.parity_swap_edges: str = settings["parity_swap_edges"]
+            self.parity_swap_edges: str = settings["parity_swap_edges"].upper()
             self.floating_comms_sheet_name: str = settings["floating_comms_sheet_name"]
             # update_comm_list(
             #     buffers=self.all_buffers_order, file=self.comm_file_name,
             # )
             # do I need to parse csv again if there's already .json
         self._validate_settings()
+
+    def get_dlin_default_buffers(self) -> dlin.DefaultBuffers:
+        DEFAULTBUFFERS = {
+            "corner": [
+                "UFR",
+                "UFL",
+                "UBL",
+                "UBR",
+                "DFR",
+                "DFL",
+                "DBR",
+                "DBL",
+            ],
+            "edge": [
+                "UF",
+                "UB",
+                "UR",
+                "UL",
+                "DF",
+                "DB",
+                "FR",
+                "FL",
+                "DR",
+                "DL",
+                "BR",
+                "BL",
+            ],
+        }
+
+        buffers = DEFAULTBUFFERS.copy()
+        corner_buffers = self.buffer_order["corners"]
+        edge_buffers = self.buffer_order["edges"]
+
+        if len(corner_buffers) + len(edge_buffers) == 16:
+            if sorted(corner_buffers[-1]) == sorted(buffers["corner"][-2]):
+                buffers["corner"][-2], buffers["corner"][-3] = (
+                    buffers["corner"][-3],
+                    buffers["corner"][-2],
+                )
+            buffers["edge"][: len(edge_buffers)] = edge_buffers
+            buffers["corner"][: len(corner_buffers)] = corner_buffers
+
+        return dlin.DefaultBuffers(edge=buffers["edge"], corner=buffers["corner"])
 
     def load_list_of_comms_json(self):
         ...
@@ -128,6 +203,7 @@ class Settings:
     def _validate_comm_files(self):
         invalid = []
         excel_extensions = [".xlsx", ".xlsm", ".xls", ".xlsb"]
+        # TODO::: is this logic reduntant?
         # NOTE: isn't this backwards
         # like we should be asking what files are in Spreadsheets
         # and offering to ingest them for the user

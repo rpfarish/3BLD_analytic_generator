@@ -1,10 +1,9 @@
-from collections import Counter
-from itertools import combinations
 from pprint import pprint
 
 import dlin
 from Cube.dlin_float import find_optimal_combinations
 from Cube.memo import Memo
+from Settings.settings import BufferOrder, Buffers
 
 
 class Solution:
@@ -12,24 +11,26 @@ class Solution:
     def __init__(
         self,
         scramble,
-        letter_scheme=None,
-        buffers=None,
-        parity_swap_edges: str = None,
-        buffer_order=None,
+        settings,
         inc_floats=True,
     ):
+
         self.cube = Memo(
             scramble,
             auto_scramble=False,
             can_parity_swap=True,
-            ls=letter_scheme,
-            buffers=buffers,
-            parity_swap_edges=parity_swap_edges,
-            buffer_order=buffer_order,
+            ls=settings.letter_scheme,
+            buffers=settings.buffers,
+            parity_swap_edges=settings.parity_swap_edges,
+            buffer_order=settings.buffer_order,
         )
         self.scramble = scramble
         self.parity = self.cube.has_parity
         self.cube.scramble_cube(self.scramble)
+
+        self.buffers = settings.buffers
+        self.buffer_order = settings.buffer_order
+        self.settings: Settings = settings
 
         self.edges = self.cube.format_edge_memo(self.cube.memo_edges()).split(" ")
         self.flipped_edges = list(self.cube.flipped_edges)
@@ -40,8 +41,8 @@ class Solution:
         self.corner_buffers = list(self.cube.corner_memo_buffers)
         self.can_float_corners = None
 
-        if parity_swap_edges is not None:
-            self.parity_swap_edges = tuple(parity_swap_edges.split("-"))
+        if settings.parity_swap_edges is not None:
+            self.parity_swap_edges = tuple(settings.parity_swap_edges.split("-"))
         else:
             self.parity_swap_edges = None
 
@@ -50,89 +51,23 @@ class Solution:
         self.number_of_algs = self.count_number_of_algs(inc_floats=inc_floats)
         self.edge_float_buffers = []
         # FIX: rename this
-        self.can_float_edges = self.can_float_edges()
+
         self.inc_floats = inc_floats
-        # TODO support wide moves
+        # TODO: support wide moves
 
-        # TODO return twists with top or bottom color
-        # TODO add alg count
+        # TODO: return twists with top or bottom color
+        # TODO: add alg count
 
+    @property
     def can_float_edges(self) -> bool:
-        # TODO: change this into sandwich float detector or smth
-        """
-        ca cb = 2e2e
-        ca bc = can float
-        ac bc = 2e2e
-        ac cb = same as doing ab
-        :return:
-        """
-
         trace = self.get_dlin_trace()
 
-        buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]
-        results = find_optimal_combinations(trace["edge"], buffer_order)
+        results = find_optimal_combinations(trace["edge"], self.buffer_order)
 
         buffer_count = [group for group in results if group["target_count"] != 0]
-        return len(buffer_count) >= 2 or not any("UF" in t["buffers"] for t in results)
-
-        memo = self.edges
-        buffers = self.edge_buffers
-        if not self.cube.adj_edges:
-            print("Edges are all solved")
-            return
-        # flips = self.number_of_edge_flips
-        # print('buffers', buffers)
-        for buffer in buffers:
-
-            is_buffer_hit = False
-            buffer_hit_parity = 0
-            for pair in memo:
-                if not pair:
-                    continue
-                pair_len_half = len(pair) // 2
-                a = pair[:pair_len_half]
-                b = pair[pair_len_half:]
-
-                # FF
-                if buffer == a and not is_buffer_hit:
-                    is_buffer_hit = True
-                    buffer_hit_parity = 1
-                    # print('2e2e or can not float', pair)
-                # LL
-                elif buffer == b and not is_buffer_hit:
-                    is_buffer_hit = True
-                    buffer_hit_parity = 2
-
-                    # print('2e2e or with flipped edge', pair)
-                # FL
-                elif buffer == b and is_buffer_hit and buffer_hit_parity == 1:
-                    self.edge_float_buffers.append(buffer)
-                    # print('can float from buffer', buffer, pair)
-                    return True
-
-                # FL hit opp side edge
-                if (
-                    buffer == self.cube.adj_edges[b]
-                    and is_buffer_hit
-                    and buffer_hit_parity == 1
-                ):
-                    # print("can float from buffer, but it's flipped", buffer, pair)
-                    pass
-
-            # print("edge_buffer_count", count)
-        return "maybe"
-
-    """
-    LL => ac bc = 2e2e - buffer:A <> B:C
-    FL => ca bc = can float
-
-
-    # INVALID STATE
-    LF => ac cb = same as doing ab
-    # INVALID METHOD
-    FF => cb ca = 2e2e - buffer:B <> A:C
-
-    """
+        return len(buffer_count) >= 2 or not any(
+            self.buffers["edge_buffer"] in t["buffers"] for t in results
+        )
 
     def get_float_memo(self):
         if self.can_float_edges:
@@ -144,22 +79,20 @@ class Solution:
         else:
             swap = None
 
-        return dlin.trace(scramble=self.scramble, swap=swap)
+        return dlin.trace(
+            scramble=self.scramble, swap=swap, buffers=self.settings.dlin_buffers
+        )
 
     def count_sandwich_floats(self):
-        # TODO: switch buffers here to use settings.json
         dlin_trace = self.get_dlin_trace()
         float_count = 0
         for buffer_trace in dlin_trace["corner"] + dlin_trace["edge"]:
-            can_float = (
+            float_count += (
                 buffer_trace["orientation"] == 0
                 and buffer_trace["parity"] == 0
                 and buffer_trace["type"] == "cycle"
-                and buffer_trace["buffer"] not in ["UFR", "UF"]
+                and buffer_trace["buffer"] not in self.buffers.values()
             )
-            # todo fix this 'UFR' to self.corner_buffer etc
-            if can_float:
-                float_count += 1
 
         return float_count
 
@@ -232,35 +165,14 @@ class Solution:
         print("Edge Buffers:", solution["edge_buffers"])
         print("Twisted Corners:", self.cube.twisted_corners)
         print("Alg count:", solution["number_of_algs"])
+        print("Corner Buffers:", solution["corner_buffers"])
         # corner_memo = solution['corners']
         # when cube is memoed, the state of the memo should be saved when the buffer is first hit
         # no_cycle_break_corner_memo = set()
-        corner_buffers = solution["corner_buffers"]
-        print(corner_buffers)
 
-        DEFAULTBUFFERS = {
-            "corner": ["UFR", "UFL", "UBL", "UBR", "DFR", "DFL", "DBR", "DBL"],
-            "edge": [
-                "UF",
-                "UB",
-                "UR",
-                "UL",
-                "DF",
-                "DB",
-                "FR",
-                "FL",
-                "DR",
-                "DL",
-                "BR",
-                "BL",
-            ],
-        }
+        trace = self.get_dlin_trace()
 
-        swap = self.parity_swap_edges if self.parity else None
-        trace = dlin.trace(self.scramble, buffers=DEFAULTBUFFERS, swap=swap)
-
-        buffer_order = ["UF", "UB", "UR", "UL", "DF", "DB", "FR", "FL", "DR", "DL"]
-        results = find_optimal_combinations(trace["edge"], buffer_order)
+        results = find_optimal_combinations(trace["edge"], self.buffer_order)
         print("=" * 20, "Dlin combine floats", "=" * 20)
         pprint(results)
         # self.get_dlin_trace_type_count_edges(trace)
@@ -312,27 +224,10 @@ class Solution:
         return edge_types
 
 
-def calc_corner_alg_count() -> int:
-    pass
-
-
-def calc_edge_alg_count() -> int:
-    # number and length of 00
-    # number and length of 01
-    # number and length of 11
-    pass
-
-
-#
-# def calc_alg_count(dlin_memo):
-#     # do twists and flips later
-#     corner_alg_count = calc_corner_alg_count()
-#     edge_alg_count = calc_edge_alg_count()
-#     alg_count = corner_alg_count + edge_alg_count
-#     return alg_count
-
-
 if __name__ == "__main__":
+    from Settings.settings import Settings
+
+    s = Settings()
     # R U' D2 F2 L' B D R2 F B2 L2 U R2 B2 D2 F2 D' L2 D2 R2 F2 L B'
-    s = Solution("D F' D2 L2 R' D2 F2 R' L F B R L' F' D U2 B F2 U' R")
+    s = Solution("D F' D2 L2 R' D2 F2 R' L F B R L' F' D U2 B F2 U' R", s)
     print(s.count_number_of_algs())

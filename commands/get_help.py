@@ -2,7 +2,7 @@ def get_help():
     """Provides helpful information about commands"""
     docs = """
 Type 'command' to find out more. 
-Simple commands with no options have no extra info.
+Simple commands with no arguments have no extra info.
 
 h  | help  : Display help information about commands
 c  | comm  : Retrieve and display commutators.

@@ -3,8 +3,6 @@ import json
 import re
 from collections import deque
 
-from Cube import Cube
-
 # for i in a.split('\n'):
 # print(i.split(','), "\n\n")
 from .expand_comm import expand_comm
@@ -18,7 +16,7 @@ def add_spaces(moves):
     return result.strip()
 
 
-# todo make this take a spreadsheet and csv
+# TODO: make this take a spreadsheet and csv
 
 
 def _convert(buffer, file_name="max_comms"):
@@ -29,7 +27,7 @@ def _convert(buffer, file_name="max_comms"):
     with open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for num, row in enumerate(reader):
-            row: dict[str] = row
+            row: dict[str, str] = row
             second_target = row[top_corner_key]
             if len(buffer) + num > 24:
                 break
@@ -92,65 +90,65 @@ def add_pair(comms, buffer, sticker1, sticker2, comm):
     return comms
 
 
-def fill_in_buffers(file_comms):
-    cube = Cube()
-    buffers = cube.edge_buffer_order + cube.corner_buffer_order
-    num = 0
-    comms = {}
-
-    for buffer, sticker_comms in file_comms.items():
-        for sticker1, comms_dict in sticker_comms.items():
-            for sticker2, comm in comms_dict.items():
-                if not comm:
-                    continue
-
-                print(comm, "-" * 10)
-                num += 1
-                for buffer, sticker1, sticker2 in rotate_pair(
-                    buffer, sticker1, sticker2
-                ):
-                    comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
-                # corner or edge?
-                if len(buffer) == 3:
-                    for i in range(2):
-                        buffer, sticker1, sticker2 = (
-                            cube.adj_corners[buffer][i],
-                            cube.adj_corners[sticker1][i],
-                            cube.adj_corners[sticker2][i],
-                        )
-                        for buffer, sticker1, sticker2 in rotate_pair(
-                            buffer, sticker1, sticker2
-                        ):
-                            comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
-
-                elif len(buffer) == 2:
-                    buffer, sticker1, sticker2 = (
-                        cube.adj_edges[buffer],
-                        cube.adj_edges[sticker1],
-                        cube.adj_edges[sticker2],
-                    )
-                    for buffer, sticker1, sticker2 in rotate_pair(
-                        buffer, sticker1, sticker2
-                    ):
-                        if len({buffer, sticker1, sticker2}) != 3:
-                            break
-                        comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
-                else:
-                    raise BufferError("Buffer incorrect length")
-    print(num)
-
-    # make loop to get through all letterpairs
-    # take letterpair rotate it and then insert that into file_comms
-    # then rotate / flip the pair and repeat
-    file_comms |= comms
-
-    with open("testing.json", "w+") as f:
-        json.dump(file_comms, f, indent=4)
-    return file_comms
+# def fill_in_buffers(file_comms):
+#     cube = Cube()
+#     buffers = cube.edge_buffer_order + cube.corner_buffer_order
+#     num = 0
+#     comms = {}
+#
+#     for buffer, sticker_comms in file_comms.items():
+#         for sticker1, comms_dict in sticker_comms.items():
+#             for sticker2, comm in comms_dict.items():
+#                 if not comm:
+#                     continue
+#
+#                 print(comm, "-" * 10)
+#                 num += 1
+#                 for buffer, sticker1, sticker2 in rotate_pair(
+#                     buffer, sticker1, sticker2
+#                 ):
+#                     comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
+#                 # corner or edge?
+#                 if len(buffer) == 3:
+#                     for i in range(2):
+#                         buffer, sticker1, sticker2 = (
+#                             cube.adj_corners[buffer][i],
+#                             cube.adj_corners[sticker1][i],
+#                             cube.adj_corners[sticker2][i],
+#                         )
+#                         for buffer, sticker1, sticker2 in rotate_pair(
+#                             buffer, sticker1, sticker2
+#                         ):
+#                             comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
+#
+#                 elif len(buffer) == 2:
+#                     buffer, sticker1, sticker2 = (
+#                         cube.adj_edges[buffer],
+#                         cube.adj_edges[sticker1],
+#                         cube.adj_edges[sticker2],
+#                     )
+#                     for buffer, sticker1, sticker2 in rotate_pair(
+#                         buffer, sticker1, sticker2
+#                     ):
+#                         if len({buffer, sticker1, sticker2}) != 3:
+#                             break
+#                         comms |= add_pair(comms, buffer, sticker1, sticker2, comm)
+#                 else:
+#                     raise BufferError("Buffer incorrect length")
+#     print(num)
+#
+#     # make loop to get through all letterpairs
+#     # take letterpair rotate it and then insert that into file_comms
+#     # then rotate / flip the pair and repeat
+#     file_comms |= comms
+#
+#     with open("testing.json", "w+") as f:
+#         json.dump(file_comms, f, indent=2)
+#     return file_comms
 
 
 def update_comm_list(buffers=None, file="max_comms"):
-    # todo import from settings
+    # TODO: import from settings
     print(f"{buffers=}")
     if buffers is None:
         buffers = [
@@ -180,7 +178,7 @@ def update_comm_list(buffers=None, file="max_comms"):
         comms[buffer] = _convert(buffer, file)
 
     with open(f"comms/{file}/{file}.json", "w+") as f:
-        json.dump(comms, f, indent=4)
+        json.dump(comms, f, indent=2)
 
 
 if __name__ == "__main__":

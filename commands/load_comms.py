@@ -4,7 +4,7 @@ from pathlib import Path
 from Commutator.convert_list_to_comms import update_comm_list
 
 
-def load_comms(file_name):
+def load_comms(file_name) -> dict[str, str]:
     json_path = Path(f"comms/{file_name}/{file_name}.json")
     try:
         with open(json_path) as f:
