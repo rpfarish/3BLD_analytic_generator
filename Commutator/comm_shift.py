@@ -12,18 +12,18 @@ def _get_comm(comms, buffer, a, b) -> Optional[str]:
 
 
 def comm_shift(comms, buffer, x, y, check_inverse=True) -> Optional[str]:
-    res = None
     if cur_comm := (
         _get_comm(comms, y, buffer, x)
         or _get_comm(comms, x, y, buffer)
         or _get_comm(comms, buffer, x, y)
     ):
-        res = cur_comm
+        return cur_comm
 
-    if not res and len(buffer) == 3:
-        res = shift_corners(comms, buffer, x, y)
+    if len(buffer) == 3:
+        if cur_comm := shift_corners(comms, buffer, x, y):
+            return cur_comm
 
-    if not res and len(buffer) == 2:
+    if len(buffer) == 2:
         buffer = buffer[::-1]
         x = x[::-1]
         y = y[::-1]
@@ -35,10 +35,10 @@ def comm_shift(comms, buffer, x, y, check_inverse=True) -> Optional[str]:
                 res = cur_comm
                 break
 
-    if not res and check_inverse:
-        res = invert_solution(comm_shift(comms, y, x, buffer, check_inverse=False))
+    if check_inverse:
+        return comm_shift(comms, y, x, buffer, check_inverse=False)
 
-    return res
+    return None
 
 
 def shift_corners(comms, buffer, x, y) -> Optional[str]:

@@ -498,7 +498,6 @@ class Drill:
                 comms.append(comm)
                 if not return_list:
                     comm = comm if comm else "Not listed"
-                    print(f"{pair_letters}:", comm)
 
             scrams[num] = [scramble, memo, comms]
 
@@ -548,14 +547,11 @@ class Drill:
             total_cases // self.max_cycles_per_buffer["".join(sorted(corner_buffer))]
         )
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
-        print(self.total_cases_per_buffer, total_cases)
-        print(self.max_cycles_per_buffer, max_number_of_times)
 
         corners = self.cube_memo.remove_irrelevant_corner_buffers(
             self.cube_memo.adj_corners.copy(), corner_buffer
         )
 
-        print("CORNERS", corners)
         all_corners = set(
             i + j
             for i, j in itertools.permutations(corners, 2)
