@@ -1,5 +1,4 @@
 from commands.memo import memo
-from Settings.settings import BufferOrder, Buffers
 
 
 def memo_cube(
@@ -23,6 +22,8 @@ def memo_cube(
     """
 
     scramble = " ".join(scramble)
+
+    scramble = scramble.replace("3'", "")
 
     if scramble.startswith("-l"):
         _, file_name = scramble.split()

@@ -1,8 +1,5 @@
 import random
-import re
 from typing import Optional
-
-import kociemba
 
 from Cube import Cube
 from Cube.letterscheme import LetterScheme
@@ -15,7 +12,7 @@ class Memo(Cube):
         scramble="",
         can_parity_swap=False,
         auto_scramble=True,
-        ls: LetterScheme = None,
+        ls: Optional[LetterScheme] = None,
         buffers: Optional[Buffers] = None,
         parity_swap_edges=None,
         buffer_order=None,
@@ -158,7 +155,6 @@ class Memo(Cube):
         return edges
 
     def remove_irrelevant_corner_buffers(self, corners, corner_buffer):
-
         corner_buffer_order = self.corner_buffer_order.copy()
         for buff in corner_buffer_order:
             corners.pop(buff)
@@ -174,5 +170,5 @@ class Memo(Cube):
 
 if __name__ == "__main__":
     cube = Cube()
-    scram = "R"
+    scram = "R U r'"
     memo_cube = Memo(scram)

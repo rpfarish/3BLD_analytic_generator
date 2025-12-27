@@ -3,18 +3,15 @@ from pprint import pprint
 import dlin
 from Cube.dlin_float import find_optimal_combinations
 from Cube.memo import Memo
-from Settings.settings import BufferOrder, Buffers
 
 
 class Solution:
-
     def __init__(
         self,
         scramble,
         settings,
         inc_floats=True,
     ):
-
         self.cube = Memo(
             scramble,
             auto_scramble=False,
@@ -147,9 +144,9 @@ class Solution:
             "corner_buffers": list(self.cube.corner_memo_buffers),
             "can_float_corners": None,
             "number_of_algs": self.count_number_of_algs(inc_floats=self.inc_floats),
+            "number_of_edge_flips": self.cube.flipped_edges_count,
+            "number_of_corner_twists": self.cube.twisted_corners_count,
         }
-        solution["number_of_edge_flips"] = len(solution["flipped_edges"]) // 2
-        solution["number_of_corner_twists"] = len(solution["twisted_corners"]) // 3
 
         return solution
 
@@ -157,11 +154,11 @@ class Solution:
         solution = self.get_solution()
         print("=" * 20, "MEMO", "=" * 20)
         print("Scramble", self.scramble)
-        print(f"Parity:", solution["parity"])
+        print("Parity:", solution["parity"])
         print("Can float edges:", self.can_float_edges)
-        print(f"Edges:", " ".join(solution["edges"]))
+        print("Edges:", " ".join(solution["edges"]))
         print("Corners:", " ".join(solution["corners"]))
-        print(f"Flipped Edges:", solution["flipped_edges"])
+        print("Flipped Edges:", solution["flipped_edges"])
         print("Edge Buffers:", solution["edge_buffers"])
         print("Twisted Corners:", self.cube.twisted_corners)
         print("Alg count:", solution["number_of_algs"])
@@ -204,8 +201,9 @@ class Solution:
 
         # print(f"Edge types count: {edge_types}")
         # Validation checks
-        sum_type_1_and_3 = edge_types[1] + edge_types[3]
-        sum_type_2_3_and_4 = edge_types[2] + edge_types[3] + edge_types[4]
+
+        # sum_type_1_and_3 = edge_types[1] + edge_types[3]
+        # sum_type_2_3_and_4 = edge_types[2] + edge_types[3] + edge_types[4]
 
         # print(
         #     f"Sum of type 1 and 3: {sum_type_1_and_3} (should be even: {sum_type_1_and_3 % 2 == 0})"
@@ -229,5 +227,8 @@ if __name__ == "__main__":
 
     s = Settings()
     # R U' D2 F2 L' B D R2 F B2 L2 U R2 B2 D2 F2 D' L2 D2 R2 F2 L B'
-    s = Solution("D F' D2 L2 R' D2 F2 R' L F B R L' F' D U2 B F2 U' R", s)
+    scramble = "D F' D2 L2 R' D2 F2 R' L F B R L' F' D U2 B F2 U' R", s
+    scramble = "R U r'"
+    s = Solution(scramble, s)
+    s.cube.display_cube()
     print(s.count_number_of_algs())

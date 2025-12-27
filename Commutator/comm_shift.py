@@ -32,17 +32,15 @@ def comm_shift(comms, buffer, x, y, check_inverse=True) -> Optional[str]:
         for _ in range(3):
             q.rotate(1)
             if cur_comm := _get_comm(comms, *q):
-                res = cur_comm
-                break
+                return cur_comm
 
     if check_inverse:
-        return comm_shift(comms, y, x, buffer, check_inverse=False)
+        return invert_solution(comm_shift(comms, y, x, buffer, check_inverse=False))
 
     return None
 
 
 def shift_corners(comms, buffer, x, y) -> Optional[str]:
-
     corner_ori = {
         "DFL": ["LDF", "FDL", "DFL"],
         "DFR": ["RDF", "DFR", "FDR"],

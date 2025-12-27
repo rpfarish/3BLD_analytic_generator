@@ -8,7 +8,6 @@ def get_scramble(requires_parity: bool = False) -> str:
 
 
 def get_scramble_bld(requires_parity: bool = False):
-
     random_orientation = [
         "",
         "Rw",

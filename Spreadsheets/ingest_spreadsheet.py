@@ -2,6 +2,7 @@ import csv
 import os
 import re
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 
@@ -29,7 +30,7 @@ def ingest_spreadsheet(file_name: Path, cols_first: bool):
         "readme",
     ]
 
-    all_valid_buffers = {
+    all_valid_buffers: set[str] = {
         "UB",
         "UR",
         "UF",
@@ -79,7 +80,9 @@ def ingest_spreadsheet(file_name: Path, cols_first: bool):
         "DBR",
         "DBL",
     }
-    sorted_buffers = sorted(all_valid_buffers, key=len, reverse=True)
+    sorted_buffers: list[str] = sorted(
+        all_valid_buffers, key=lambda x: len(x), reverse=True
+    )
     buffers_regex = "|".join(re.escape(buf) for buf in sorted_buffers)
     buffer_pattern = re.compile(r"^(" + buffers_regex + r")(?:[^A-Za-z]|$)")
 
@@ -113,7 +116,9 @@ def ingest_spreadsheet(file_name: Path, cols_first: bool):
             )
             if buffer_name in all_valid_buffers:
                 try:
-                    data_frame = xl_file.parse(sheet_name)
+                    data_frame = cast(
+                        pd.DataFrame, xl_file.parse(sheet_name=sheet_name)
+                    )
                     dfs[buffer_name] = data_frame
                     print(
                         f"  ✓ USING SHEET '{sheet_name}' as buffer '{buffer_name}' - Shape: {data_frame.shape}"
@@ -228,7 +233,7 @@ def ingest_spreadsheet(file_name: Path, cols_first: bool):
                 print(f"  - Read {len(all_rows)} rows")
 
                 if not cols_first:
-                    print(f"  - Transposing data (cols_first=False)")
+                    print("  - Transposing data (cols_first=False)")
                     num_cols = max(len(row) for row in all_rows) if all_rows else 0
                     print(
                         f"  - Original dimensions: {len(all_rows)} rows x {num_cols} cols"

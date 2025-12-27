@@ -4,6 +4,7 @@ import os
 import random
 import time
 from datetime import datetime
+from typing import Optional
 
 import dlin
 from comms.comms import COMMS
@@ -13,6 +14,7 @@ from Cube.letterscheme import LetterScheme, convert_letterpairs
 from Cube.memo import Memo
 from Scramble import get_scramble
 from Settings.settings import Settings
+
 
 DEBUG = 0
 
@@ -28,10 +30,9 @@ def input_with_quit(message: str = "") -> str:
 
 
 class Drill:
-
     def __init__(
         self,
-        memo: Memo = None,
+        memo: Optional[Memo] = None,
         buffer_order=None,
         letter_scheme=None,
         cur_settings=None,
@@ -133,7 +134,6 @@ class Drill:
     def get_no_cycle_break_memo_corners(
         self, scramble, letter_scheme, buffer, format=True
     ) -> list[str]:
-
         trace = self.get_dlin_trace(scramble)
 
         corner_cycles = trace["corner"]
@@ -163,7 +163,6 @@ class Drill:
     def get_no_cycle_break_memo_edges(
         self, scramble, letter_scheme, buffer, format=True
     ) -> list[str]:
-
         trace = self.get_dlin_trace(scramble)
 
         edge_cycles = trace["edge"]
@@ -198,7 +197,6 @@ class Drill:
         random_pairs: bool = False,
         freq: int = -1,
     ):
-
         # if algs is not None:
         #     algs_to_drill = algs
         # else:
@@ -227,7 +225,6 @@ class Drill:
 
         start = time.perf_counter()
         while remaining_algs:
-
             # TODO::::::::::::::::::: maybe increase scramble length to 26?
             scramble = get_scramble.get_scramble_bld()
 
@@ -304,7 +301,7 @@ class Drill:
                 start = time.perf_counter()
 
         print(
-            f"Memo - Avg: {sum(memo_times)/len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
+            f"Memo - Avg: {sum(memo_times) / len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
         )
 
     def drill_two_color_memo(
@@ -312,7 +309,6 @@ class Drill:
         letter_scheme=None,
         buffer=None,
     ):
-
         print("Running...")
         while True:
             scramble = get_scramble.get_scramble()
@@ -440,9 +436,9 @@ class Drill:
                 else:
                     print(f'Scramble {num}/{max_number_of_times}: "{scramble}"')
 
-                with open(f"cache/drill_save.json", "r+") as f:
+                with open("cache/drill_save.json", "r+") as f:
                     drill_list_json = json.load(f)
-                with open(f"cache/drill_save.json", "w") as f:
+                with open("cache/drill_save.json", "w") as f:
                     drill_list_json[edge_buffer] = list(all_edges - exclude_from_memo)
                     json.dump(drill_list_json, f, indent=2)
 
@@ -523,9 +519,9 @@ class Drill:
             print("Scrambles saved to", file_name)
 
         print("Finished")
-        with open(f"cache/drill_save.json", "r+") as f:
+        with open("cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
-        with open(f"cache/drill_save.json", "w") as f:
+        with open("cache/drill_save.json", "w") as f:
             drill_list_json[edge_buffer] = []
             json.dump(drill_list_json, f, indent=2)
         return scrams
@@ -533,9 +529,9 @@ class Drill:
     def drill_corner_buffer(
         self,
         corner_buffer: str,
-        exclude_from_memo: set = None,
+        exclude_from_memo: Optional[set] = None,
         return_list: bool = False,
-        drill_set: set = None,
+        drill_set: Optional[set] = None,
         random_pairs=False,
         file_comms=None,
         number_of_scrambles=0,
@@ -582,9 +578,9 @@ class Drill:
                 else:
                     print(f"Scramble {num}/{max_number_of_times}: {scramble}")
 
-                with open(f"cache/drill_save.json", "r+") as f:
+                with open("cache/drill_save.json", "r+") as f:
                     drill_list_json = json.load(f)
-                with open(f"cache/drill_save.json", "w") as f:
+                with open("cache/drill_save.json", "w") as f:
                     drill_list_json[corner_buffer] = list(
                         all_corners - exclude_from_memo
                     )
@@ -653,9 +649,9 @@ class Drill:
             print("Scrambles saved to", file_name)
 
         print("Finished")
-        with open(f"cache/drill_save.json", "r+") as f:
+        with open("cache/drill_save.json", "r+") as f:
             drill_list_json = json.load(f)
-        with open(f"cache/drill_save.json", "w") as f:
+        with open("cache/drill_save.json", "w") as f:
             drill_list_json[corner_buffer] = []
             json.dump(drill_list_json, f, indent=2)
         return scrams
@@ -708,9 +704,9 @@ class Drill:
 
     def generate_random_corner_memo(
         self,
-        corners: set,
+        corners: set[str],
         corner_buffer=None,
-        exclude_from_memo: set = None,
+        exclude_from_memo: Optional[set[str]] = None,
         random_pairs=False,
     ):
         exclude_from_memo = set() if exclude_from_memo is None else exclude_from_memo
@@ -724,13 +720,13 @@ class Drill:
 
         # Convert to list and shuffle for randomness
         if random_pairs:
-            corners = list(corners)
-            random.shuffle(corners)
+            corners_list = list(corners)
         else:
-            corners = list(corners - exclude_from_memo)  # Convert to list
-            random.shuffle(corners)  # Shuffle it!
+            corners_list = list(corners - exclude_from_memo)
 
-        for pair in corners:
+        random.shuffle(corners_list)
+
+        for pair in corners_list:
             corner, corner2 = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             corner_adj1, corner_adj2 = self.cube_memo.adj_corners[corner]
             corner2_adj1, corner2_adj2 = self.cube_memo.adj_corners[corner2]
@@ -764,8 +760,6 @@ class Drill:
         random_pairs,
         freq,
     ):
-        from Cube.solution import Solution
-
         """This is a brute force gen and check method to generate scrambles with a certain set of letter pairs"""
 
         def remove_piece(target_list, piece, ltr_scheme):
@@ -812,7 +806,6 @@ class Drill:
 
         start = time.perf_counter()
         while remaining_algs:
-
             # TODO::::::::::::::::::: maybe increase scramble length to 26?
             scramble = get_scramble.get_scramble_bld()
 
@@ -888,7 +881,7 @@ class Drill:
                 start = time.perf_counter()
 
         print(
-            f"Memo - Avg: {sum(memo_times)/len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
+            f"Memo - Avg: {sum(memo_times) / len(memo_times):.3f}s, Min: {min(memo_times):.3f}s, Max: {max(memo_times):.3f}s"
         )
 
     def remove_piece(self, target_list, piece):
@@ -1147,7 +1140,6 @@ class Drill:
         len_algs = len(algs)
         # TODO::::::::::::::::::: support wide moves
         while algs:
-
             if DEBUG:
                 print("getting random alg...")
             alg = a = random.choice(algs)
@@ -1267,7 +1259,6 @@ class Drill:
             cube_trace = cube.get_dlin_trace()
             flipped_count = 0
             for edge in cube_trace["edge"]:
-
                 flipped_count += edge["orientation"] and edge["type"] == "misoriented"
                 if (
                     edge["type"] == "cycle"
@@ -1306,7 +1297,6 @@ class Drill:
                 continue
             cube_trace = cube.get_dlin_trace()
             for corner in cube_trace["corner"]:
-
                 if (
                     corner["type"] == "cycle"
                     and corner["orientation"] == 0
@@ -1326,7 +1316,6 @@ class Drill:
     def drill_cycle_break_corners(self, buffer, sticker_to_drill):
         pass
         while True:
-
             scramble = get_scramble.get_scramble()
             trace = self.get_dlin_trace(scramble)["corner"]
             buffer_cycle = None

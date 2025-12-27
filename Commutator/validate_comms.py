@@ -15,7 +15,6 @@ def compare_strings(correct: str, wrong: str) -> tuple[str, str]:
 
 
 def check_corner_symmetry(memo, buffer, x, y) -> bool:
-
     corner_ori = {
         "DFL": ["LDF", "FDL", "DFL"],
         "DFR": ["RDF", "DFR", "FDR"],

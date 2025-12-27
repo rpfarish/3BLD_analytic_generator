@@ -2,7 +2,6 @@ from Cube import Drill
 
 
 def drill_cycle_break(args, buffers):
-
     sticker_to_drill = args[0]
     corner_buffer = buffers["corner_buffer"]
     edge_buffer = buffers["edge_buffer"]
@@ -17,6 +16,6 @@ def drill_cycle_break(args, buffers):
         # drill cycle break corners
 
     if piece_type == "e":
-        print("Not Implemented yet")
+        print("Not Implemented yet:", edge_buffer)
         pass
         # drill cycle break edges

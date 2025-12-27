@@ -1,6 +1,9 @@
 from typing import TypedDict
 
+import numpy as np
+
 import dlin.cube
+import dlin.piece
 
 
 class EdgeTrace(TypedDict):
@@ -29,7 +32,12 @@ class Tracing(TypedDict):
 class Tracer(dlin.cube.Cube):
     def __init__(self, buffers, trace="both"):
         super().__init__()
-        self.tracing: Tracing = {"edge": [], "corner": [], "scramble": ""}
+        self.tracing: Tracing = {
+            "edge": [],
+            "corner": [],
+            "scramble": "",
+            "rotation": [],
+        }
         self.buffers = buffers
         self.loopcube = []
         for x in range(3):
@@ -268,15 +276,19 @@ class Tracer(dlin.cube.Cube):
     def manual_swap(self, e1, e2):
         # CURRENTLY ONLY SUPPORTS PSEUDOSWAPS PRESERVING F/B EO
         coords1, coords2 = self.coords_from_name(e1), self.coords_from_name(e2)
-        slice1, slice2 = self.cube[coords1].sides.index(""), self.cube[
-            coords2
-        ].sides.index("")
-        non_slice1, non_slice2 = sorted(list({0, 1, 2} - {slice1})), sorted(
-            list({0, 1, 2} - {slice2})
+
+        # Fix: Use np.where instead of .index()
+        slice1 = int(np.where(self.cube[coords1].sides == "")[0][0])
+        slice2 = int(np.where(self.cube[coords2].sides == "")[0][0])
+
+        non_slice1, non_slice2 = (
+            sorted(list({0, 1, 2} - {slice1})),
+            sorted(list({0, 1, 2} - {slice2})),
         )
-        piece1, piece2 = [f for f in self.cube[coords1].sides if f], [
-            f for f in self.cube[coords2].sides if f
-        ]
+        piece1, piece2 = (
+            [f for f in self.cube[coords1].sides if f],
+            [f for f in self.cube[coords2].sides if f],
+        )
         # idk why you have to do this but it works
         if sorted([slice1, slice2]) == [0, 1] or sorted([slice1, slice2]) == [0, 2]:
             piece2 = reversed(piece2)

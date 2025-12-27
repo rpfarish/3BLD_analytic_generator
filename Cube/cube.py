@@ -14,6 +14,7 @@ from .face_enum import CornerFaceEnum as Corner
 from .face_enum import EdgeFaceEnum
 from .face_enum import EdgeFaceEnum as Edge
 
+
 DEBUG = True
 
 
@@ -29,7 +30,7 @@ class Cube:
         buffer_order: Optional[dict[str, list[str]]] = None,
         settings=None,
     ):
-
+        s = s.replace("3'", "")
         self.scramble: list[str] = s.rstrip("\n").strip().split()
         self.has_parity: bool = (len(self.scramble) - s.count("2")) % 2 == 1
         self.kociemba_order: str = "URFDLB"
@@ -37,12 +38,17 @@ class Cube:
             "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
         )
         self.faces: str = "ULFRBD"
+
         use_default_letter_scheme = True if ls is None else False
         if type(ls) is LetterScheme:
             self.ls: LetterScheme = ls
-        else:
+        elif ls is None:
             ls: letter_scheme = LetterScheme(ls, use_default=use_default_letter_scheme)
             self.ls: LetterScheme = ls
+        else:
+            raise TypeError(
+                f"Cube: letterscheme (type: {type(ls)}) is not of type LetterScheme and is not None"
+            )
 
         self.settings: Settings = settings if settings is not None else Settings()
 
@@ -360,7 +366,7 @@ class Cube:
         self.e_edges_index = [Edge.RIGHT, Edge.RIGHT, Edge.RIGHT, Edge.RIGHT]
         self.e_adj_edges_index = [Edge.LEFT, Edge.LEFT, Edge.LEFT, Edge.LEFT]
 
-        self.wide_moves = {
+        self.wide_moves: dict[str, tuple[str, int]] = {
             "u": ("E", -1),
             "r": ("M", -1),
             "f": ("S", 1),
@@ -368,7 +374,23 @@ class Cube:
             "d": ("E", 1),
             "b": ("S", -1),
         }
-        self.rotations_map = {
+
+        self.notation_to_dir: dict[str, int] = {
+            "'": -1,
+            "2": 2,
+            "2'": 2,
+            "'2": 2,
+            "": 1,
+            "3": -1,
+            "3'": 1,
+            -1: "'",
+            1: "",
+            2: "2",
+            -2: "2",
+            "''": 1,
+        }
+
+        self.dir_to_notation: dict[int, str] = {
             "'": -1,
             "2": 2,
             "2'": 2,
@@ -492,59 +514,32 @@ class Cube:
 
     # memo
 
-    def parity_swap(self):
-        # FIXME: this should support more than just UF-UR and UL-UB
+    def parity_swap(self, parity_swap_edges="UF-UR"):
         if not self.has_parity:
             return
 
-        swap = (
-            self.parity_swap_edges
-            if self.parity_swap_edges is not None
-            else self.settings.parity_swap_edges
-        )
-
-        piece_a, piece_b = swap.split("-")
-        a, b = self.get_piece_map(piece_a), self.get_piece_map(piece_b)
-        if a is None or b is None:
-            raise ValueError(
-                "Parity swap is an invalid value: {self.parity_swap_edges}"
+        if (
+            parity_swap_edges == "UF-UR"
+            or parity_swap_edges == "UR-UF"
+            or parity_swap_edges is None
+        ):
+            self.U_edges[Edge.RIGHT], self.U_edges[Edge.DOWN] = (
+                self.U_edges[Edge.DOWN],
+                self.U_edges[Edge.RIGHT],
             )
-
-        piece_a_adj, piece_b_adj = piece_a[::-1], piece_b[::-1]
-        a_adj, b_adj = self.get_piece_map(piece_a_adj), self.get_piece_map(piece_b_adj)
-        if a_adj is None or b_adj is None:
-            raise ValueError(
-                "Parity swap is an invalid value: {self.parity_swap_edges}"
+            self.F_edges[Edge.UP], self.R_edges[Edge.UP] = (
+                self.R_edges[Edge.UP],
+                self.F_edges[Edge.UP],
             )
-
-        a_face, b_face = piece_a[0], piece_b[0]
-        a_face_adj, b_face_adj = piece_a_adj[0], piece_b_adj[0]
-
-        a_faces, a_dir = a
-        b_faces, b_dir = b
-
-        a_faces_adj, a_dir_adj = a_adj
-        b_faces_adj, b_dir_adj = b_adj
-
-        new_a = a_faces.copy()
-        new_a[a_dir] = b_faces[b_dir]
-        setattr(self, f"{a_face}_edges", new_a)
-
-        b_faces, b_dir = self.get_piece_map(piece_b)
-
-        new_b = b_faces.copy()
-        new_b[b_dir] = a_faces[a_dir]
-        setattr(self, f"{b_face}_edges", new_b)
-
-        new_a_adj = a_faces_adj.copy()
-        new_a_adj[a_dir_adj] = b_faces_adj[b_dir_adj]
-        setattr(self, f"{a_face_adj}_edges", new_a_adj)
-
-        b_faces_adj, b_dir_adj = self.get_piece_map(piece_b_adj)
-
-        new_b_adj = b_faces_adj.copy()
-        new_b_adj[b_dir_adj] = a_faces_adj[a_dir_adj]
-        setattr(self, f"{b_face_adj}_edges", new_b_adj)
+        elif parity_swap_edges == "UL-UB" or parity_swap_edges == "UB-UL":
+            self.U_edges[Edge.UP], self.U_edges[Edge.LEFT] = (
+                self.U_edges[Edge.LEFT],
+                self.U_edges[Edge.UP],
+            )
+            self.B_edges[Edge.UP], self.L_edges[Edge.UP] = (
+                self.L_edges[Edge.UP],
+                self.B_edges[Edge.UP],
+            )
 
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
@@ -572,11 +567,11 @@ class Cube:
             raise ValueError("Invalid move length", move)
 
         has_wide_move = False
-        if "w" in move:
+        if "w" in move or move.islower():
             move = move.replace("w", "")
             has_wide_move = True
 
-        rotation = self.rotations_map[move[1:]]
+        rotation = self.notation_to_dir[move[1:]]
 
         face_turn = move[:1]
 
@@ -611,6 +606,7 @@ class Cube:
         corners,
         adj_corners,
         adj_corners_index,
+        *,
         invert_direction=False,
     ):
         if invert_direction:
@@ -641,7 +637,13 @@ class Cube:
 
     @staticmethod
     def _rotate_slice(
-        rotation, edges, adj_edges, edges_index, adj_edges_index, invert_direction=False
+        rotation,
+        edges,
+        adj_edges,
+        edges_index,
+        adj_edges_index,
+        *,
+        invert_direction=False,
     ):
         if invert_direction:
             rotation *= -1
@@ -659,9 +661,9 @@ class Cube:
     def _rotate_wide(self, face_turn):
         self.do_move(face_turn.upper())
         slice_, direction = self.wide_moves[face_turn[:1]]
-        rotation = self.rotations_map[face_turn[1:]]
+        rotation = self.notation_to_dir[face_turn[1:]]
         rotation *= direction
-        slice_turn = slice_[:1] + self.rotations_map[rotation]
+        slice_turn = slice_[:1] + self.dir_to_notation[rotation]
         self.do_move(slice_turn)
 
     @property
@@ -689,6 +691,10 @@ class Cube:
         return len(self.twisted_corners) // 3
 
     @property
+    def flipped_edges_count(self):
+        return len(self.flipped_edges) // 2
+
+    @property
     def solved_edges(self):
         return [
             default
@@ -699,7 +705,7 @@ class Cube:
         ]
 
     @property
-    def flipped_edges(self):
+    def flipped_edges(self) -> dict[str, str]:
         return {
             default: current
             for default, current in zip(self.default_edges, self.all_edges)
@@ -796,7 +802,7 @@ class Cube:
         rotations = trace["rotation"]
         for rotation in rotations:
             self.do_cube_rotation(rotation)
-        #
+
         # self.display_cube()
 
     def is_solved(self):

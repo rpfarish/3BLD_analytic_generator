@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import List, TypedDict
 
 import dlin
-from Commutator.convert_list_to_comms import update_comm_list
 from Cube.letterscheme import LetterScheme, sort_face_precedence
 
 
