@@ -2,18 +2,17 @@ import json
 from collections import deque
 from typing import Optional
 
-import kociemba
-
 import dlin
+import kociemba
 from comms.comms import COMMS
 from Commutator.comm_shift import comm_shift
-from Cube.letterscheme import LetterScheme
 from Settings.settings import Buffers, Settings
+
+from Cube.letterscheme import LetterScheme
 
 from .face_enum import CornerFaceEnum as Corner
 from .face_enum import EdgeFaceEnum
 from .face_enum import EdgeFaceEnum as Edge
-
 
 DEBUG = True
 
@@ -24,9 +23,9 @@ class Cube:
         s: str = "",
         can_parity_swap: bool = False,
         auto_scramble: bool = True,
-        ls: Optional[LetterScheme] = None,
-        buffers: Optional[Buffers] = None,
-        parity_swap_edges: Optional[str] = None,
+        ls: LetterScheme | None = None,
+        buffers: Buffers | None = None,
+        parity_swap_edges: str | None = None,
         buffer_order: Optional[dict[str, list[str]]] = None,
         settings=None,
     ):
@@ -518,11 +517,7 @@ class Cube:
         if not self.has_parity:
             return
 
-        if (
-            parity_swap_edges == "UF-UR"
-            or parity_swap_edges == "UR-UF"
-            or parity_swap_edges is None
-        ):
+        if parity_swap_edges in {"UF-UR", "UR-UF"} or parity_swap_edges is None:
             self.U_edges[Edge.RIGHT], self.U_edges[Edge.DOWN] = (
                 self.U_edges[Edge.DOWN],
                 self.U_edges[Edge.RIGHT],
@@ -531,7 +526,7 @@ class Cube:
                 self.R_edges[Edge.UP],
                 self.F_edges[Edge.UP],
             )
-        elif parity_swap_edges == "UL-UB" or parity_swap_edges == "UB-UL":
+        elif parity_swap_edges in {"UL-UB", "UB-UL"}:
             self.U_edges[Edge.UP], self.U_edges[Edge.LEFT] = (
                 self.U_edges[Edge.LEFT],
                 self.U_edges[Edge.UP],
@@ -544,26 +539,28 @@ class Cube:
     def __eq__(self, other):
         if self.__class__ is not other.__class__:
             return NotImplemented
+
+        if len(self.cube_faces().values()) != len(other.cube_faces().values()):
+            return False
         for (edges, corners), (edges2, corners2) in zip(
-            self.cube_faces().values(), other.cube_faces().values()
+            self.cube_faces().values(), other.cube_faces().values(), strict=True
         ):
             if edges != edges2 or corners != corners2:
                 return False
-        else:
-            return True
+        return True
 
     def __ne__(self, other):
         result = self.__eq__(other)
         if result is NotImplemented:
             return NotImplemented
-        else:
-            return not result
+        return not result
 
     def do_move(self, move: str, invert_direction: bool = False):
         if not move:
             return
 
-        elif len(move) > 3:
+        MAX_MOVE_LEN = 3
+        if len(move) > MAX_MOVE_LEN:
             raise ValueError("Invalid move length", move)
 
         has_wide_move = False
@@ -619,7 +616,7 @@ class Cube:
         side = deque([i[j] for i, j in zip(adj_edges, adj_edges_index)])
         side.rotate(rotation)
         for adj_side_obj, adj_edges_index, side_slice in zip(
-            adj_edges, adj_edges_index, side
+            adj_edges, adj_edges_index, side, strict=True
         ):
             adj_side_obj[adj_edges_index] = side_slice
 
@@ -627,7 +624,7 @@ class Cube:
         side = deque(
             [
                 (layer[i], layer[j])
-                for layer, (i, j) in zip(adj_corners, adj_corners_index)
+                for layer, (i, j) in zip(adj_corners, adj_corners_index, strict=True)
             ]
         )
         side.rotate(rotation)

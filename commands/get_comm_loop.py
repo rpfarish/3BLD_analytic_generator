@@ -1,8 +1,11 @@
-from commands.get_buffer import get_comm
 from Cube.letterscheme import LetterScheme
 
+from commands.get_buffer import get_comm
 
-def get_comm_loop(args, file_comms: list, letter_scheme: LetterScheme):
+
+def get_comm_loop(
+    args: list[str], file_comms: list, letter_scheme: LetterScheme
+) -> None:
     """Comm: comm [buffer] [target pair] [-r]
     Description: Displays the commutator given from the imported comm sheets.
     Options:
@@ -35,6 +38,6 @@ def get_comm_loop(args, file_comms: list, letter_scheme: LetterScheme):
             buffer = args[args.index("-b") + 1]
             args.remove("-b")
         else:
-            args = [buffer] + args
+            args = [buffer, *args]
 
         get_comm(args, file_comms, letterscheme=letter_scheme)

@@ -82,7 +82,6 @@ sticker (this may not be necessary anymore).
   wide move scrambles
 
 - **Options:**
-
   - scramble: The scramble to memo.
   - -l filename: Load scrambles from the FILENAME text file
   - -s filename: Save the SCRAMBLE to the FILENAME text file
@@ -108,13 +107,11 @@ sticker (this may not be necessary anymore).
 - **Description:** Manage letter scheme options.
 
 - **Options:**
-
   - -d: Dumps the current loaded letter scheme for the standard Singmaster notation
   - -l: Loads the letter scheme from settings.json
   - -c: prints the current letter scheme
 
 - **Usage Examples**:
-
   - Dump the letter scheme
 
     ```
@@ -141,7 +138,6 @@ sticker (this may not be necessary anymore).
   the drill_lists directory. Corner and edge pairs can only be drilled one at a time.
 
 - **Options:**
-
   - sticker: When a list to drill is not specified, this will load all the sticker + xy letter pairs. This parameter
     must be put first.
   - -type corner | edge: Specifies the type of the piece to drill. Only needed when piece type is ambiguous.
@@ -151,7 +147,6 @@ sticker (this may not be necessary anymore).
     then. This parameter must be put last.
 
 - **Usage Examples**:
-
   - Drill the corner sticker N (RUB)
 
     ```
@@ -194,14 +189,12 @@ sticker (this may not be necessary anymore).
   more. Note: all buffers can be saved to the same file
 
 - **Options:**
-
   - -l <filename>: Load the current buffer drill file from JSON to allow multiple concurrent buffer drill sessions.
     Note
     that if you start a new session without -l, it will erase the existing save file.
   - -r: Randomly generate cycles with no limit on repeating pairs.
 
 - **Example Usages**:
-
   - Drill the "UF" buffer with random pair generation:
 
     ```
@@ -240,12 +233,10 @@ These examples demonstrate how to use the buffer command with various options.
 
 - **Description:** Retrieve and display commutators.
 - **Options:**
-
   - -r: Rapid mode allows you to enter many pairs in and keep the buffer selected for each query
   - -b: Selects a new buffer while in rapid mode
 
 - **Example Usages**:
-
   - Display commutators for the buffer UF with pairs AB and CD:
 
     ```

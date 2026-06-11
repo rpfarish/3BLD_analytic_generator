@@ -236,6 +236,13 @@ def sort_face_precedence(cell):
     return "".join(name)
 
 
+def rotate_face_precedence(cell):
+    name = list(cell)
+    face_precedence = {"U": 0, "D": 0, "F": 1, "B": 1, "R": 2, "L": 2, "": 3}
+    name = sorted(name, key=lambda x: face_precedence[x])
+    return "".join(name)
+
+
 if __name__ == "__main__":
     scheme = LetterScheme()
     converted = scheme.convert_to_pos_from_type("N", "edge")

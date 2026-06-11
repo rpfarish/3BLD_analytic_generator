@@ -2,9 +2,8 @@ import csv
 import json
 import re
 from collections import deque
+from pathlib import Path
 
-# for i in a.split('\n'):
-# print(i.split(','), "\n\n")
 from .expand_comm import expand_comm
 
 
@@ -19,15 +18,19 @@ def add_spaces(moves):
 # TODO: make this take a spreadsheet and csv
 
 
-def _convert(buffer, file_name="max_comms"):
+def _convert(buffer, file_name: Path | None = None):
+    if file_name is None:
+        file_name = Path("max_comms")
+
     comms = {}
-    with open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile:
+    comm_file_path = Path("comms") / file_name / f"{buffer}.csv"
+    with comm_file_path.open(newline="") as csvfile:
         top_corner_key, *_ = next(csv.reader(csvfile))
 
-    with open(f"comms/{file_name}/{buffer}.csv", newline="") as csvfile:
+    with comm_file_path.open(newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for num, row in enumerate(reader):
-            row: dict[str, str] = row
+            row: dict[str, str]
             second_target = row[top_corner_key]
             if len(buffer) + num > 24:
                 break
@@ -147,9 +150,14 @@ def add_pair(comms, buffer, sticker1, sticker2, comm):
 #     return file_comms
 
 
-def update_comm_list(buffers=None, file="max_comms"):
+def update_comm_list(buffers=None, file: Path | None = None):
+    if file is None:
+        file = Path("max_comms")
+
     # TODO: import from settings
+
     print(f"{buffers=}")
+    BUFFERS_SIZE = 16
     if buffers is None:
         buffers = [
             "UF",
@@ -169,8 +177,7 @@ def update_comm_list(buffers=None, file="max_comms"):
             "RDF",
             "RDB",
         ]
-
-    elif len(buffers) != 16:
+    elif len(buffers) != BUFFERS_SIZE:
         raise ValueError("Please include all of the buffers in settings.json")
     comms = {}
 

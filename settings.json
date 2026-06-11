@@ -69,7 +69,7 @@
       "name": "Charlie",
       "spreadsheet": "Charlie Eggins's blind algs (Private Sheet).xlsx",
       "cols_first": true,
-      "enabled": true
+      "enabled": false
     },
 
     "Elliott": {
@@ -94,5 +94,6 @@
     }
   },
   "floating_comms_sheet_name": "Elliott",
-  "parity_swap_edges": "UF-UR"
+  "parity_swap_edges": "UF-UR",
+  "drill_show_comms": true
 }

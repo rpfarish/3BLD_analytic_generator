@@ -1,8 +1,9 @@
 import json
 import os
 
-from commands.drill_piece_buffer import drill_piece_buffer
 from Cube.letterscheme import sort_face_precedence
+
+from commands.drill_piece_buffer import drill_piece_buffer
 
 
 def drill_buffer(args: list[str], file_comms, filename, buffer_order, letter_scheme):

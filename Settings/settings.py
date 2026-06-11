@@ -34,6 +34,8 @@ class Settings:
         self.comm_files: dict[str, CommFile] = {}
         self.parity_swap_edges: str = ""
         self.floating_comms_sheet_name: str = ""
+        self.corner_buffer_precedence = []
+        self.edge_buffer_precedence = []
 
         self.valid_edges = [
             "UF",
@@ -49,6 +51,8 @@ class Settings:
             "BR",
             "BL",
         ]
+
+        self.drill_show_comms = True
 
         self.reload(first=True)
 
@@ -84,6 +88,10 @@ class Settings:
             self.all_buffers_order: List[str] = (
                 self.buffer_order["edges"] + self.buffer_order["corners"]
             )
+
+            for comm_file in settings["comm_files"].values():
+                comm_file["spreadsheet"] = Path(comm_file["spreadsheet"])
+
             self.comm_files: dict[str, CommFile] = settings["comm_files"]
 
             self.parity_swap_edges: str = settings["parity_swap_edges"].upper()
@@ -92,6 +100,7 @@ class Settings:
             #     buffers=self.all_buffers_order, file=self.comm_file_name,
             # )
             # do I need to parse csv again if there's already .json
+            self.drill_show_comms = settings["drill_show_comms"]
         self._validate_settings()
 
     def get_dlin_default_buffers(self) -> dlin.DefaultBuffers:
@@ -192,6 +201,11 @@ class Settings:
         if self.floating_comms_sheet_name not in self.comm_files:
             raise ValueError(
                 f"Name: {self.floating_comms_sheet_name} does not exist in comm_files"
+            )
+
+        if not isinstance(self.drill_show_comms, bool):
+            raise ValueError(
+                f"drill_show_comms can only be true or false: found {self.drill_show_comms}"
             )
 
         self._validate_comm_files()

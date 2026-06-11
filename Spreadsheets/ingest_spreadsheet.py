@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import cast
 
 import pandas as pd
-
 from Cube.letterscheme import sort_face_precedence
 
 
@@ -80,9 +79,7 @@ def ingest_spreadsheet(file_name: Path, cols_first: bool):
         "DBR",
         "DBL",
     }
-    sorted_buffers: list[str] = sorted(
-        all_valid_buffers, key=lambda x: len(x), reverse=True
-    )
+    sorted_buffers: list[str] = sorted(all_valid_buffers, key=len, reverse=True)
     buffers_regex = "|".join(re.escape(buf) for buf in sorted_buffers)
     buffer_pattern = re.compile(r"^(" + buffers_regex + r")(?:[^A-Za-z]|$)")
 

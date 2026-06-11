@@ -2,6 +2,7 @@ import itertools
 import json
 import os
 import random
+import sys
 import time
 from datetime import datetime
 from typing import Optional
@@ -9,12 +10,12 @@ from typing import Optional
 import dlin
 from comms.comms import COMMS
 from Commutator.comm_shift import comm_shift
-from Cube import Cube
-from Cube.letterscheme import LetterScheme, convert_letterpairs
-from Cube.memo import Memo
 from Scramble import get_scramble
 from Settings.settings import Settings
 
+from Cube import Cube
+from Cube.letterscheme import LetterScheme, convert_letterpairs
+from Cube.memo import Memo
 
 DEBUG = 0
 
@@ -26,7 +27,7 @@ def input_with_quit(message: str = "") -> str:
             return "return"
         return response
     except KeyboardInterrupt:
-        quit()
+        sys.exit()
 
 
 class Drill:
@@ -1142,7 +1143,7 @@ class Drill:
         while algs:
             if DEBUG:
                 print("getting random alg...")
-            alg = a = random.choice(algs)
+            alg = a = random.choice(algs.reverse())
 
             post_move = self.gen_premove()
             if DEBUG:

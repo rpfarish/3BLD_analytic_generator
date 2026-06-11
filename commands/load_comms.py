@@ -3,11 +3,14 @@ from pathlib import Path
 
 from Commutator.convert_list_to_comms import update_comm_list
 
+type Comms = dict[str, str | Comms]
 
-def load_comms(file_name) -> dict[str, str]:
+
+def load_comms(file_name: Path) -> Comms:
+    """Load comms from json file or csv on error."""
     json_path = Path(f"comms/{file_name}/{file_name}.json")
     try:
-        with open(json_path) as f:
+        with json_path.open() as f:
             file_comms = json.load(f)
     except FileNotFoundError:
         # Get all buffers from CSV files in the directory
