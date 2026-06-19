@@ -116,7 +116,6 @@ class Settings:
             sort_face_precedence(b).upper() for b in self.buffer_order["corners"]
         ]
         self.buffer_order["edges"] = [b.upper() for b in self.buffer_order["edges"]]
-        print("BUFFER ORDER IS SET", self.buffer_order)
 
         self.dlin_buffers = self._get_dlin_default_buffers()
         self.all_buffers_order = (
@@ -151,7 +150,6 @@ class Settings:
             buffers["edge"][: len(edge_buffers)] = edge_buffers
             buffers["corner"][: len(corner_buffers)] = corner_buffers
 
-        print("SETTINGS LOADING DEFAULT DLIN BUFFERS", buffers)
         return dlin.DefaultBuffers(edge=buffers["edge"], corner=buffers["corner"])
 
     def load_list_of_comms_json(self) -> None: ...

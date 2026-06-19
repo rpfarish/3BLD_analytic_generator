@@ -142,9 +142,6 @@ class Drill:
         has_parity = (len(scramble.split()) - scramble.count("2")) % 2 == 1
         swap = self.settings.parity_swap_edges.split("-") if has_parity else None
 
-        print(
-            "GETTING DLIN TRACE WITH BUFFERS DLIN BUFFERS 3", self.settings.dlin_buffers
-        )
         return dlin.trace(scramble, swap=swap, buffers=self.settings.dlin_buffers)
 
     # -------------------------------------------------------------------------

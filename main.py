@@ -1,12 +1,13 @@
 """Main function entry point starts and ends here."""
 
-import logging
-import sys
 import functools
 import json
+import logging
+import sys
 import time
 from contextlib import suppress
 from pathlib import Path
+
 from Commands import Commands
 
 # from commands import (
@@ -26,8 +27,6 @@ from Commands import Commands
 #     memo_cube,
 #     set_letter_scheme,
 # )
-from comms.comms import COMMS
-
 # from Commutator.validate_comms import validate_comms
 # from Cube import Drill
 from interface import CLIInterface, OutputMode
@@ -83,35 +82,35 @@ def get_query() -> tuple[str, list[str]]:
     return mode, args
 
 
-#
-# def format_duration(seconds: float) -> str:
-#     """Format duration in seconds to a readable string.
-#
-#     Displays only non-zero time units.
-#     """
-#     seconds = round(seconds, 2)
-#
-#     SECONDS_IN_MINUTE = 60
-#     if seconds < SECONDS_IN_MINUTE:
-#         return f"{seconds}s"
-#
-#     days = int(seconds // 86400)
-#     hours = int((seconds % 86400) // 3600)
-#     minutes = int((seconds % 3600) // 60)
-#     secs = round(seconds % 60, 2)
-#
-#     parts: list[str] = []
-#     if days:
-#         parts.append(f"{days}d")
-#     if hours:
-#         parts.append(f"{hours}h")
-#     if minutes:
-#         parts.append(f"{minutes}m")
-#     if secs:
-#         parts.append(f"{secs}s")
-#
-#     return " ".join(parts)
-#
+def format_duration(seconds: float) -> str:
+    """Format duration in seconds to a readable string.
+
+    Displays only non-zero time units.
+    """
+    seconds = round(seconds, 2)
+
+    SECONDS_IN_MINUTE = 60
+    if seconds < SECONDS_IN_MINUTE:
+        return f"{seconds}s"
+
+    days = int(seconds // 86400)
+    hours = int((seconds % 86400) // 3600)
+    minutes = int((seconds % 3600) // 60)
+    secs = round(seconds % 60, 2)
+
+    parts: list[str] = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if secs:
+        parts.append(f"{secs}s")
+
+    return " ".join(parts)
+
+
 #
 # type Comms = dict[str, str | Comms]
 #
@@ -567,14 +566,14 @@ def main():
                 #                 case "clear":
                 #                     ui.clear_screen()
                 #
-                #                 case "q" | "quit" | "exit":
-                #                     ui.blank_line()
-                #                     ui.info("Thanks for using 3BLD Analytic Generator!")
-                #                     ui.result(
-                #                         "Total session time", format_duration(time.time() - start_time)
-                #                     )
-                #                     ui.blank_line()
-                #                     sys.exit(0)
+                case "q" | "quit" | "exit":
+                    ui.blank_line()
+                    ui.info("Thanks for using 3BLD Analytic Generator!")
+                    ui.result(
+                        "Total session time", format_duration(time.time() - start_time)
+                    )
+                    ui.blank_line()
+                    sys.exit(0)
                 #
                 case _:
                     ui.error(f"Unrecognized command: '{mode}'")

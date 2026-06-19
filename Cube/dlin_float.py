@@ -575,11 +575,11 @@ def _build_corner_group_result(group: list[dict], buffer_order: list[str]) -> di
         [c2.buffer] …
 
     "Misoriented" cycles (twisted at home, no targets) bypass the target
-    block and accumulate in the ``flips`` list for separate handling.
+    block and accumulate in the ``twists`` list for separate handling.
     """
     all_targets: list[str] = []
     buffers: list[str] = []
-    flips: list[str] = []  # twisted-in-place corners (corner analogue of edge flips)
+    twists: list[str] = []  # twisted-in-place corners (corner analogue of edge flips)
 
     # ── Select primary buffer (highest priority in buffer_order) ────────────
     primary = min(
@@ -591,7 +591,7 @@ def _build_corner_group_result(group: list[dict], buffer_order: list[str]) -> di
     buffers.append(primary["buffer"])
 
     if primary["corner"].get("type") == "misoriented":
-        flips.append(primary["buffer"])
+        twists.append(primary["buffer"])
     else:
         all_targets.extend(primary["targets"])
 
@@ -603,7 +603,7 @@ def _build_corner_group_result(group: list[dict], buffer_order: list[str]) -> di
         buffers.append(cycle["buffer"])
 
         if cycle["corner"].get("type") == "misoriented":
-            flips.append(cycle["buffer"])
+            twists.append(cycle["buffer"])
             continue
 
         # Join sticker: target the secondary cycle's buffer slot
@@ -621,7 +621,7 @@ def _build_corner_group_result(group: list[dict], buffer_order: list[str]) -> di
     return {
         "buffers": buffers,
         "targets": all_targets,
-        "flips": flips,
+        "twists": twists,
         "joins": len(group) - 1,
         "final_type": 0,
         "combination_path": buffers,
@@ -636,7 +636,6 @@ def _build_corner_group_result(group: list[dict], buffer_order: list[str]) -> di
 
 def _buf_priority(buf: str | None, buffer_order: list[str]) -> int:
     """Return the buffer_order index of a buffer (lower = higher priority)."""
-    print("BUFFER ORDER:", buffer_order)
     if buf and buf in buffer_order:
         return buffer_order.index(buf)
     return 999
@@ -804,14 +803,13 @@ def find_optimal_combinations_corners(
     non_type_0 = [c for c in corner_data if c["type"] != 0]
 
     results: list[dict] = []
-    print("BUFFER ORDER:", buffer_order)
 
     for cycle in type_0:
         results.append(
             {
                 "buffers": [cycle["buffer"]],
                 "targets": cycle["targets"],
-                "flips": [],
+                "twists": [],
                 "joins": 0,
                 "final_type": 0,
                 "combination_path": [cycle["buffer"]],
@@ -892,21 +890,21 @@ def analyze_corner_trace(
 
     total_joins = 0
     total_targets = 0
-    total_flips = 0
+    total_twists = 0
 
     for i, result in enumerate(results, 1):
-        if "flips" in result and result["flips"]:
-            total_flips += len(result["flips"])
+        if "twists" in result and result["twists"]:
+            total_twists += len(result["twists"])
 
         total_joins += result["joins"]
         total_targets += result["target_count"]
 
     all_targets: list[str] = []
-    all_flips: list[str] = []
+    all_twists: list[str] = []
     for result in results:
         all_targets.extend(result["targets"])
-        if "flips" in result:
-            all_flips.extend(result["flips"])
+        if "twists" in result:
+            all_twists.extend(result["twists"])
 
     return {
         "corner_types": corner_types,
@@ -916,11 +914,11 @@ def analyze_corner_trace(
             "total_groups": len(results),
             "total_joins": total_joins,
             "total_targets": total_targets,
-            "total_flips": total_flips,
+            "total_twists": total_twists,
             "buffer_count": len([b for r in results for b in r["buffers"]]),
         },
         "target_sequence": all_targets,
-        "flip_sequence": all_flips,
+        "flip_sequence": all_twists,
     }
 
 

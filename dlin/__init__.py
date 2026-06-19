@@ -16,7 +16,6 @@ DEFAULTBUFFERS: DefaultBuffers = {
 
 def trace(scramble, buffers=DEFAULTBUFFERS, trace="both", swap=None):
     scramble = scramble.strip()
-    print("TRACING CUBE WITH BUFFERS:", buffers)
     s = Tracer(buffers, trace)
     if swap:
         e1, e2 = swap

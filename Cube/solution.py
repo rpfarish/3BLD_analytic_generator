@@ -95,9 +95,6 @@ class Solution:
         else:
             swap = None
 
-        print(
-            "GETTING DLIN TRACE WITH BUFFERS DLIN BUFFERS 2", self.settings.dlin_buffers
-        )
         return dlin.trace(
             scramble=self.scramble, swap=swap, buffers=self.settings.dlin_buffers
         )
@@ -258,9 +255,15 @@ class Solution:
         self.ui.info("Edge cycles")
         if trace["edge"]:
             self.ui.table(
-                headers=["Buffer", "Targets", "Type", "Parity"],
+                headers=["Buffer", "Targets", "Type", "Parity", "Orientation"],
                 rows=[
-                    [c["buffer"], " ".join(c["targets"]), c["type"], str(c["parity"])]
+                    [
+                        c["buffer"],
+                        " ".join(c["targets"]),
+                        c["type"],
+                        str(c["parity"]),
+                        str(c["orientation"]),
+                    ]
                     for c in trace["edge"]
                 ],
             )
@@ -273,9 +276,15 @@ class Solution:
         self.ui.info("Corner cycles")
         if trace["corner"]:
             self.ui.table(
-                headers=["Buffer", "Targets", "Type", "Parity"],
+                headers=["Buffer", "Targets", "Type", "Parity", "Orientation"],
                 rows=[
-                    [c["buffer"], " ".join(c["targets"]), c["type"], str(c["parity"])]
+                    [
+                        c["buffer"],
+                        " ".join(c["targets"]),
+                        c["type"],
+                        str(c["parity"]),
+                        str(c["orientation"]),
+                    ]
                     for c in trace["corner"]
                 ],
             )

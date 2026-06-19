@@ -29,9 +29,15 @@ class Tracing(TypedDict):
     rotation: list[str]
 
 
+def rotate_face_precedence(cell):
+    name = list(cell)
+    face_precedence = {"U": 0, "D": 0, "F": 1, "B": 1, "R": 2, "L": 2, "": 3}
+    name = sorted(name, key=lambda x: face_precedence[x])
+    return "".join(name)
+
+
 class Tracer(dlin.cube.Cube):
     def __init__(self, buffers, trace="both"):
-        print("initialized tracer with buffers:", buffers)
         super().__init__()
         self.tracing: Tracing = {
             "edge": [],
@@ -48,6 +54,13 @@ class Tracer(dlin.cube.Cube):
 
         self.trace_corners = True if trace in {"corners", "both"} else False
         self.trace_edges = True if trace in {"edges", "both"} else False
+
+    def find_matching_buffer(self, piece_name, piece_type):
+        normalized = rotate_face_precedence(piece_name)
+        for buffer in self.buffers[piece_type]:
+            if rotate_face_precedence(buffer) == normalized:
+                return buffer
+        return piece_name
 
     def find_piece(self, piecename):
         piecename = set(piecename)
@@ -215,7 +228,6 @@ class Tracer(dlin.cube.Cube):
 
     def trace_all(self, piecetype, buffers):
         solved = []
-        print("buffers in trace all", buffers)
         for buffer in buffers:
             if self.absolute_target(buffer) in [
                 self.absolute_target(x) for x in solved
@@ -248,7 +260,7 @@ class Tracer(dlin.cube.Cube):
                     self.tracing["edge"].append(
                         {
                             "type": "misoriented",
-                            "buffer": flip,
+                            "buffer": self.find_matching_buffer(flip, "edge"),
                             "targets": [],
                             "orientation": 1,
                             "parity": 0,
@@ -262,19 +274,18 @@ class Tracer(dlin.cube.Cube):
                     self.tracing["corner"].append(
                         {
                             "type": "misoriented",
-                            "buffer": twist["location"],
+                            "buffer": self.find_matching_buffer(
+                                twist["location"], "corner"
+                            ),
                             "targets": [],
                             "orientation": twist["orientation"],
                             "parity": 0,
                         }
                     )
 
-        return
-
     def modify_buffer_order(self, edgebuffers, cornerbuffers):
         self.buffers["edge"] = edgebuffers
         self.buffers["corner"] = cornerbuffers
-        return
 
     def manual_swap(self, e1, e2):
         # CURRENTLY ONLY SUPPORTS PSEUDOSWAPS PRESERVING F/B EO
@@ -307,8 +318,6 @@ class Tracer(dlin.cube.Cube):
         ) = piece1
 
     def sort_tracing(self):
-        print("tying to sort buffers in dlin tracer", self.tracing["edge"])
-        print("tying to sort buffers in dlin tracer", self.tracing["corner"])
         self.tracing["edge"].sort(key=lambda x: self.buffers["edge"].index(x["buffer"]))
         self.tracing["corner"].sort(
             key=lambda x: self.buffers["corner"].index(x["buffer"])

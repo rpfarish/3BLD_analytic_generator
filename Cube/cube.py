@@ -858,9 +858,6 @@ class Cube:
         scram = (
             " ".join(self.scramble) if type(self.scramble) is list else self.scramble
         )
-        print(
-            "GETTING DLIN TRACE WITH BUFFERS DLIN BUFFERS 0", self.settings.dlin_buffers
-        )
         return dlin.trace(scramble=scram, swap=swap, buffers=self.settings.dlin_buffers)
 
     def solve(self, max_depth=20, invert=False):
