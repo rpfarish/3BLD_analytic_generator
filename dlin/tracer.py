@@ -31,6 +31,7 @@ class Tracing(TypedDict):
 
 class Tracer(dlin.cube.Cube):
     def __init__(self, buffers, trace="both"):
+        print("initialized tracer with buffers:", buffers)
         super().__init__()
         self.tracing: Tracing = {
             "edge": [],
@@ -60,6 +61,7 @@ class Tracer(dlin.cube.Cube):
         u_center = self.find_piece("U")
         direction = max(set(u_center) - {1})
         axis = u_center.index(direction)
+        rotation = ""
         if axis == 2:
             rotation = "x" if direction == 0 else "x'"
         elif axis == 0:
@@ -213,6 +215,7 @@ class Tracer(dlin.cube.Cube):
 
     def trace_all(self, piecetype, buffers):
         solved = []
+        print("buffers in trace all", buffers)
         for buffer in buffers:
             if self.absolute_target(buffer) in [
                 self.absolute_target(x) for x in solved
@@ -302,9 +305,10 @@ class Tracer(dlin.cube.Cube):
             self.cube[coords2].sides[non_slice2[0]],
             self.cube[coords2].sides[non_slice2[1]],
         ) = piece1
-        return
 
     def sort_tracing(self):
+        print("tying to sort buffers in dlin tracer", self.tracing["edge"])
+        print("tying to sort buffers in dlin tracer", self.tracing["corner"])
         self.tracing["edge"].sort(key=lambda x: self.buffers["edge"].index(x["buffer"]))
         self.tracing["corner"].sort(
             key=lambda x: self.buffers["corner"].index(x["buffer"])
@@ -323,4 +327,3 @@ class Tracer(dlin.cube.Cube):
         if self.trace_edges:
             self.trace_all("edge", self.buffers["edge"])
         self.sort_tracing()
-        return

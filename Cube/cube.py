@@ -6,9 +6,9 @@ import dlin
 import kociemba
 from comms.comms import COMMS
 from Commutator.comm_shift import comm_shift
+from interface import CLIInterface
+from Letterscheme.letterscheme import LetterScheme
 from Settings.settings import Buffers, Settings
-
-from Cube.letterscheme import LetterScheme
 
 from .face_enum import CornerFaceEnum as Corner
 from .face_enum import EdgeFaceEnum
@@ -24,6 +24,7 @@ class Cube:
         can_parity_swap: bool = False,
         auto_scramble: bool = True,
         ls: LetterScheme | None = None,
+        ui: CLIInterface | None = None,
         buffers: Buffers | None = None,
         parity_swap_edges: str | None = None,
         buffer_order: Optional[dict[str, list[str]]] = None,
@@ -49,7 +50,7 @@ class Cube:
                 f"Cube: letterscheme (type: {type(ls)}) is not of type LetterScheme and is not None"
             )
 
-        self.settings: Settings = settings if settings is not None else Settings()
+        self.settings: Settings = settings if settings is not None else Settings(ui)
 
         self.slices: str = "MSE"
 
@@ -856,6 +857,9 @@ class Cube:
             swap = None
         scram = (
             " ".join(self.scramble) if type(self.scramble) is list else self.scramble
+        )
+        print(
+            "GETTING DLIN TRACE WITH BUFFERS DLIN BUFFERS 0", self.settings.dlin_buffers
         )
         return dlin.trace(scramble=scram, swap=swap, buffers=self.settings.dlin_buffers)
 

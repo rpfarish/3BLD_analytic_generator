@@ -221,12 +221,11 @@ def convert_letterpairs(
 
     if return_type == "set":
         return converted_set
-    elif return_type == "list":
+
+    if return_type == "list":
         return converted_list
-    else:
-        raise ValueError(
-            f"Invalid return_type '{return_type}'. Must be 'set' or 'list'"
-        )
+
+    raise ValueError(f"Invalid return_type '{return_type}'. Must be 'set' or 'list'")
 
 
 def sort_face_precedence(cell):

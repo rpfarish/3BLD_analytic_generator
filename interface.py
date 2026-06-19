@@ -1,11 +1,13 @@
 """CLI Interface System - Clean abstraction for user-facing messages."""
 
 import logging
+import os
+import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, ClassVar, Optional
+from typing import ClassVar
 
 
 class MessageType(Enum):
@@ -73,11 +75,11 @@ class CLIInterface:
             log_dir.mkdir(exist_ok=True)
 
             file_handler = logging.FileHandler(
-                log_dir / f"bld_{datetime.now():%Y%m%d}.log"
+                log_dir / f"bld_{datetime.now(tz=timezone.utc):%Y%m%d}.log",
             )
             file_handler.setLevel(log_level)
             file_formatter = logging.Formatter(
-                "%(asctime)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s"
+                "%(asctime)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s",
             )
             file_handler.setFormatter(file_formatter)
             logger.addHandler(file_handler)
@@ -103,12 +105,11 @@ class CLIInterface:
         prefix = prefixes.get(msg_type, "")
         return f"{prefix}{msg}"
 
-    def message(self, msg: str, msg_type: MessageType = MessageType.INFO):
+    def message(self, msg: str, msg_type: MessageType = MessageType.INFO) -> None:
         """Display a general message to the user."""
         formatted = self._format_message(msg, msg_type)
-        print(formatted)
+        print(formatted)  # noqa: T201
 
-        # Log to file
         log_methods = {
             MessageType.ERROR: self.logger.error,
             MessageType.WARNING: self.logger.warning,
@@ -118,116 +119,120 @@ class CLIInterface:
         log_method = log_methods.get(msg_type, self.logger.debug)
         log_method(msg)
 
-    def success(self, msg: str):
-        """Display a success message"""
+    def success(self, msg: str) -> None:
+        """Display a success message."""
         self.message(msg, MessageType.SUCCESS)
 
-    def error(self, msg: str, exception: Optional[Exception] = None):
-        """Display an error message"""
+    def error(self, msg: str, exception: Exception | None = None) -> None:
+        """Display an error message."""
         self.message(msg, MessageType.ERROR)
         if exception:
             self.logger.exception("Exception details:", exc_info=exception)
 
-    def warning(self, msg: str):
-        """Display a warning message"""
+    def warning(self, msg: str) -> None:
+        """Display a warning message."""
         self.message(msg, MessageType.WARNING)
 
-    def info(self, msg: str):
-        """Display an info message"""
+    def info(self, msg: str) -> None:
+        """Display an info message."""
         self.message(msg, MessageType.INFO)
 
-    def header(self, msg: str, width: int = 60):
-        """Display a header message"""
+    def header(self, msg: str, width: int = 60) -> None:
+        """Display a header message."""
         if self.output_mode == OutputMode.MINIMAL:
-            print(msg)
+            print(msg)  # noqa: T201
         else:
             separator = "=" * width
             centered = msg.center(width)
             formatted_sep = self._format_message(separator, MessageType.HEADER)
             formatted_msg = self._format_message(centered, MessageType.HEADER)
-            print(f"\n{formatted_sep}\n{formatted_msg}\n{formatted_sep}")
-        self.logger.debug(f"Header: {msg}")
+            print(f"\n{formatted_sep}\n{formatted_msg}\n{formatted_sep}")  # noqa: T201
+        self.logger.debug("Header: %s", msg)
 
-    def separator(self, char: str = "-", width: int = 60):
-        """Display a separator line"""
+    def separator(self, char: str = "-", width: int = 60) -> None:
+        """Display a separator line."""
         if self.output_mode != OutputMode.MINIMAL:
-            print(char * width)
+            print(char * width)  # noqa: T201
 
-    def result(self, label: str, value: Any, indent: int = 0):
-        """Display a labeled result"""
+    def result(self, label: str, value: object, indent: int = 0) -> None:
+        """Display a labeled result."""
         indent_str = " " * indent
         formatted_label = self._format_message(f"{label}:", MessageType.RESULT)
-        print(f"{indent_str}{formatted_label} {value}")
-        self.logger.debug(f"{label}: {value}")
+        print(f"{indent_str}{formatted_label} {value}")  # noqa: T201
+        self.logger.debug("%s: %s", label, value)
 
-    def list_items(self, items: list[str], numbered: bool = False, indent: int = 2):
-        """Display a list of items"""
+    def list_items(
+        self,
+        items: list[str],
+        numbered: bool = False,
+        indent: int = 2,
+    ) -> None:
+        """Display a list of items."""
         indent_str = " " * indent
         for i, item in enumerate(items, 1):
             if numbered:
-                print(f"{indent_str}{i}. {item}")
+                print(f"{indent_str}{i}. {item}")  # noqa: T201
             else:
-                print(f"{indent_str}• {item}")
-        self.logger.debug(f"listed {len(items)} items")
+                print(f"{indent_str}• {item}")  # noqa: T201
+        self.logger.debug("listed %d items", len(items))
 
     def table(
         self,
         headers: list[str],
         rows: list[list[str]],
-        col_widths: Optional[list[int]] = None,
-    ):
-        """Display a simple table"""
+        col_widths: list[int] | None = None,
+    ) -> None:
+        """Display a simple table."""
         if not col_widths:
-            # Auto-calculate column widths
             col_widths = [
-                max(len(str(row[i])) for row in [headers] + rows)
+                max(len(str(row[i])) for row in [headers, *rows])
                 for i in range(len(headers))
             ]
 
-        # Header
-        header_row = " | ".join(str(h).ljust(w) for h, w in zip(headers, col_widths))
-        separator = "-+-".join("-" * w for w in col_widths)
+        header_row = " | ".join(
+            str(h).ljust(w) for h, w in zip(headers, col_widths, strict=True)
+        )
+        sep = "-+-".join("-" * w for w in col_widths)
 
-        print(self._format_message(header_row, MessageType.HEADER))
-        print(separator)
+        print(self._format_message(header_row, MessageType.HEADER))  # noqa: T201
+        print(sep)  # noqa: T201
 
-        # Rows
         for row in rows:
-            row_str = " | ".join(str(cell).ljust(w) for cell, w in zip(row, col_widths))
-            print(row_str)
+            row_str = " | ".join(
+                str(cell).ljust(w) for cell, w in zip(row, col_widths, strict=True)
+            )
+            print(row_str)  # noqa: T201
 
-        self.logger.debug(f"Displayed table with {len(rows)} rows")
+        self.logger.debug("Displayed table with %d rows", len(rows))
 
-    def prompt(self, question: str, default: Optional[str] = None) -> str:
-        """Prompt user for input"""
-        if default:
-            prompt_text = f"{question} [{default}]: "
-        else:
-            prompt_text = f"{question}: "
-
+    def prompt(self, question: str, default: str | None = None) -> str:
+        """Prompt user for input."""
+        prompt_text = f"{question} [{default}]: " if default else f"{question}: "
         formatted_prompt = self._format_message(prompt_text, MessageType.PROMPT)
         response = input(formatted_prompt).strip()
 
         if not response and default:
             response = default
 
-        self.logger.debug(f"Prompt '{question}' -> '{response}'")
+        self.logger.debug("Prompt '%s' -> '%s'", question, response)
         return response
 
     def confirm(self, question: str, default: bool = False) -> bool:
-        """Ask for yes/no confirmation"""
+        """Ask for yes/no confirmation."""
         default_str = "Y/n" if default else "y/N"
         response = self.prompt(f"{question} ({default_str})", "").lower()
 
         if not response:
             return default
-
         return response.startswith("y")
 
     def choice(
-        self, question: str, options: list[str], default: Optional[int] = None
+        self,
+        question: str,
+        options: list[str],
+        default: int | None = None,
     ) -> int:
-        """Present multiple choice options"""
+        """Present multiple choice options."""
         self.info(question)
         self.list_items(options, numbered=True)
 
@@ -236,48 +241,48 @@ class CLIInterface:
             response = self.prompt("Enter choice number", default_str)
 
             try:
-                choice = int(response)
-                if 1 <= choice <= len(options):
-                    return choice - 1  # Return 0-indexed
-                else:
-                    self.error(f"Please enter a number between 1 and {len(options)}")
+                chosen = int(response)
+                if 1 <= chosen <= len(options):
+                    return chosen - 1  # Return 0-indexed
+                self.error(f"Please enter a number between 1 and {len(options)}")
             except ValueError:
                 self.error("Please enter a valid number")
 
-    def progress(self, current: int, total: int, label: str = "Progress"):
-        """Display a simple progress indicator"""
+    def progress(self, current: int, total: int, label: str = "Progress") -> None:
+        """Display a simple progress indicator."""
         percentage = (current / total) * 100 if total > 0 else 0
         bar_length = 40
         filled = int(bar_length * current / total) if total > 0 else 0
         bar = "█" * filled + "░" * (bar_length - filled)
 
-        print(
+        print(  # noqa: T201
             f"\r{label}: [{bar}] {percentage:.1f}% ({current}/{total})",
             end="",
             flush=True,
         )
 
         if current >= total:
-            print()  # New line when complete
+            print()  # noqa: T201
 
-    def clear_screen(self):
-        """Clear the console screen"""
-        import os
-
-        os.system("cls" if os.name == "nt" else "clear")
+    def clear_screen(self) -> None:
+        """Clear the console screen."""
+        cmd = ["cls"] if os.name == "nt" else ["clear"]
+        subprocess.run(cmd, check=False)
         self.logger.debug("Screen cleared")
 
-    def debug(self, msg: str):
-        """Log debug message (not shown to user unless verbose mode)"""
+    def debug(self, msg: str) -> None:
+        """Log debug message (not shown to user unless verbose mode)."""
         self.logger.debug(msg)
 
-    def blank_line(self, count: int = 1):
-        """Print blank lines"""
-        print("\n" * (count - 1))
+    def blank_line(self, count: int = 1) -> None:
+        """Print blank lines."""
+        print("\n" * (count - 1))  # noqa: T201
 
 
 # Example usage
 if __name__ == "__main__":
+    import time
+
     # Initialize interface
     ui = CLIInterface(output_mode=OutputMode.COLORED)
 
@@ -328,14 +333,12 @@ if __name__ == "__main__":
 
     # Multiple choice
     options = ["Drill stickers", "Practice algs", "Generate scramble"]
-    choice = ui.choice("What would you like to do?", options)
-    ui.success(f"You selected: {options[choice]}")
+    chosen_idx = ui.choice("What would you like to do?", options)
+    ui.success(f"You selected: {options[chosen_idx]}")
 
     ui.blank_line()
 
     # Progress
-    import time
-
     for i in range(1, 101):
         ui.progress(i, 100, "Loading")
         time.sleep(0.02)

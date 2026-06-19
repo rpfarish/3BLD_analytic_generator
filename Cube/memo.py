@@ -1,9 +1,11 @@
 import random
 from typing import Optional
 
-from Cube import Cube
-from Cube.letterscheme import LetterScheme
+from interface import CLIInterface
+from Letterscheme.letterscheme import LetterScheme
 from Settings.settings import Buffers
+
+from Cube import Cube
 
 
 class Memo(Cube):
@@ -13,6 +15,7 @@ class Memo(Cube):
         can_parity_swap=False,
         auto_scramble=True,
         ls: Optional[LetterScheme] = None,
+        ui: CLIInterface | None = None,
         buffers: Optional[Buffers] = None,
         parity_swap_edges=None,
         buffer_order=None,
@@ -22,6 +25,7 @@ class Memo(Cube):
             can_parity_swap=can_parity_swap,
             auto_scramble=auto_scramble,
             ls=ls,
+            ui=ui,
             buffers=buffers,
             parity_swap_edges=parity_swap_edges,
             buffer_order=buffer_order,
