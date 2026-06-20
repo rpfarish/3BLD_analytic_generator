@@ -199,7 +199,6 @@ class Solution:
         corner_res = find_optimal_combinations_corners(
             trace["corner"], self.buffer_order["corners"]
         )
-        print(results, corner_res)
 
         self.ui.header("MEMO")
 
@@ -262,7 +261,7 @@ class Solution:
                         " ".join(c["targets"]),
                         c["type"],
                         str(c["parity"]),
-                        str(c["orientation"]),
+                        f"{c['orientation']:>2}",
                     ]
                     for c in trace["edge"]
                 ],
@@ -283,7 +282,7 @@ class Solution:
                         " ".join(c["targets"]),
                         c["type"],
                         str(c["parity"]),
-                        str(c["orientation"]),
+                        f"{c['orientation']:>2}",
                     ]
                     for c in trace["corner"]
                 ],
