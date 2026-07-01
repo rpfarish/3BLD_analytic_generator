@@ -477,12 +477,28 @@ class Cube:
         self.parity_swap_edges = (
             parity_swap_edges.upper() if parity_swap_edges is not None else "UF-UR"
         )
+        self.can_parity_swap = can_parity_swap
         # UF-UR swap
         if can_parity_swap:
             self.parity_swap()
 
         if auto_scramble:
             self.scramble_cube()
+
+    def set_edge_state(self, other: Cube) -> None:
+        if not isinstance(other, Cube):
+            raise TypeError(f"Expected a Cube, got {type(other).__name__}")
+
+        self.U_edges = other.U_edges.copy()
+        self.L_edges = other.L_edges.copy()
+        self.F_edges = other.F_edges.copy()
+        self.R_edges = other.R_edges.copy()
+        self.B_edges = other.B_edges.copy()
+        self.D_edges = other.D_edges.copy()
+
+        # FIX: idk if we need to do this
+        if self.can_parity_swap:
+            self.parity_swap()
 
     def get_piece_map(self, piece) -> tuple[deque[str], EdgeFaceEnum]:
         return {
@@ -514,6 +530,7 @@ class Cube:
 
     # memo
 
+    # TODO: fix this for any swap
     def parity_swap(self, parity_swap_edges="UF-UR"):
         if not self.has_parity:
             return

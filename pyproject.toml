@@ -37,39 +37,39 @@ extend-include = ["*.ipynb"]
 src = ["src"]
 
 [tool.ruff.lint]
-select = [
-  # "ALL",
-  "E",      # pycodestyle errors
-  "W",      # pycodestyle warnings
-  "F",      # pyflakes
-  "I",      # isort
-  "N",      # pep8-naming
-  "UP",     # pyupgrade
-  "ANN",    # flake8-annotations
-  "B",      # flake8-bugbear
-  "A",      # flake8-builtins
-  "COM",    # flake8-commas
-  "C4",     # flake8-comprehensions
-  "DTZ",    # flake8-datetimez
-  "T10",    # flake8-debugger
-  "EM",     # flake8-errmsg
-  "ISC",    # flake8-implicit-str-concat
-  "ICN",    # flake8-import-conventions
-  "G",      # flake8-logging-format
-  "PIE",    # flake8-pie
-  "T20",    # flake8-print
-  "PT",     # flake8-pytest-style
-  "Q",      # flake8-quotes
-  "RSE",    # flake8-raise
-  "RET",    # flake8-return
-  "SLF",    # flake8-self
-  "SIM",    # flake8-simplify
-  "TID",    # flake8-tidy-imports
-  "ARG",    # flake8-unused-arguments
-  "PTH",    # flake8-use-pathlib
-  "PL",     # pylint
-  "TRY",    # tryceratops
-  "RUF",    # ruff-specific rules
-  "NPY201", # numpy 2.0 migration rules
-]
+# select = [
+#   # "ALL",
+#   "E",      # pycodestyle errors
+#   "W",      # pycodestyle warnings
+#   "F",      # pyflakes
+#   "I",      # isort
+#   "N",      # pep8-naming
+#   "UP",     # pyupgrade
+#   "ANN",    # flake8-annotations
+#   "B",      # flake8-bugbear
+#   "A",      # flake8-builtins
+#   "COM",    # flake8-commas
+#   "C4",     # flake8-comprehensions
+#   "DTZ",    # flake8-datetimez
+#   "T10",    # flake8-debugger
+#   "EM",     # flake8-errmsg
+#   "ISC",    # flake8-implicit-str-concat
+#   "ICN",    # flake8-import-conventions
+#   "G",      # flake8-logging-format
+#   "PIE",    # flake8-pie
+#   "T20",    # flake8-print
+#   "PT",     # flake8-pytest-style
+#   "Q",      # flake8-quotes
+#   "RSE",    # flake8-raise
+#   "RET",    # flake8-return
+#   "SLF",    # flake8-self
+#   "SIM",    # flake8-simplify
+#   "TID",    # flake8-tidy-imports
+#   "ARG",    # flake8-unused-arguments
+#   "PTH",    # flake8-use-pathlib
+#   "PL",     # pylint
+#   "TRY",    # tryceratops
+#   "RUF",    # ruff-specific rules
+#   "NPY201", # numpy 2.0 migration rules
+# ]
 # ignore = ["N806", "COM812"]

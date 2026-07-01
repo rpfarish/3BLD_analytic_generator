@@ -1,12 +1,12 @@
 // Comment out a line like this
 // Use a * to drill all the possible pairs with the other letter
 // e.g. A* or *A
-E*
-H*
-L*
-M*
-R*
-C*
-Z*
+//E*
+//H*
+//L*
+//M*
+//R*
+//C*
+//Z*
 ZH
 

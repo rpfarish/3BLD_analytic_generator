@@ -96,8 +96,8 @@ def drill_sticker(args: list, buffers):
         Enter q to exit anytime.
     Options:
         -c Loads corner comms to drill from drill_lists/drill_list_corners.txt
-    Not Implemented:
         -e Loads edge comms to drill from drill_lists/drill_list_edges.txt
+    Not Implemented:
         -r Randomly generates scrambles indefinitely and does not remove drilled letterpairs
         -f Specifies the number of cycles to be included in a scramble (Recommended 2).
     Aliases:
@@ -112,6 +112,7 @@ def drill_sticker(args: list, buffers):
         freq = args[index + 1]
 
     letter_scheme = LetterScheme()
+
     all_corner_letters = {
         i.name for i in letter_scheme.scheme.values() if i.type == "c"
     }
@@ -119,7 +120,7 @@ def drill_sticker(args: list, buffers):
 
     if "-c" in args or "-corner" in args:
         with open("drill_lists/drill_list_corners.txt") as f:
-            algs = f.readlines()
+            algs = f.read().splitlines()
 
             buffer = buffers["corner_buffer"]
             converted_buffer = letter_scheme[buffer]
@@ -127,92 +128,91 @@ def drill_sticker(args: list, buffers):
                 converted_buffer
             ]
 
-            # calculate the freq of each alg involving a certain piece
-            new_algs = set()
-            for alg in algs:
-                alg = alg.strip("\n").strip().upper()
+        # calculate the freq of each alg involving a certain piece
+        new_algs = set()
+        for alg_line in algs:
+            alg = alg_line.strip().upper()
 
-                if not alg or alg.startswith("//"):
-                    continue
+            if not alg or alg.startswith("//"):
+                continue
 
-                # buffer in list
-                if converted_buffer in alg or piece_adj1 in alg or piece_adj2 in alg:
-                    print(
-                        f"Please remove the buffer's letters {converted_buffer}, {piece_adj1} or {piece_adj2} from {alg}"
-                    )
-                    print(f"Skipping {alg}")
-                    continue
+            # buffer in list
+            if converted_buffer in alg or piece_adj1 in alg or piece_adj2 in alg:
+                print(
+                    f"Please remove the buffer's letters {converted_buffer}, {piece_adj1} or {piece_adj2} from {alg}"
+                )
+                print(f"Skipping {alg}")
+                continue
 
-                a, b = alg[: len(alg) // 2], alg[len(alg) // 2 :]
-                if a not in all_corner_letters or b not in all_corner_letters:
-                    print(
-                        f"Warning: {alg} contains letters '{
-                            f'{a}' * (a not in all_corner_letters)
-                        }{
-                            f'{b}' * (b not in all_corner_letters)
-                        }' not in the corners letterscheme"
-                    )
-                    print("Skipping...")
-                    continue
+            a, b = alg[: len(alg) // 2], alg[len(alg) // 2 :]
+            if a not in all_corner_letters or b not in all_corner_letters:
+                print(
+                    f"Warning: {alg} contains letters '{
+                        f'{a}' * (a not in all_corner_letters)
+                    }{
+                        f'{b}' * (b not in all_corner_letters)
+                    }' not in the corners letterscheme"
+                )
+                print("Skipping...")
+                continue
 
-                if "*" in alg:
-                    starts_with_star = alg.startswith("*")
-                    sticker_to_drill = alg[starts_with_star]
+            if "*" in alg:
+                starts_with_star = alg.startswith("*")
+                sticker_to_drill = alg[starts_with_star]
 
-                    algs_to_drill = generate_corner_drill_list(
-                        letter_scheme,
-                        converted_buffer,
-                        sticker_to_drill,
-                        invert=starts_with_star,
-                    )
+                algs_to_drill = generate_corner_drill_list(
+                    letter_scheme,
+                    converted_buffer,
+                    sticker_to_drill,
+                    invert=starts_with_star,
+                )
 
-                    sticker_algs = convert_letterpairs(
-                        algs_to_drill,
-                        "letter_to_loc",
-                        letter_scheme,
-                        piece_type="corners",
-                        display=False,
-                        return_type="set",
-                    )
-                    new_algs.update(sticker_algs)
-                    continue
+                sticker_algs = convert_letterpairs(
+                    algs_to_drill,
+                    "letter_to_loc",
+                    letter_scheme,
+                    piece_type="corners",
+                    display=False,
+                    return_type="set",
+                )
+                new_algs.update(sticker_algs)
+                continue
 
-                converted = letter_scheme.convert_pair_to_pos_type(alg, "corner")
-                new_algs.add("".join(converted))
+            converted = letter_scheme.convert_pair_to_pos_type(alg, "corner")
+            new_algs.add("".join(converted))
 
-            algs = new_algs
-            print(algs)
+        algs = new_algs
+        print(algs)
 
-            if not algs:
-                print("Algs to drill is empty")
-                return
+        if not algs:
+            print("Algs to drill is empty")
+            return
 
-            categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
-            # get split pair
-            # rotate name to buffer name
-            # sort pair to buffer order
-            buffer_weight = {
-                buffer: i for i, buffer in enumerate(DEFAULTBUFFERS["corner"])
-            }
-            for pair in algs:
-                a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-                ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
-                x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
-                categorize_cycles[(x, y)].append(a + b)
+        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
+        # get split pair
+        # rotate name to buffer name
+        # sort pair to buffer order
 
-            # pprint(categorize_cycles)
+        buffer_weight = {buffer: i for i, buffer in enumerate(DEFAULTBUFFERS["corner"])}
+        for pair in algs:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
+            categorize_cycles[(x, y)].append(a + b)
 
-            # how to choose non overlap pairs?
+        # pprint(categorize_cycles)
 
-            cycles = select_cycles(categorize_cycles)
-            print("cycles", cycles)
-            Drill().drill_corner_sticker(
-                algs_to_drill=algs,
-                letter_scheme=LetterScheme(),
-                buffer=buffers["corner_buffer"],
-                random_pairs="-r" in args,
-                freq=freq,
-            )
+        # how to choose non overlap pairs?
+
+        cycles = select_cycles(categorize_cycles)
+        print("cycles", cycles)
+        Drill().drill_corner_sticker(
+            algs_to_drill=algs,
+            letter_scheme=LetterScheme(),
+            buffer=buffers["corner_buffer"],
+            random_pairs="-r" in args,
+            freq=freq,
+        )
 
         return
 

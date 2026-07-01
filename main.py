@@ -33,7 +33,7 @@ from interface import CLIInterface, OutputMode
 from Settings.settings import Settings
 
 # from Spreadsheets import ingest_spreadsheet
-#
+
 readline = None
 
 
@@ -292,19 +292,6 @@ def load_settings(ui: CLIInterface) -> Settings:
 #     ui.success("Memo generated successfully")
 #
 #
-# def handle_drill_command(ui: CLIInterface, args, settings):
-#     """Handle sticker drill command"""
-#     if not args:
-#         ui.warning("No stickers specified")
-#         ui.info(drill_sticker.__doc__ or "Usage: drill <stickers>")
-#         return
-#
-#     # try:
-#     args = [arg.lower() for arg in args]
-#     ui.info(f"Drilling stickers: {', '.join(args)}")
-#     drill_sticker(args, buffers=settings.buffers)
-#     # except Exception as e:
-#     # ui.error("Failed to run drill", e)
 #
 #
 # def handle_buffer_command(ui: CLIInterface, args, file_comms, settings):
@@ -482,6 +469,9 @@ def main():
                 #
                 case "m" | "memo":
                     commands.memo(args)
+                case "d" | "drill":
+                    commands.drill(args)
+
                 #
                 #                 case "ls" | "ltrscm":
                 #                     handle_letter_scheme_command(ui, args, settings)
@@ -493,10 +483,6 @@ def main():
                 #                     last_mode = mode
                 #                     last_args = args
                 #
-                #                 case "d" | "drill":
-                #                     handle_drill_command(ui, args, settings)
-                #                     last_mode = mode
-                #                     last_args = args
                 #
                 #                 case "b" | "buff" | "buffer":
                 #                     handle_buffer_command(ui, args, file_comms, settings)
@@ -563,9 +549,9 @@ def main():
                 #                     ui.info("Starting edge flip drill")
                 #                     drill_two_flips()
                 #
-                #                 case "clear":
-                #                     ui.clear_screen()
-                #
+                case "clear":
+                    ui.clear_screen()
+
                 case "q" | "quit" | "exit":
                     ui.blank_line()
                     ui.info("Thanks for using 3BLD Analytic Generator!")
@@ -593,11 +579,7 @@ def main():
             #     ui.error("An unexpected error occurred", e)
             #     ui.info("Type 'help' for available commands or 'quit' to exit")
 
-            last_mode = mode
-            last_args = args
 
-
-#
 if __name__ == "__main__":
     main()
     # TODO: enable memo
