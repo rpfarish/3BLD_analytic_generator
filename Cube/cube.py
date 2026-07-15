@@ -913,6 +913,33 @@ class Cube:
                 self.kociemba_solved_cube, self.get_faces_colors(), max_depth=max_depth
             )
 
+    EDGE_COLORS = {
+        0: ("U", "F"),
+        1: ("U", "B"),
+        2: ("U", "R"),
+        3: ("U", "L"),
+        4: ("D", "F"),
+        5: ("D", "R"),
+        6: ("D", "B"),
+        7: ("D", "L"),
+        8: ("F", "R"),
+        9: ("F", "L"),
+        10: ("B", "L"),
+        11: ("B", "R"),
+    }
+
+    @staticmethod
+    def letter_orientation(code, loc_to_perm, edge_colors=None):
+        """
+        Decode orientation (0=oriented, 1=flipped) directly from a
+        letter-pair code like 'UB' or 'BU', using the position's
+        canonical home reading as reference.
+        """
+        edge_colors = edge_colors or Cube.EDGE_COLORS
+        pos = loc_to_perm[code]
+        primary = edge_colors[pos][0]
+        return 0 if code[0] == primary else 1
+
     @staticmethod
     def check_valid_perm(state):
         state = list(state)
@@ -953,7 +980,6 @@ class Cube:
            11 BR
         """
 
-        # Start from a solved cube
         facelets = (
             {f"U{i}": "U" for i in range(1, 10)}
             | {f"R{i}": "R" for i in range(1, 10)}
@@ -963,37 +989,22 @@ class Cube:
             | {f"B{i}": "B" for i in range(1, 10)}
         )
 
-        # Facelets occupied by each edge position
         edge_facelets = {
-            0: ("U8", "F2"),  # UF
-            1: ("U2", "B2"),  # UB
-            2: ("U6", "R2"),  # UR
-            3: ("U4", "L2"),  # UL
-            4: ("D2", "F8"),  # DF
-            5: ("D6", "R8"),  # DR
-            6: ("D8", "B8"),  # DB
-            7: ("D4", "L8"),  # DL
-            8: ("F6", "R4"),  # FR
-            9: ("F4", "L6"),  # FL
-            10: ("B4", "L4"),  # BL
-            11: ("B6", "R6"),  # BR
+            0: ("U8", "F2"),
+            1: ("U2", "B2"),
+            2: ("U6", "R2"),
+            3: ("U4", "L2"),
+            4: ("D2", "F8"),
+            5: ("D6", "R8"),
+            6: ("D8", "B8"),
+            7: ("D4", "L8"),
+            8: ("F6", "R4"),
+            9: ("F4", "L6"),
+            10: ("B6", "L4"),
+            11: ("B4", "R6"),
         }
 
-        # Sticker colors of each edge cubie in solved orientation
-        edge_colors = {
-            0: ("U", "F"),  # UF
-            1: ("U", "B"),  # UB
-            2: ("U", "R"),  # UR
-            3: ("U", "L"),  # UL
-            4: ("D", "F"),  # DF
-            5: ("D", "R"),  # DR
-            6: ("D", "B"),  # DB
-            7: ("D", "L"),  # DL
-            8: ("F", "R"),  # FR
-            9: ("F", "L"),  # FL
-            10: ("B", "L"),  # BL
-            11: ("B", "R"),  # BR
-        }
+        edge_colors = Cube.EDGE_COLORS
 
         for pos in range(12):
             cubie = perm[pos]
@@ -1018,30 +1029,18 @@ class Cube:
         return "".join(facelets[f] for f in order)
 
     def generate_scramble_state(self, targets: set[str], min_pairs=2):
-        pass
-        # first gen a target cycle length
-        # we are first going to generate just for UF edges
-
         n = 11
         permutation = set(range(1, 12))
 
         if min_pairs > 5:
             print("minimum pair length for edges exceeds 5")
-            # self.ui.warning("minimum pair length for edges exceeds 5")
         min_pairs = min(min_pairs, 5)
 
         first_cycle_len = random.randint(min_pairs * 2, n - 1)
         print(f"{first_cycle_len=}")
         first_cycle_is_odd = first_cycle_len % 2 == 1
 
-        # pick random target pairs to use
-        # will the targets be in singmaster notation or
-        # letter scheme?
-
         categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
-        # get split pair
-        # rotate name to buffer name
-        # sort pair to buffer order
         buffer_weight = {
             buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
         }
@@ -1052,11 +1051,6 @@ class Cube:
             x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
             categorize_cycles[(x, y)].append(a + b)
 
-        # pprint(categorize_cycles)
-
-        # how to choose non overlap pairs?
-
-        # TODO: put select cycles in a better file location
         cycles = select_cycles(categorize_cycles, min_pairs)
         print("cycles", cycles)
 
@@ -1112,39 +1106,42 @@ class Cube:
         }
 
         used_permutation = set()
+        locked_orientation: dict[int, int] = {}
         used_list = []
 
-        # get the remaining pairs for the first cycle that are not in the target list optionally
+        # Decode target pairs into (position, position) AND lock their orientation
+        # from the letter codes themselves — never randomize these.
         for pair in cycles:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-            used_permutation.add(loc_to_perm[a])
-            used_permutation.add(loc_to_perm[b])
-            used_list.append((loc_to_perm[a], loc_to_perm[b]))
+            pos_a, pos_b = loc_to_perm[a], loc_to_perm[b]
+            ori_a = self.letter_orientation(a, loc_to_perm)
+            ori_b = self.letter_orientation(b, loc_to_perm)
+
+            for pos, ori in ((pos_a, ori_a), (pos_b, ori_b)):
+                if pos in locked_orientation and locked_orientation[pos] != ori:
+                    raise ValueError(
+                        f"Conflicting orientation for position {pos}: "
+                        f"{locked_orientation[pos]} vs {ori} (from pair {pair!r})"
+                    )
+                locked_orientation[pos] = ori
+
+            used_permutation.add(pos_a)
+            used_permutation.add(pos_b)
+            used_list.append((pos_a, pos_b))
 
         print(used_permutation)
         print(used_list)
         print(first_cycle_len)
+
         remaining_target_len = first_cycle_len - min_pairs * 2
         print(remaining_target_len)
 
-        remaining_target_len = first_cycle_len - min_pairs * 2
         is_odd = remaining_target_len % 2 == 1
-
-        num_pairs = (remaining_target_len - is_odd) // 2  # <-- the missing //2
+        num_pairs = (remaining_target_len - is_odd) // 2
 
         remaining_permutation = permutation - used_permutation
-        print(remaining_permutation)
-
         remaining_permutation = list(remaining_permutation)
-
         random.shuffle(remaining_permutation)
-
-        if not self.check_valid_perm(remaining_permutation):
-            remaining_permutation[0], remaining_permutation[1] = (
-                remaining_permutation[1],
-                remaining_permutation[0],
-            )
-
         print(f"{remaining_permutation=}")
 
         assert num_pairs * 2 + is_odd <= len(remaining_permutation), (
@@ -1152,6 +1149,8 @@ class Cube:
             f"only {len(remaining_permutation)} available"
         )
 
+        # Pull filler pairs (and possibly a singleton) off the shuffled list to
+        # pad the first cycle out to first_cycle_len.
         for _ in range(num_pairs):
             cur = remaining_permutation.pop()
             cur2 = remaining_permutation.pop()
@@ -1168,14 +1167,13 @@ class Cube:
         print(used_permutation)
         print(f"{used_list=}")
 
+        # --- Build the main (first) cycle by chaining pairs through the buffer ---
         permutation_state = list(range(12))
-
         cur = 0
 
         for a, b in used_list:
             permutation_state[cur] = a
             cur = a
-
             if b is not None:
                 permutation_state[cur] = b
                 cur = b
@@ -1185,23 +1183,92 @@ class Cube:
         else:
             permutation_state[cur] = 0
 
-        ref_permutation = sorted(remaining_permutation)
+        # --- Build the second cycle(s) from whatever's genuinely leftover ---
+        leftover = remaining_permutation  # untouched by the main chain
+        leftover_sorted = sorted(leftover)
 
-        # TODO: get ori map
-
-        for i, p in enumerate(remaining_permutation):
-            permutation_state[ref_permutation[i]] = p
+        for i, p in enumerate(leftover):
+            permutation_state[leftover_sorted[i]] = p
 
         print(" ".join(f"{x:>3}" for x in permutation_state))
         print(" ".join(f"{x:>3}" for x in range(12)))
-        print(
-            " ".join(
-                f"{'^' if x == i else '':>3}" for i, x in enumerate(permutation_state)
-            )
-        )
-        print(f"{remaining_permutation=}")
+        print(f"{leftover=}")
+
+        # --- Fix total edge permutation parity (must be even, to match solved corners) ---
+        def edge_perm_parity(perm):
+            visited = [False] * len(perm)
+            swaps = 0
+            for i in range(len(perm)):
+                if visited[i]:
+                    continue
+                j, clen = i, 0
+                while not visited[j]:
+                    visited[j] = True
+                    j = perm[j]
+                    clen += 1
+                swaps += clen - 1
+            return swaps % 2
+
+        total_parity = edge_perm_parity(permutation_state)
+        print(f"{total_parity=}")
+
+        if total_parity == 1:
+            if len(leftover) >= 2:
+                # Composing with any single transposition flips parity by exactly 1,
+                # regardless of current cycle structure — so any two distinct
+                # leftover positions work.
+                pi, pj = leftover_sorted[0], leftover_sorted[1]
+                permutation_state[pi], permutation_state[pj] = (
+                    permutation_state[pj],
+                    permutation_state[pi],
+                )
+                print(f"parity fix: swapped positions {pi} and {pj}")
+            else:
+                # leftover has 0 or 1 elements — mathematically this case is only
+                # reachable when first_cycle_len == n - 1, and that always yields
+                # an odd-length main cycle (even parity) on its own, so we should
+                # never actually land here. Surfacing loudly if we do.
+                raise ValueError(
+                    "Odd total edge parity with no leftover room to correct — "
+                    f"first_cycle_len={first_cycle_len}, leftover={leftover}. "
+                    "This indicates a logic error, not a normal random outcome."
+                )
+
+        assert edge_perm_parity(permutation_state) == 0, "parity fix failed"
+
+        # --- Orientation ---
 
         orientation = [0] * 12
+
+        # 1. Target pieces: orientation is already decoded from the letters — set directly.
+        for pos, ori in locked_orientation.items():
+            orientation[pos] = ori
+
+        # 2. Filler pieces: anything displaced that isn't a locked target piece
+        #    (this naturally includes positions touched by the parity-fix swap).
+        filler_displaced = [
+            pos
+            for pos in range(12)
+            if pos not in locked_orientation and permutation_state[pos] != pos
+        ]
+
+        for pos in filler_displaced:
+            orientation[pos] = random.randint(0, 1)
+
+        # 3. Fix orientation parity using filler only — never touch locked orientations.
+        if sum(orientation) % 2 == 1:
+            if filler_displaced:
+                flip_idx = random.choice(filler_displaced)
+                orientation[flip_idx] ^= 1
+            else:
+                raise ValueError(
+                    "Target-cycle orientations sum to odd parity with no filler "
+                    "piece available to correct — check `select_cycles`/letter data."
+                )
+
+        print(f"{orientation=}")
+
+        return permutation_state, orientation
 
 
 if __name__ == "__main__":
@@ -1394,4 +1461,15 @@ if __name__ == "__main__":
         "", ls=settings.letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
     )
 
-    cube.generate_scramble_state(targets)
+    print("Here one")
+    state = cube.generate_scramble_state(targets)
+    print("Here two")
+    res = cube.edges_to_facelet_string(*state)
+    print("Here three")
+    print(res)
+
+    kociemba_solved_cube: str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
+    scram = kociemba.solve(kociemba_solved_cube, res, max_depth=20)
+    print("Here three")
+
+    print(scram)
