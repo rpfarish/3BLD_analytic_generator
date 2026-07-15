@@ -1,8 +1,10 @@
+from collections import defaultdict
 from pathlib import Path
 from random import choice, shuffle
 
 from Cube import Memo
 from Cube.solution import Solution
+from dlin.tracer import rotate_face_precedence
 from Drill.drill import Drill
 from interface import CLIInterface
 from Letterscheme.letterscheme import (
@@ -251,24 +253,26 @@ class Commands:
             print("Algs to drill is empty")
             return
 
-        # categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
-        # # get split pair
-        # # rotate name to buffer name
-        # # sort pair to buffer order
-        #
-        # buffer_weight = {buffer: i for i, buffer in enumerate(DEFAULTBUFFERS["corner"])}
-        # for pair in algs:
-        #     a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-        #     ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
-        #     x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
-        #     categorize_cycles[(x, y)].append(a + b)
-        #
-        # # pprint(categorize_cycles)
-        #
-        # # how to choose non overlap pairs?
-        #
-        # cycles = select_cycles(categorize_cycles)
-        # print("cycles", cycles)
+        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
+        # get split pair
+        # rotate name to buffer name
+        # sort pair to buffer order
+        buffer_weight = {
+            buf: i for i, buf in enumerate(self.settings.dlin_buffers["corner"])
+        }
+
+        for pair in algs:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
+            categorize_cycles[(x, y)].append(a + b)
+
+        # pprint(categorize_cycles)
+
+        # how to choose non overlap pairs?
+
+        cycles = select_cycles(categorize_cycles, 3)
+        print("cycles", cycles)
 
         Drill(self.ui).drill_corner_sticker(
             algs_to_drill=algs,
@@ -344,26 +348,29 @@ class Commands:
             print("Algs to drill is empty")
             return
 
-        # categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
-        # # get split pair
-        # # rotate name to buffer name
-        # # sort pair to buffer order
-        # buffer_weight = {buf: i for i, buf in enumerate(DEFAULTBUFFERS["edge"])}
-        #
-        # for pair in algs:
-        #     a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-        #     ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
-        #     x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
-        #     categorize_cycles[(x, y)].append(a + b)
-        #
-        # # pprint(categorize_cycles)
-        #
-        # # how to choose non overlap pairs?
-        #
-        # cycles = select_cycles(categorize_cycles, 5)
-        # print("cycles", cycles)
-        #
-        # print(algs)
+        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
+        # get split pair
+        # rotate name to buffer name
+        # sort pair to buffer order
+        buffer_weight = {
+            buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
+        }
+
+        print(algs.pop())
+        for pair in algs:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
+            categorize_cycles[(x, y)].append(a + b)
+
+        # pprint(categorize_cycles)
+
+        # how to choose non overlap pairs?
+
+        cycles = select_cycles(categorize_cycles, 3)
+        print("cycles", cycles)
+
+        print(algs)
 
         Drill(self.ui).drill_edge_sticker(
             algs_to_drill=algs,

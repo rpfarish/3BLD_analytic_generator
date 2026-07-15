@@ -1,12 +1,17 @@
+import logging
+import Settings.settings
+from dlin.tracer import rotate_face_precedence
+import random
 import json
-from collections import deque
+from collections import deque, defaultdict
 from typing import Optional
+from Settings.settings import Settings
 
 import dlin
 import kociemba
 from comms.comms import COMMS
 from Commutator.comm_shift import comm_shift
-from interface import CLIInterface
+from interface import CLIInterface, OutputMode
 from Letterscheme.letterscheme import LetterScheme
 from Settings.settings import Buffers, Settings
 
@@ -15,6 +20,26 @@ from .face_enum import EdgeFaceEnum
 from .face_enum import EdgeFaceEnum as Edge
 
 DEBUG = True
+
+
+def select_cycles(
+    categorize_cycles: dict[tuple[str, str], list[str]],
+    max_cycle_len: int = 3,
+) -> list[str]:
+    keys = list(categorize_cycles.keys())
+    random.shuffle(keys)  # randomness lives here
+
+    used = set()
+    cycles = []
+    for a, b in keys:
+        if len(cycles) >= max_cycle_len:
+            break
+        if a not in used and b not in used:
+            cycles.append(random.choice(categorize_cycles[(a, b)]))
+            used.add(a)
+            used.add(b)
+
+    return cycles
 
 
 class Cube:
@@ -888,39 +913,485 @@ class Cube:
                 self.kociemba_solved_cube, self.get_faces_colors(), max_depth=max_depth
             )
 
+    @staticmethod
+    def check_valid_perm(state):
+        state = list(state)
+        rank = {}
+        for i, s in enumerate(sorted(state)):
+            rank[s] = i
+
+        state = [rank[s] for s in state]
+        res = 0
+        c = 0
+        while c < len(state):
+            if state[c] == c:  # value is home, move on
+                c += 1
+                continue
+            dest = state[c]  # state[c] belongs at index dest
+            state[c], state[dest] = state[dest], state[c]  # send it home
+            res += 1
+        return res % 2 == 0
+
+    @staticmethod
+    def edges_to_facelet_string(perm, ori):
+        """
+        perm[pos] = edge cubie at position pos
+        ori[pos] = 0 (oriented) or 1 (flipped)
+
+        Edge numbering:
+            0 UF
+            1 UB
+            2 UR
+            3 UL
+            4 DF
+            5 DR
+            6 DB
+            7 DL
+            8 FR
+            9 FL
+           10 BL
+           11 BR
+        """
+
+        # Start from a solved cube
+        facelets = (
+            {f"U{i}": "U" for i in range(1, 10)}
+            | {f"R{i}": "R" for i in range(1, 10)}
+            | {f"F{i}": "F" for i in range(1, 10)}
+            | {f"D{i}": "D" for i in range(1, 10)}
+            | {f"L{i}": "L" for i in range(1, 10)}
+            | {f"B{i}": "B" for i in range(1, 10)}
+        )
+
+        # Facelets occupied by each edge position
+        edge_facelets = {
+            0: ("U8", "F2"),  # UF
+            1: ("U2", "B2"),  # UB
+            2: ("U6", "R2"),  # UR
+            3: ("U4", "L2"),  # UL
+            4: ("D2", "F8"),  # DF
+            5: ("D6", "R8"),  # DR
+            6: ("D8", "B8"),  # DB
+            7: ("D4", "L8"),  # DL
+            8: ("F6", "R4"),  # FR
+            9: ("F4", "L6"),  # FL
+            10: ("B4", "L4"),  # BL
+            11: ("B6", "R6"),  # BR
+        }
+
+        # Sticker colors of each edge cubie in solved orientation
+        edge_colors = {
+            0: ("U", "F"),  # UF
+            1: ("U", "B"),  # UB
+            2: ("U", "R"),  # UR
+            3: ("U", "L"),  # UL
+            4: ("D", "F"),  # DF
+            5: ("D", "R"),  # DR
+            6: ("D", "B"),  # DB
+            7: ("D", "L"),  # DL
+            8: ("F", "R"),  # FR
+            9: ("F", "L"),  # FL
+            10: ("B", "L"),  # BL
+            11: ("B", "R"),  # BR
+        }
+
+        for pos in range(12):
+            cubie = perm[pos]
+            colors = list(edge_colors[cubie])
+
+            if ori[pos]:
+                colors.reverse()
+
+            f1, f2 = edge_facelets[pos]
+            facelets[f1] = colors[0]
+            facelets[f2] = colors[1]
+
+        order = (
+            [f"U{i}" for i in range(1, 10)]
+            + [f"R{i}" for i in range(1, 10)]
+            + [f"F{i}" for i in range(1, 10)]
+            + [f"D{i}" for i in range(1, 10)]
+            + [f"L{i}" for i in range(1, 10)]
+            + [f"B{i}" for i in range(1, 10)]
+        )
+
+        return "".join(facelets[f] for f in order)
+
+    def generate_scramble_state(self, targets: set[str], min_pairs=2):
+        pass
+        # first gen a target cycle length
+        # we are first going to generate just for UF edges
+
+        n = 11
+        permutation = set(range(1, 12))
+
+        if min_pairs > 5:
+            print("minimum pair length for edges exceeds 5")
+            # self.ui.warning("minimum pair length for edges exceeds 5")
+        min_pairs = min(min_pairs, 5)
+
+        first_cycle_len = random.randint(min_pairs * 2, n - 1)
+        print(f"{first_cycle_len=}")
+        first_cycle_is_odd = first_cycle_len % 2 == 1
+
+        # pick random target pairs to use
+        # will the targets be in singmaster notation or
+        # letter scheme?
+
+        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
+        # get split pair
+        # rotate name to buffer name
+        # sort pair to buffer order
+        buffer_weight = {
+            buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
+        }
+
+        for pair in targets:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
+            categorize_cycles[(x, y)].append(a + b)
+
+        # pprint(categorize_cycles)
+
+        # how to choose non overlap pairs?
+
+        # TODO: put select cycles in a better file location
+        cycles = select_cycles(categorize_cycles, min_pairs)
+        print("cycles", cycles)
+
+        loc_to_perm = {
+            "UB": 1,
+            "UR": 2,
+            "UF": 0,
+            "UL": 3,
+            "LU": 3,
+            "LF": 9,
+            "LD": 7,
+            "LB": 10,
+            "FU": 0,
+            "FR": 8,
+            "FD": 4,
+            "FL": 9,
+            "RU": 2,
+            "RB": 11,
+            "RD": 5,
+            "RF": 8,
+            "BU": 1,
+            "BL": 10,
+            "BD": 6,
+            "BR": 11,
+            "DF": 4,
+            "DR": 5,
+            "DB": 6,
+            "DL": 7,
+            "UBL": "A",
+            "UBR": "B",
+            "UFR": "U",
+            "UFL": "D",
+            "LUB": "J",
+            "LUF": "F",
+            "LDF": "G",
+            "LDB": "H",
+            "FUL": "E",
+            "FUR": "I",
+            "FDR": "K",
+            "FDL": "L",
+            "RUF": "X",
+            "RUB": "N",
+            "RDB": "O",
+            "RDF": "P",
+            "BUR": "R",
+            "BUL": "M",
+            "BDL": "S",
+            "BDR": "T",
+            "DFL": "C",
+            "DFR": "V",
+            "DBR": "W",
+            "DBL": "Z",
+        }
+
+        used_permutation = set()
+        used_list = []
+
+        # get the remaining pairs for the first cycle that are not in the target list optionally
+        for pair in cycles:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            used_permutation.add(loc_to_perm[a])
+            used_permutation.add(loc_to_perm[b])
+            used_list.append((loc_to_perm[a], loc_to_perm[b]))
+
+        print(used_permutation)
+        print(used_list)
+        print(first_cycle_len)
+        remaining_target_len = first_cycle_len - min_pairs * 2
+        print(remaining_target_len)
+
+        remaining_target_len = first_cycle_len - min_pairs * 2
+        is_odd = remaining_target_len % 2 == 1
+
+        num_pairs = (remaining_target_len - is_odd) // 2  # <-- the missing //2
+
+        remaining_permutation = permutation - used_permutation
+        print(remaining_permutation)
+
+        remaining_permutation = list(remaining_permutation)
+
+        random.shuffle(remaining_permutation)
+
+        if not self.check_valid_perm(remaining_permutation):
+            remaining_permutation[0], remaining_permutation[1] = (
+                remaining_permutation[1],
+                remaining_permutation[0],
+            )
+
+        print(f"{remaining_permutation=}")
+
+        assert num_pairs * 2 + is_odd <= len(remaining_permutation), (
+            f"first_cycle_len={first_cycle_len} needs {num_pairs * 2 + is_odd} pieces, "
+            f"only {len(remaining_permutation)} available"
+        )
+
+        for _ in range(num_pairs):
+            cur = remaining_permutation.pop()
+            cur2 = remaining_permutation.pop()
+            used_permutation.add(cur)
+            used_permutation.add(cur2)
+            used_list.append((cur, cur2))
+
+        random.shuffle(used_list)
+        if first_cycle_is_odd != is_odd:
+            cur = remaining_permutation.pop()
+            used_permutation.add(cur)
+            used_list.append((cur, None))
+
+        print(used_permutation)
+        print(f"{used_list=}")
+
+        permutation_state = list(range(12))
+
+        cur = 0
+
+        for a, b in used_list:
+            permutation_state[cur] = a
+            cur = a
+
+            if b is not None:
+                permutation_state[cur] = b
+                cur = b
+            else:
+                permutation_state[cur] = 0
+                break
+        else:
+            permutation_state[cur] = 0
+
+        ref_permutation = sorted(remaining_permutation)
+
+        # TODO: get ori map
+
+        for i, p in enumerate(remaining_permutation):
+            permutation_state[ref_permutation[i]] = p
+
+        print(" ".join(f"{x:>3}" for x in permutation_state))
+        print(" ".join(f"{x:>3}" for x in range(12)))
+        print(
+            " ".join(
+                f"{'^' if x == i else '':>3}" for i, x in enumerate(permutation_state)
+            )
+        )
+        print(f"{remaining_permutation=}")
+
+        orientation = [0] * 12
+
 
 if __name__ == "__main__":
-    from pathlib import Path
-
-    # Get the directory containing this file
-    module_dir = Path(__file__).parent
-    # Go up one level to root and find settings.json
-    settings_path = module_dir.parent / "settings.json"
-
-    with open(settings_path) as f:
-        settings = json.loads(f.read())
-        letter_scheme = settings["letter_scheme"]
-    #     buffers = settings['buffers']
-    # # s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
-    # scram = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
-    # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
+    # from pathlib import Path
     #
-    # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    # scram = "R U R' U' " * 6
-    # scram += "F4 B4 L4 R4 D4 R4 B4 U4 R4 L4 S4 E4 M4 S4 L4 F4 U4"
-    scram = "R U R'"
-    scram = "D"
+    # # Get the directory containing this file
+    # module_dir = Path(__file__).parent
+    # # Go up one level to root and find settings.json
+    # settings_path = module_dir.parent / "settings.json"
+    #
+    # with open(settings_path) as f:
+    #     settings = json.loads(f.read())
+    #     letter_scheme = settings["letter_scheme"]
+    #     buffers = settings['buffers']
+    # # # s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
+    # # scram = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
+    # # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
+    # #
+    # # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
+    # # scram = "R U R' U' " * 6
+    # # scram += "F4 B4 L4 R4 D4 R4 B4 U4 R4 L4 S4 E4 M4 S4 L4 F4 U4"
+    # scram = "R U R'"
+    # scram = "D"
+    #
+    # cube = Cube(
+    #     scram, ls=letter_scheme, parity_swap_edges="UF-UR",
+    #     can_parity_swap=True
+    # )
+    # print(scram)
+    # # # print(c.adj_corners)
+    # cube.display_cube()
+    # print(cube.get_faces_colors())
+    # # print(cube.solve(invert=False))
+    # # print(cube.solve(invert=True))
+    # # # # TODO:::: adapt for different versions of FDR ie FRD
+    # # # # c.drill_corner_sticker('FDR')
+    # # # # TODO:::: letter scheme for below is a dependency for working
+    # # # c.drill_edge_buffer("DF")
+    #
+
+    targets = {
+        "RURD",
+        "LUFD",
+        "LBFD",
+        "FLUB",
+        "LBUR",
+        "RUFL",
+        "BLLF",
+        "DFUL",
+        "BURU",
+        "FLDB",
+        "BUUL",
+        "LULD",
+        "LULF",
+        "LBUB",
+        "DFLF",
+        "BURB",
+        "LULB",
+        "FLFD",
+        "LURB",
+        "BLFL",
+        "BUDR",
+        "FLBU",
+        "BLBU",
+        "BUDB",
+        "BLUR",
+        "DFBU",
+        "LBBU",
+        "LUDF",
+        "LBBD",
+        "RULF",
+        "RULD",
+        "BUBL",
+        "DFLU",
+        "LBDB",
+        "RUUB",
+        "LURF",
+        "BLFD",
+        "DFUR",
+        "BLRF",
+        "BLRB",
+        "LUBD",
+        "LBRB",
+        "DFFR",
+        "LURU",
+        "BUUR",
+        "LUDR",
+        "BLUL",
+        "BLRU",
+        "FLRD",
+        "BLDL",
+        "DFDL",
+        "LUDL",
+        "LBFL",
+        "FLDR",
+        "DFFL",
+        "LBUL",
+        "FLRB",
+        "FLRF",
+        "FLLB",
+        "RUDL",
+        "BLDR",
+        "BUDL",
+        "RURF",
+        "RUDB",
+        "BLLU",
+        "DFDR",
+        "LUUR",
+        "FLBR",
+        "LUBR",
+        "LUBU",
+        "FLLD",
+        "BULF",
+        "LBFR",
+        "RUBL",
+        "DFDB",
+        "BUFL",
+        "FLDL",
+        "DFBL",
+        "RUBU",
+        "RUBD",
+        "LBRF",
+        "RURB",
+        "DFRB",
+        "RULB",
+        "LBDF",
+        "LBRD",
+        "LBDL",
+        "DFBD",
+        "FLDF",
+        "FLBD",
+        "RULU",
+        "LBDR",
+        "FLBL",
+        "LUDB",
+        "FLLU",
+        "RUDR",
+        "BUFR",
+        "BLBD",
+        "LBBR",
+        "BLDB",
+        "RUDF",
+        "BULD",
+        "BLDF",
+        "DFLD",
+        "BURD",
+        "BULB",
+        "RUBR",
+        "BLFR",
+        "LUFR",
+        "BUFD",
+        "FLRU",
+        "BLLD",
+        "DFRF",
+        "LURD",
+        "RUFD",
+        "BUBR",
+        "BURF",
+        "DFBR",
+        "LBLU",
+        "FLUR",
+        "DFUB",
+        "LBLF",
+        "BLBR",
+        "LUUB",
+        "FLFR",
+        "DFLB",
+        "DFRU",
+        "LUFL",
+        "BUBD",
+        "BUDF",
+        "LUBL",
+        "DFRD",
+        "BLUB",
+        "BLRD",
+        "RUFR",
+        "BULU",
+        "FLUL",
+        "LBLD",
+        "RUUL",
+    }
+
+    ui = CLIInterface(
+        output_mode=OutputMode.COLORED, log_to_file=True, log_level=logging.DEBUG
+    )
+
+    settings = Settings(ui)
 
     cube = Cube(
-        scram, ls=letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
+        "", ls=settings.letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
     )
-    print(scram)
-    # # print(c.adj_corners)
-    cube.display_cube()
-    print(cube.get_faces_colors())
-    # print(cube.solve(invert=False))
-    # print(cube.solve(invert=True))
-    # # # TODO:::: adapt for different versions of FDR ie FRD
-    # # # c.drill_corner_sticker('FDR')
-    # # # TODO:::: letter scheme for below is a dependency for working
-    # # c.drill_edge_buffer("DF")
+
+    cube.generate_scramble_state(targets)
