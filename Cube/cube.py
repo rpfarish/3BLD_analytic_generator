@@ -2,10 +2,9 @@ import logging
 import Settings.settings
 from dlin.tracer import rotate_face_precedence
 import random
-import json
 from collections import deque, defaultdict
 from typing import Optional
-from Settings.settings import Settings
+from Letterscheme.letterscheme import convert_letterpairs
 
 import dlin
 import kociemba
@@ -18,6 +17,9 @@ from Settings.settings import Buffers, Settings
 from .face_enum import CornerFaceEnum as Corner
 from .face_enum import EdgeFaceEnum
 from .face_enum import EdgeFaceEnum as Edge
+
+
+import time
 
 DEBUG = True
 
@@ -40,6 +42,138 @@ def select_cycles(
             used.add(b)
 
     return cycles
+
+
+def edge_perm_parity(perm):
+    visited = [False] * len(perm)
+    swaps = 0
+    for i in range(len(perm)):
+        if visited[i]:
+            continue
+        j, clen = i, 0
+        while not visited[j]:
+            visited[j] = True
+            j = perm[j]
+            clen += 1
+        swaps += clen - 1
+    return swaps % 2
+
+
+def chain_into_permutation(permutation_state, start_pos, links):
+    """
+    Threads (a, b) blocks into one closed permutation cycle starting AND
+    ending at start_pos. `start_pos` must never itself appear inside `links`
+    -- it's purely the silent entry/anchor point, never an explicit hop.
+    Every block always contributes exactly 2 hops, so any (pos_a, pos_b)
+    target block stays paired together as a written trace pair no matter
+    where it falls in the shuffle or how many other blocks share the cycle.
+    """
+    cur = start_pos
+    for a, b in links:
+        permutation_state[cur] = a
+        cur = a
+        if b is not None:
+            permutation_state[cur] = b
+            cur = b
+    permutation_state[cur] = start_pos
+
+
+def build_natural_filler_cycles(positions, avg_cycle_len=3.0):
+    """Splits leftover positions into a natural mix of cycle lengths --
+    including length-1 (fixed points), which are the in-place-flip candidates."""
+    positions = list(positions)
+    random.shuffle(positions)
+    cycles = []
+    i, n = 0, len(positions)
+    while i < n:
+        remaining = n - i
+        length = 1
+        while length < remaining and random.random() < (1 - 1 / avg_cycle_len):
+            length += 1
+        cycles.append(positions[i : i + length])
+        i += length
+    return cycles
+
+
+def build_uniform_random_cycles(positions):
+    """
+    A genuinely unbiased natural cycle structure: sample a uniformly random
+    permutation of `positions` (plain shuffle) and decompose it into its own
+    cycles, rather than pre-deciding cycle lengths with an artificial
+    distribution. A uniform random permutation has an expected value of
+    exactly 1 fixed point, regardless of pool size (basic probability fact)
+    -- that's what a real scramble's leftover pieces look like.
+    """
+    positions = list(positions)
+    shuffled = list(positions)
+    random.shuffle(shuffled)
+    perm_map = dict(zip(positions, shuffled))
+    visited = set()
+    cycles = []
+    for p in positions:
+        if p in visited:
+            continue
+        cyc = []
+        cur = p
+        while cur not in visited:
+            visited.add(cur)
+            cyc.append(cur)
+            cur = perm_map[cur]
+        cycles.append(cyc)
+    return cycles
+
+
+AXIS_OF_LETTER = {"U": 1, "D": 1, "F": 2, "B": 2, "R": 0, "L": 0}
+
+
+def solve_chain_orientation(
+    chain_positions, start_axis, requirements, ori_out, edge_colors
+):
+    """
+    chain_positions: [P_0(buffer, implicit), P_1, ..., P_k] in the EXACT
+    order the real Tracer will walk (matches perm[] chain order).
+    requirements: dict position -> desired bit (0 = that position's own
+    primary letter should be read first, 1 = secondary first) for any
+    position that's a locked target.
+
+    The critical fact this encodes, from stepping through Tracer.where_to():
+    the letter shown when "visiting" P_i actually spells out P_{i+1}'s own
+    identity (since perm[P_i] = P_{i+1}), and its reading direction is
+    controlled by ori[P_i] combined with whether the INCOMING axis (itself
+    a function of the whole chain walked so far) matches P_i's own primary
+    axis type -- not F/B-then-U/D priority, and not P_{i+1}'s own bit.
+    So ori_out[P_i] is solved to satisfy P_{i+1}'s requirement.
+    """
+    current_axis = start_axis
+    for i in range(len(chain_positions) - 1):
+        P_i = chain_positions[i]
+        P_next = chain_positions[i + 1]
+        p_primary, _ = edge_colors[P_i]
+        axis_matches = current_axis == AXIS_OF_LETTER[p_primary]
+
+        next_primary, next_secondary = edge_colors[P_next]
+
+        if P_next in requirements:
+            want_primary_shown = requirements[P_next] == 0
+            ori_bit = (
+                (0 if want_primary_shown else 1)
+                if axis_matches
+                else (1 if want_primary_shown else 0)
+            )
+        else:
+            ori_bit = random.randint(0, 1)
+
+        ori_out[P_i] = ori_bit
+        primary_shown = (axis_matches and ori_bit == 0) or (
+            not axis_matches and ori_bit == 1
+        )
+        shown_letter = next_primary if primary_shown else next_secondary
+        current_axis = AXIS_OF_LETTER[shown_letter]
+
+    ori_out[chain_positions[-1]] = random.randint(
+        0, 1
+    )  # closes to buffer, unconstrained
+    return ori_out
 
 
 class Cube:
@@ -907,10 +1041,13 @@ class Cube:
         if not self.ls.is_default:
             raise Exception("letter scheme must be default in order to solve cube")
         if not invert:
-            return kociemba.solve(self.get_faces_colors(), max_depth=max_depth)
+            return kociemba.solve(
+                self.get_faces_colors(),
+            )
         else:
             return kociemba.solve(
-                self.kociemba_solved_cube, self.get_faces_colors(), max_depth=max_depth
+                self.kociemba_solved_cube,
+                self.get_faces_colors(),
             )
 
     EDGE_COLORS = {
@@ -1029,30 +1166,7 @@ class Cube:
         return "".join(facelets[f] for f in order)
 
     def generate_scramble_state(self, targets: set[str], min_pairs=2):
-        n = 11
-        permutation = set(range(1, 12))
-
-        if min_pairs > 5:
-            print("minimum pair length for edges exceeds 5")
         min_pairs = min(min_pairs, 5)
-
-        first_cycle_len = random.randint(min_pairs * 2, n - 1)
-        print(f"{first_cycle_len=}")
-        first_cycle_is_odd = first_cycle_len % 2 == 1
-
-        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
-        buffer_weight = {
-            buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
-        }
-
-        for pair in targets:
-            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
-            x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
-            categorize_cycles[(x, y)].append(a + b)
-
-        cycles = select_cycles(categorize_cycles, min_pairs)
-        print("cycles", cycles)
 
         loc_to_perm = {
             "UB": 1,
@@ -1105,168 +1219,146 @@ class Cube:
             "DBL": "Z",
         }
 
-        used_permutation = set()
-        locked_orientation: dict[int, int] = {}
-        used_list = []
+        buffer_weight = {
+            buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
+        }
 
-        # Decode target pairs into (position, position) AND lock their orientation
-        # from the letter codes themselves — never randomize these.
+        # ---- 1. Categorize + select targets, excluding buffer-touching ones ----
+        categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
+        for pair in targets:
+            a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
+            pos_a, pos_b = loc_to_perm[a], loc_to_perm[b]
+            if pos_a == 0 or pos_b == 0:
+                continue
+            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            x, y = sorted([ra, rb], key=lambda k: buffer_weight[k])
+            categorize_cycles[(x, y)].append(a + b)
+
+        cycles = select_cycles(categorize_cycles, min_pairs)
+        print(
+            cycles,
+            convert_letterpairs(
+                cycles, "loc_to_letter", self.ls, "edges", return_type="list"
+            ),
+        )
+
+        target_links: list[tuple[int, int]] = []
+        requirements: dict[int, int] = {}
+        used_positions: set[int] = set()
+
         for pair in cycles:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             pos_a, pos_b = loc_to_perm[a], loc_to_perm[b]
-            ori_a = self.letter_orientation(a, loc_to_perm)
-            ori_b = self.letter_orientation(b, loc_to_perm)
-
-            for pos, ori in ((pos_a, ori_a), (pos_b, ori_b)):
-                if pos in locked_orientation and locked_orientation[pos] != ori:
+            req_a = self.letter_orientation(a, loc_to_perm)
+            req_b = self.letter_orientation(b, loc_to_perm)
+            for pos, req in ((pos_a, req_a), (pos_b, req_b)):
+                if pos in requirements and requirements[pos] != req:
                     raise ValueError(
-                        f"Conflicting orientation for position {pos}: "
-                        f"{locked_orientation[pos]} vs {ori} (from pair {pair!r})"
+                        f"Conflicting requirement for position {pos}: "
+                        f"{requirements[pos]} vs {req} (from pair {pair!r})"
                     )
-                locked_orientation[pos] = ori
+                requirements[pos] = req
+            used_positions.add(pos_a)
+            used_positions.add(pos_b)
+            target_links.append((pos_a, pos_b))
 
-            used_permutation.add(pos_a)
-            used_permutation.add(pos_b)
-            used_list.append((pos_a, pos_b))
+        # ---- 2. All target blocks thread through ONE cycle anchored at the
+        # real buffer (position 0). ----
+        free_positions = list(set(range(12)) - used_positions - {0})
+        random.shuffle(free_positions)
+        leftover_pool = list(free_positions)
 
-        print(used_permutation)
-        print(used_list)
-        print(first_cycle_len)
-
-        remaining_target_len = first_cycle_len - min_pairs * 2
-        print(remaining_target_len)
-
-        is_odd = remaining_target_len % 2 == 1
-        num_pairs = (remaining_target_len - is_odd) // 2
-
-        remaining_permutation = permutation - used_permutation
-        remaining_permutation = list(remaining_permutation)
-        random.shuffle(remaining_permutation)
-        print(f"{remaining_permutation=}")
-
-        assert num_pairs * 2 + is_odd <= len(remaining_permutation), (
-            f"first_cycle_len={first_cycle_len} needs {num_pairs * 2 + is_odd} pieces, "
-            f"only {len(remaining_permutation)} available"
-        )
-
-        # Pull filler pairs (and possibly a singleton) off the shuffled list to
-        # pad the first cycle out to first_cycle_len.
-        for _ in range(num_pairs):
-            cur = remaining_permutation.pop()
-            cur2 = remaining_permutation.pop()
-            used_permutation.add(cur)
-            used_permutation.add(cur2)
-            used_list.append((cur, cur2))
-
-        random.shuffle(used_list)
-        if first_cycle_is_odd != is_odd:
-            cur = remaining_permutation.pop()
-            used_permutation.add(cur)
-            used_list.append((cur, None))
-
-        print(used_permutation)
-        print(f"{used_list=}")
-
-        # --- Build the main (first) cycle by chaining pairs through the buffer ---
         permutation_state = list(range(12))
-        cur = 0
-
-        for a, b in used_list:
-            permutation_state[cur] = a
-            cur = a
-            if b is not None:
-                permutation_state[cur] = b
-                cur = b
-            else:
-                permutation_state[cur] = 0
+        links = list(target_links)
+        max_main_filler_pairs = min(4, len(free_positions) // 2)
+        num_filler_pairs_main = (
+            random.randint(1, max_main_filler_pairs)
+            if max_main_filler_pairs >= 1
+            else 0
+        )
+        for _ in range(num_filler_pairs_main):
+            if len(free_positions) < 2:
                 break
+            x, y = free_positions.pop(), free_positions.pop()
+            links.append((x, y))
+            leftover_pool.remove(x)
+            leftover_pool.remove(y)
+        random.shuffle(links)
+
+        main_cycle_exists = bool(links)
+        if main_cycle_exists:
+            chain_into_permutation(permutation_state, 0, links)
         else:
-            permutation_state[cur] = 0
+            free_positions.append(0)
+            leftover_pool.append(0)
 
-        # --- Build the second cycle(s) from whatever's genuinely leftover ---
-        leftover = remaining_permutation  # untouched by the main chain
-        leftover_sorted = sorted(leftover)
-
-        for i, p in enumerate(leftover):
-            permutation_state[leftover_sorted[i]] = p
-
-        print(" ".join(f"{x:>3}" for x in permutation_state))
-        print(" ".join(f"{x:>3}" for x in range(12)))
-        print(f"{leftover=}")
-
-        # --- Fix total edge permutation parity (must be even, to match solved corners) ---
-        def edge_perm_parity(perm):
-            visited = [False] * len(perm)
-            swaps = 0
-            for i in range(len(perm)):
-                if visited[i]:
+        # ---- 3. Remaining positions -> independent natural filler cycles ----
+        if free_positions:
+            for fc in build_uniform_random_cycles(free_positions):
+                if len(fc) == 1:
+                    permutation_state[fc[0]] = fc[0]
                     continue
-                j, clen = i, 0
-                while not visited[j]:
-                    visited[j] = True
-                    j = perm[j]
-                    clen += 1
-                swaps += clen - 1
-            return swaps % 2
+                f_links = [(fc[i], fc[i + 1]) for i in range(0, len(fc) - 1, 2)]
+                if len(fc) % 2 == 1:
+                    f_links.append((fc[-1], None))
+                chain_into_permutation(permutation_state, fc[0], f_links)
 
-        total_parity = edge_perm_parity(permutation_state)
-        print(f"{total_parity=}")
-
-        if total_parity == 1:
-            if len(leftover) >= 2:
-                # Composing with any single transposition flips parity by exactly 1,
-                # regardless of current cycle structure — so any two distinct
-                # leftover positions work.
-                pi, pj = leftover_sorted[0], leftover_sorted[1]
-                permutation_state[pi], permutation_state[pj] = (
-                    permutation_state[pj],
-                    permutation_state[pi],
-                )
-                print(f"parity fix: swapped positions {pi} and {pj}")
+        # ---- 4. Fix total permutation parity ----
+        if edge_perm_parity(permutation_state) == 1:
+            fixed_in_leftover = [p for p in leftover_pool if permutation_state[p] == p]
+            if len(fixed_in_leftover) >= 2:
+                pi, pj = fixed_in_leftover[0], fixed_in_leftover[1]
+            elif len(leftover_pool) >= 2:
+                pi, pj = leftover_pool[0], leftover_pool[1]
             else:
-                # leftover has 0 or 1 elements — mathematically this case is only
-                # reachable when first_cycle_len == n - 1, and that always yields
-                # an odd-length main cycle (even parity) on its own, so we should
-                # never actually land here. Surfacing loudly if we do.
                 raise ValueError(
-                    "Odd total edge parity with no leftover room to correct — "
-                    f"first_cycle_len={first_cycle_len}, leftover={leftover}. "
-                    "This indicates a logic error, not a normal random outcome."
+                    "No room to fix permutation parity without disturbing a "
+                    f"target cycle — used_positions={used_positions}."
                 )
+            permutation_state[pi], permutation_state[pj] = (
+                permutation_state[pj],
+                permutation_state[pi],
+            )
 
         assert edge_perm_parity(permutation_state) == 0, "parity fix failed"
+        assert sorted(permutation_state) == list(range(12)), (
+            "permutation_state is not a valid bijection"
+        )
 
-        # --- Orientation ---
+        # ---- 5. Orientation: solve the MAIN cycle with the chain-aware
+        # solver -- this is what actually satisfies the targets. Everything
+        # else (pure filler cycles / fixed points, no requirements) gets
+        # free random bits. ----
+        orientation: list = [None] * 12
 
-        orientation = [0] * 12
+        if main_cycle_exists:
+            chain_positions = [0]
+            cur = permutation_state[0]
+            while cur != 0:
+                chain_positions.append(cur)
+                cur = permutation_state[cur]
+            ori_map: dict[int, int] = {}
+            solve_chain_orientation(
+                chain_positions,
+                start_axis=1,
+                requirements=requirements,
+                ori_out=ori_map,
+                edge_colors=Cube.EDGE_COLORS,
+            )
+            for pos, bit in ori_map.items():
+                orientation[pos] = bit
 
-        # 1. Target pieces: orientation is already decoded from the letters — set directly.
-        for pos, ori in locked_orientation.items():
-            orientation[pos] = ori
-
-        # 2. Filler pieces: anything displaced that isn't a locked target piece
-        #    (this naturally includes positions touched by the parity-fix swap).
-        filler_displaced = [
-            pos
-            for pos in range(12)
-            if pos not in locked_orientation and permutation_state[pos] != pos
-        ]
-
-        for pos in filler_displaced:
+        remaining = [p for p in range(12) if orientation[p] is None]
+        for pos in remaining:
             orientation[pos] = random.randint(0, 1)
 
-        # 3. Fix orientation parity using filler only — never touch locked orientations.
         if sum(orientation) % 2 == 1:
-            if filler_displaced:
-                flip_idx = random.choice(filler_displaced)
-                orientation[flip_idx] ^= 1
+            if remaining:
+                orientation[random.choice(remaining)] ^= 1
             else:
                 raise ValueError(
-                    "Target-cycle orientations sum to odd parity with no filler "
-                    "piece available to correct — check `select_cycles`/letter data."
+                    "No filler piece available to correct orientation parity."
                 )
-
-        print(f"{orientation=}")
 
         return permutation_state, orientation
 
@@ -1469,7 +1561,9 @@ if __name__ == "__main__":
     print(res)
 
     kociemba_solved_cube: str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
-    scram = kociemba.solve(kociemba_solved_cube, res, max_depth=20)
+    start = time.time_ns()
+    scram = kociemba.solve(kociemba_solved_cube, res)
+    print(f"{(time.time_ns() - start) / 1e6:.2f}")
     print("Here three")
 
     print(scram)

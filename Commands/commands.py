@@ -4,7 +4,7 @@ from random import choice, shuffle
 
 from Cube import Memo
 from Cube.solution import Solution
-from dlin.tracer import rotate_face_precedence
+from dlin.tracer import rotate_face_precedence, rotate_to_buffer
 from Drill.drill import Drill
 from interface import CLIInterface
 from Letterscheme.letterscheme import (
@@ -261,9 +261,12 @@ class Commands:
             buf: i for i, buf in enumerate(self.settings.dlin_buffers["corner"])
         }
 
+        buff = self.settings.dlin_buffers["corner"]
+        print("BUFFERS dlin", buff)
         for pair in algs:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
-            ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
+            ra, rb = rotate_to_buffer(a, buff), rotate_to_buffer(b, buff)
+            print("rotate_to_buffer", ra, rb)
             x, y = sorted([ra, rb], key=lambda x: buffer_weight[x])
             categorize_cycles[(x, y)].append(a + b)
 

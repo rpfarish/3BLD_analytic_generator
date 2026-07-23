@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import pandas as pd
-from Cube.letterscheme import sort_face_precedence
+from Letterscheme.letterscheme import sort_face_precedence
 
 
 def ingest_spreadsheet(file_name: Path, cols_first: bool):

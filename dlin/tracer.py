@@ -29,11 +29,39 @@ class Tracing(TypedDict):
     rotation: list[str]
 
 
+def sort_face_precedence(cell):
+    name = list(cell)
+    face_precedence = {"U": 0, "D": 0, "F": 1, "B": 1, "R": 2, "L": 2, "": 3}
+    name[1:] = sorted(name[1:], key=lambda x: face_precedence[x])
+    return "".join(name)
+
+
 def rotate_face_precedence(cell):
     name = list(cell)
     face_precedence = {"U": 0, "D": 0, "F": 1, "B": 1, "R": 2, "L": 2, "": 3}
     name = sorted(name, key=lambda x: face_precedence[x])
     return "".join(name)
+
+
+def rotate_to_buffer(cell, buffers):
+    """
+    Cyclically rotate a 3-letter corner sticker name to match the
+    canonical buffer name for that physical piece — preserves orientation
+    (chirality), unlike a full letter-sort.
+    `buffers`: list of canonical buffer corner names, e.g. self.settings.dlin_buffers["corner"]
+    """
+    if len(cell) != 3:
+        return rotate_face_precedence(cell)  # fallback for edges/other lengths
+
+    cell_set = frozenset(cell)
+    for buf in buffers:
+        if frozenset(buf) == cell_set:
+            target = buf[0]
+            idx = cell.index(target)
+            return sort_face_precedence(cell[idx:] + cell[:idx])
+
+    # no matching buffer piece found — fall back to old behavior
+    return sort_face_precedence(rotate_face_precedence(cell))
 
 
 class Tracer(dlin.cube.Cube):

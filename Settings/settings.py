@@ -150,6 +150,8 @@ class Settings:
             buffers["edge"][: len(edge_buffers)] = edge_buffers
             buffers["corner"][: len(corner_buffers)] = corner_buffers
 
+        # sort_face_precedence()
+
         return dlin.DefaultBuffers(edge=buffers["edge"], corner=buffers["corner"])
 
     def load_list_of_comms_json(self) -> None: ...
