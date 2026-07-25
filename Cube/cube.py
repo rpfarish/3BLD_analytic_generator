@@ -1193,30 +1193,6 @@ class Cube:
             "DR": 5,
             "DB": 6,
             "DL": 7,
-            "UBL": "A",
-            "UBR": "B",
-            "UFR": "U",
-            "UFL": "D",
-            "LUB": "J",
-            "LUF": "F",
-            "LDF": "G",
-            "LDB": "H",
-            "FUL": "E",
-            "FUR": "I",
-            "FDR": "K",
-            "FDL": "L",
-            "RUF": "X",
-            "RUB": "N",
-            "RDB": "O",
-            "RDF": "P",
-            "BUR": "R",
-            "BUL": "M",
-            "BDL": "S",
-            "BDR": "T",
-            "DFL": "C",
-            "DFR": "V",
-            "DBR": "W",
-            "DBL": "Z",
         }
 
         buffer_weight = {
@@ -1364,6 +1340,8 @@ class Cube:
 
 
 if __name__ == "__main__":
+    beginning = time.time_ns()
+
     # from pathlib import Path
     #
     # # Get the directory containing this file
@@ -1543,6 +1521,8 @@ if __name__ == "__main__":
         "RUUL",
     }
 
+    # targets = {"RUBU", "RUBL"}
+
     ui = CLIInterface(
         output_mode=OutputMode.COLORED, log_to_file=True, log_level=logging.DEBUG
     )
@@ -1553,17 +1533,14 @@ if __name__ == "__main__":
         "", ls=settings.letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
     )
 
-    print("Here one")
-    state = cube.generate_scramble_state(targets)
-    print("Here two")
+    state = cube.generate_scramble_state(targets, min_pairs=3)
     res = cube.edges_to_facelet_string(*state)
-    print("Here three")
     print(res)
 
     kociemba_solved_cube: str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
     start = time.time_ns()
     scram = kociemba.solve(kociemba_solved_cube, res)
-    print(f"{(time.time_ns() - start) / 1e6:.2f}")
-    print("Here three")
 
+    print(f"Time: {(time.time_ns() - start) / 1e6:.2f}ms")
     print(scram)
+    print(f"Total Time: {(time.time_ns() - beginning) / 1e6:.2f}ms")
