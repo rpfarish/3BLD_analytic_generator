@@ -8,11 +8,13 @@ from Letterscheme.letterscheme import convert_letterpairs
 
 import dlin
 import kociemba
+import numpy as np
 from comms.comms import COMMS
 from Commutator.comm_shift import comm_shift
 from interface import CLIInterface, OutputMode
 from Letterscheme.letterscheme import LetterScheme
 from Settings.settings import Buffers, Settings
+from dlin.piece import Piece
 
 from .face_enum import CornerFaceEnum as Corner
 from .face_enum import EdgeFaceEnum
@@ -22,6 +24,15 @@ from .face_enum import EdgeFaceEnum as Edge
 import time
 
 DEBUG = True
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers (edges) -- used by both Cube.generate_scramble_state and,
+# indirectly, by nothing corner-related (corners have their own copies below
+# where the logic actually differs).
+# ---------------------------------------------------------------------------
+
+AXIS_OF_LETTER = {"U": 1, "D": 1, "F": 2, "B": 2, "R": 0, "L": 0}
 
 
 def select_cycles(
@@ -45,6 +56,8 @@ def select_cycles(
 
 
 def edge_perm_parity(perm):
+    """Generic permutation-array parity check (works for any length --
+    also reused as `perm_parity` for corners)."""
     visited = [False] * len(perm)
     swaps = 0
     for i in range(len(perm)):
@@ -54,6 +67,30 @@ def edge_perm_parity(perm):
         while not visited[j]:
             visited[j] = True
             j = perm[j]
+            clen += 1
+        swaps += clen - 1
+    return swaps % 2
+
+
+# alias used by the corner-generation code (identical implementation)
+perm_parity = edge_perm_parity
+
+
+def edge_perm_parity_sub(perm, positions):
+    """Permutation parity over just the given subset (for when some
+    positions -- e.g. a pseudo-swapped pair -- are handled separately)."""
+    positions = list(positions)
+    index_of = {p: i for i, p in enumerate(positions)}
+    sub = [index_of[perm[p]] for p in positions]
+    visited = [False] * len(sub)
+    swaps = 0
+    for i in range(len(sub)):
+        if visited[i]:
+            continue
+        j, clen = i, 0
+        while not visited[j]:
+            visited[j] = True
+            j = sub[j]
             clen += 1
         swaps += clen - 1
     return swaps % 2
@@ -123,9 +160,6 @@ def build_uniform_random_cycles(positions):
     return cycles
 
 
-AXIS_OF_LETTER = {"U": 1, "D": 1, "F": 2, "B": 2, "R": 0, "L": 0}
-
-
 def solve_chain_orientation(
     chain_positions, start_axis, requirements, ori_out, edge_colors
 ):
@@ -174,6 +208,301 @@ def solve_chain_orientation(
         0, 1
     )  # closes to buffer, unconstrained
     return ori_out
+
+
+# ---------------------------------------------------------------------------
+# Corner-generation helpers (module-level -- these operate independently of
+# a Cube instance, mirroring how edge generation is a Cube method but
+# corner generation stays a standalone set of functions you can call with
+# just a target set).
+# ---------------------------------------------------------------------------
+
+CLASS1 = [{"U", "F", "R"}, {"U", "B", "L"}, {"D", "B", "R"}, {"D", "F", "L"}]
+
+CORNER_COLORS = {
+    0: "UFR",
+    1: "UFL",
+    2: "UBL",
+    3: "UBR",
+    4: "DFR",
+    5: "DFL",
+    6: "DBR",
+    7: "DBL",
+}
+CORNER_ORI = {
+    "BDL": ["LDB", "DBL", "BDL"],
+    "BDR": ["RDB", "BDR", "DBR"],
+    "BLU": ["LUB", "BUL", "UBL"],
+    "BRU": ["RUB", "UBR", "BUR"],
+    "DFL": ["LDF", "FDL", "DFL"],
+    "DFR": ["RDF", "DFR", "FDR"],
+    "FLU": ["LUF", "UFL", "FUL"],
+    "FRU": ["RUF", "FUR", "UFR"],
+}
+
+
+def corner_key(s):
+    return "".join(sorted(s))
+
+
+def is_class1(name3):
+    return set(name3) in CLASS1
+
+
+AXIS_SEQUENCE = [1, 2, 0]
+
+
+def letters_by_axis(name3, reversed_=False):
+    out = {}
+    for ch in name3:
+        out[AXIS_OF_LETTER[ch]] = ch
+    if reversed_:
+        out[0], out[2] = out[2], out[0]
+    return out
+
+
+def build_corner_sides(cubie_name, position_name, orientation):
+    """
+    orientation is an internal 0/1/2 slot index (one of the 3 valid physical
+    states for this cubie AT THIS POSITION). Corners alternate handedness
+    class across the 8 positions (same {UFR,UBL,DBR,DFL} vs {UFL,UBR,DFR,DBL}
+    split your Tracer's find_twists()/corner_cycle_ori special-case on) --
+    when the cubie's home class differs from the position's class, the R/L
+    and F/B axis roles swap relative to the same-class case. Validated
+    against 16,000 real scrambled states (dlin.cube.Cube with actual move
+    application): 0 mismatches.
+    """
+    same_class = is_class1(cubie_name) == is_class1(position_name)
+    cubie_letters = letters_by_axis(cubie_name, reversed_=not same_class)
+    sides = ["", "", ""]
+    for i in range(3):
+        axis = AXIS_SEQUENCE[i]
+        source_axis = AXIS_SEQUENCE[(i - orientation) % 3]
+        sides[axis] = cubie_letters[source_axis]
+    return sides
+
+
+def corner_reading(cubie_name, position_name, orientation, axis):
+    sides = build_corner_sides(cubie_name, position_name, orientation)
+    p = Piece(1, 1, 1)
+    p.sides = np.array(sides)
+    return p.get_name(axis=axis)
+
+
+def kociemba_orientation(position_name, my_slot):
+    """
+    Convert my internal orientation slot into kociemba's own orientation
+    number (needed for the sum-of-orientations validity constraint, since
+    my slot numbering and kociemba's differ by a fixed, position-only
+    permutation -- an artifact of my CORNER_FACELETS table ordering two
+    facelets differently than kociemba's own table for exactly the class1
+    positions). Harmless for facelet placement itself; only matters for
+    this sum check. Self-inverse, so the same function converts either way.
+    """
+    if is_class1(position_name):
+        return [0, 2, 1][my_slot]
+    return my_slot
+
+
+loc_to_perm_corner = {}
+for _pos, _name in CORNER_COLORS.items():
+    for _reading in CORNER_ORI[corner_key(_name)]:
+        loc_to_perm_corner[_reading] = _pos
+
+dlin_buffers_corner = ["UFR", "UFL", "UBL", "UBR", "DFR", "DFL", "DBR", "DBL"]
+corner_buffer_weight = {name: i for i, name in enumerate(dlin_buffers_corner)}
+
+
+def solve_corner_chain_orientation(chain_positions, start_axis, requirements, ori_out):
+    """
+    chain_positions: [P_0(buffer, implicit), P_1, ..., P_k] in exact perm[]
+    chain order. requirements: dict position -> desired READING STRING
+    (e.g. "UFL") for any locked target position.
+
+    Brute-force at each step: try each of the 3 physical orientation slots
+    for the occupying cubie, read it via the real Piece.get_name(axis=...),
+    and pick whichever slot produces EXACTLY the desired string -- avoids
+    needing a numeric orientation formula to be axis-invariant (it isn't).
+    """
+    current_axis = start_axis
+    for i in range(len(chain_positions) - 1):
+        P_i = chain_positions[i]
+        P_next = chain_positions[i + 1]
+        cubie_name = CORNER_COLORS[P_next]
+        position_name = CORNER_COLORS[P_i]
+
+        desired = requirements.get(P_next)
+        chosen_ori = None
+        chosen_reading = None
+        candidates = list(range(3))
+        random.shuffle(candidates)
+        for cand in candidates:
+            reading = corner_reading(cubie_name, position_name, cand, current_axis)
+            if desired is None or reading == desired:
+                chosen_ori, chosen_reading = cand, reading
+                break
+        if chosen_ori is None:
+            raise ValueError(
+                f"Could not satisfy corner requirement {desired!r} for position "
+                f"{P_next} coming from position {P_i} (axis={current_axis})."
+            )
+        ori_out[P_i] = chosen_ori
+        current_axis = AXIS_OF_LETTER[chosen_reading[0]]
+
+    ori_out[chain_positions[-1]] = random.randint(0, 2)
+    return ori_out
+
+
+def generate_corner_scramble_state(targets, min_pairs=3, force_parity=None, seed=None):
+    """
+    targets: set of 6-char strings, each a pair of 3-letter corner readings
+    concatenated, e.g. "UFLDFR".
+    min_pairs: capped at 3 (buffer + 3 pairs = all 7 non-buffer corners).
+    force_parity: None / 0 (even) / 1 (odd) permutation parity -- the 50/50
+    corner-parity coin flip.
+
+    With only 8 corners, 3 full target pairs use 6 of 7 non-buffer
+    positions, leaving exactly 1 free -- forcing a single 7-cycle + 1 fixed
+    point (always even parity), no room for a parity fix. When force_parity
+    hits this, retry with one fewer target pair to free up room.
+    """
+    cap = min(min_pairs, 3)
+    last_error = None
+    for attempt_cap in range(cap, -1, -1):
+        try:
+            return _generate_corner_scramble_state_once(
+                targets, min_pairs=attempt_cap, force_parity=force_parity, seed=seed
+            )
+        except ValueError as e:
+            last_error = e
+            continue
+    raise last_error
+
+
+def _generate_corner_scramble_state_once(targets, min_pairs, force_parity, seed):
+    if seed is not None:
+        random.seed(seed)
+    min_pairs = min(min_pairs, 3)
+
+    categorize_cycles = defaultdict(list)
+    for pair in targets:
+        a, b = pair[:3], pair[3:]
+        pos_a, pos_b = loc_to_perm_corner[a], loc_to_perm_corner[b]
+        if pos_a == 0 or pos_b == 0:
+            continue
+        x, y = sorted([pos_a, pos_b])
+        categorize_cycles[(x, y)].append((a, b))
+
+    cycles = select_cycles(categorize_cycles, min_pairs)
+
+    target_links = []
+    requirements = {}
+    used_positions = set()
+
+    for a, b in cycles:
+        pos_a, pos_b = loc_to_perm_corner[a], loc_to_perm_corner[b]
+        for pos, req in ((pos_a, a), (pos_b, b)):
+            if pos in requirements and requirements[pos] != req:
+                raise ValueError(
+                    f"Conflicting requirement for corner {pos}: {requirements[pos]} vs {req}"
+                )
+            requirements[pos] = req
+        used_positions.add(pos_a)
+        used_positions.add(pos_b)
+        target_links.append((pos_a, pos_b))
+
+    free_positions = list(set(range(8)) - used_positions - {0})
+    random.shuffle(free_positions)
+    leftover_pool = list(free_positions)
+
+    permutation_state = list(range(8))
+    links = list(target_links)
+    reserve = 2 if force_parity is not None else 0
+    max_main_filler_pairs = min(3, max(0, len(free_positions) - reserve) // 2)
+    num_filler_pairs_main = (
+        random.randint(0, max_main_filler_pairs) if max_main_filler_pairs >= 1 else 0
+    )
+    for _ in range(num_filler_pairs_main):
+        if len(free_positions) < 2:
+            break
+        x, y = free_positions.pop(), free_positions.pop()
+        links.append((x, y))
+        leftover_pool.remove(x)
+        leftover_pool.remove(y)
+    random.shuffle(links)
+
+    main_cycle_exists = bool(links)
+    if main_cycle_exists:
+        chain_into_permutation(permutation_state, 0, links)
+    else:
+        free_positions.append(0)
+        leftover_pool.append(0)
+
+    if free_positions:
+        for fc in build_uniform_random_cycles(free_positions):
+            if len(fc) == 1:
+                permutation_state[fc[0]] = fc[0]
+                continue
+            f_links = [(fc[i], fc[i + 1]) for i in range(0, len(fc) - 1, 2)]
+            if len(fc) % 2 == 1:
+                f_links.append((fc[-1], None))
+            chain_into_permutation(permutation_state, fc[0], f_links)
+
+    if force_parity is not None and perm_parity(permutation_state) != force_parity:
+        fixed_in_leftover = [p for p in leftover_pool if permutation_state[p] == p]
+        if len(fixed_in_leftover) >= 2:
+            pi, pj = fixed_in_leftover[0], fixed_in_leftover[1]
+        elif len(leftover_pool) >= 2:
+            pi, pj = leftover_pool[0], leftover_pool[1]
+        else:
+            raise ValueError(
+                "no room to fix corner permutation parity without disturbing a target cycle"
+            )
+        permutation_state[pi], permutation_state[pj] = (
+            permutation_state[pj],
+            permutation_state[pi],
+        )
+
+    assert sorted(permutation_state) == list(range(8))
+    if force_parity is not None:
+        assert perm_parity(permutation_state) == force_parity
+
+    orientation = [None] * 8
+    if main_cycle_exists:
+        chain_positions = [0]
+        cur = permutation_state[0]
+        while cur != 0:
+            chain_positions.append(cur)
+            cur = permutation_state[cur]
+        ori_map = {}
+        solve_corner_chain_orientation(
+            chain_positions, start_axis=1, requirements=requirements, ori_out=ori_map
+        )
+        for pos, bit in ori_map.items():
+            orientation[pos] = bit
+
+    remaining = [p for p in range(8) if orientation[p] is None]
+    for pos in remaining:
+        orientation[pos] = random.randint(0, 2)
+
+    # Validity constraint (sum of orientations == 0 mod 3) is defined in
+    # kociemba's numbering, not mine -- convert before checking/fixing.
+    total_koc = (
+        sum(kociemba_orientation(CORNER_COLORS[p], orientation[p]) for p in range(8))
+        % 3
+    )
+    if total_koc != 0:
+        if remaining:
+            pos = random.choice(remaining)
+            cur_koc = kociemba_orientation(CORNER_COLORS[pos], orientation[pos])
+            new_koc = (cur_koc - total_koc) % 3
+            orientation[pos] = kociemba_orientation(CORNER_COLORS[pos], new_koc)
+        else:
+            raise ValueError(
+                "no filler corner available to correct orientation sum mod 3"
+            )
+
+    return permutation_state, orientation, cycles, requirements, target_links
 
 
 class Cube:
@@ -644,7 +973,7 @@ class Cube:
         if auto_scramble:
             self.scramble_cube()
 
-    def set_edge_state(self, other: Cube) -> None:
+    def set_edge_state(self, other: "Cube") -> None:
         if not isinstance(other, Cube):
             raise TypeError(f"Expected a Cube, got {type(other).__name__}")
 
@@ -1065,6 +1394,33 @@ class Cube:
         11: ("B", "R"),
     }
 
+    LOC_TO_PERM_EDGE = {
+        "UB": 1,
+        "UR": 2,
+        "UF": 0,
+        "UL": 3,
+        "LU": 3,
+        "LF": 9,
+        "LD": 7,
+        "LB": 10,
+        "FU": 0,
+        "FR": 8,
+        "FD": 4,
+        "FL": 9,
+        "RU": 2,
+        "RB": 11,
+        "RD": 5,
+        "RF": 8,
+        "BU": 1,
+        "BL": 10,
+        "BD": 6,
+        "BR": 11,
+        "DF": 4,
+        "DR": 5,
+        "DB": 6,
+        "DL": 7,
+    }
+
     @staticmethod
     def letter_orientation(code, loc_to_perm, edge_colors=None):
         """
@@ -1165,58 +1521,58 @@ class Cube:
 
         return "".join(facelets[f] for f in order)
 
-    def generate_scramble_state(self, targets: set[str], min_pairs=2):
+    def generate_scramble_state(
+        self,
+        targets: set[str],
+        min_pairs=2,
+        fully_excluded: frozenset = frozenset(),
+        seed: int | None = None,
+    ):
+        """
+        fully_excluded: positions entirely excluded from this generation --
+        never a target, never filler, never the anchor. Empty by default
+        (buffer/UF is used as the anchor, just never a target). When the
+        corner-parity pseudo-swap is active, pass {0, 2}: the caller sets
+        perm[0]/perm[2] directly afterward, and this method's own main cycle
+        anchors at whichever position is first in self.settings.dlin_buffers
+        edge order among what's left (UB, position 1) -- matching how the
+        real Tracer picks its next buffer once 0 and 2 are already
+        accounted for.
+
+        Returns (permutation_state, orientation, cycles, requirements,
+        target_links).
+        """
+        if seed is not None:
+            random.seed(seed)
+
         min_pairs = min(min_pairs, 5)
 
-        loc_to_perm = {
-            "UB": 1,
-            "UR": 2,
-            "UF": 0,
-            "UL": 3,
-            "LU": 3,
-            "LF": 9,
-            "LD": 7,
-            "LB": 10,
-            "FU": 0,
-            "FR": 8,
-            "FD": 4,
-            "FL": 9,
-            "RU": 2,
-            "RB": 11,
-            "RD": 5,
-            "RF": 8,
-            "BU": 1,
-            "BL": 10,
-            "BD": 6,
-            "BR": 11,
-            "DF": 4,
-            "DR": 5,
-            "DB": 6,
-            "DL": 7,
-        }
+        loc_to_perm = self.LOC_TO_PERM_EDGE
 
         buffer_weight = {
             buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
         }
 
-        # ---- 1. Categorize + select targets, excluding buffer-touching ones ----
+        anchor = next(
+            loc_to_perm[name]
+            for name in self.settings.dlin_buffers["edge"]
+            if loc_to_perm[name] not in fully_excluded
+        )
+        anchor_axis = AXIS_OF_LETTER[self.EDGE_COLORS[anchor][0]]
+        target_exclude = set(fully_excluded) | {anchor}
+
+        # ---- 1. Categorize + select targets, excluding buffer/reserved ----
         categorize_cycles: dict[tuple[str, str], list[str]] = defaultdict(list)
         for pair in targets:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             pos_a, pos_b = loc_to_perm[a], loc_to_perm[b]
-            if pos_a == 0 or pos_b == 0:
+            if pos_a in target_exclude or pos_b in target_exclude:
                 continue
             ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
             x, y = sorted([ra, rb], key=lambda k: buffer_weight[k])
             categorize_cycles[(x, y)].append(a + b)
 
         cycles = select_cycles(categorize_cycles, min_pairs)
-        print(
-            cycles,
-            convert_letterpairs(
-                cycles, "loc_to_letter", self.ls, "edges", return_type="list"
-            ),
-        )
 
         target_links: list[tuple[int, int]] = []
         requirements: dict[int, int] = {}
@@ -1239,14 +1595,19 @@ class Cube:
             target_links.append((pos_a, pos_b))
 
         # ---- 2. All target blocks thread through ONE cycle anchored at the
-        # real buffer (position 0). ----
-        free_positions = list(set(range(12)) - used_positions - {0})
+        # real buffer (or, when a pseudo-swap reserves it, the next buffer
+        # in line). ----
+        free_positions = list(
+            set(range(12)) - used_positions - set(fully_excluded) - {anchor}
+        )
         random.shuffle(free_positions)
         leftover_pool = list(free_positions)
 
         permutation_state = list(range(12))
+        for r in fully_excluded:
+            permutation_state[r] = r  # placeholder; caller overwrites these slots
         links = list(target_links)
-        max_main_filler_pairs = min(4, len(free_positions) // 2)
+        max_main_filler_pairs = min(4, max(0, len(free_positions) - 2) // 2)
         num_filler_pairs_main = (
             random.randint(1, max_main_filler_pairs)
             if max_main_filler_pairs >= 1
@@ -1263,10 +1624,10 @@ class Cube:
 
         main_cycle_exists = bool(links)
         if main_cycle_exists:
-            chain_into_permutation(permutation_state, 0, links)
+            chain_into_permutation(permutation_state, anchor, links)
         else:
-            free_positions.append(0)
-            leftover_pool.append(0)
+            free_positions.append(anchor)
+            leftover_pool.append(anchor)
 
         # ---- 3. Remaining positions -> independent natural filler cycles ----
         if free_positions:
@@ -1279,8 +1640,9 @@ class Cube:
                     f_links.append((fc[-1], None))
                 chain_into_permutation(permutation_state, fc[0], f_links)
 
-        # ---- 4. Fix total permutation parity ----
-        if edge_perm_parity(permutation_state) == 1:
+        # ---- 4. Fix total permutation parity (over the non-reserved subset) ----
+        non_reserved = [p for p in range(12) if p not in fully_excluded]
+        if edge_perm_parity_sub(permutation_state, non_reserved) == 1:
             fixed_in_leftover = [p for p in leftover_pool if permutation_state[p] == p]
             if len(fixed_in_leftover) >= 2:
                 pi, pj = fixed_in_leftover[0], fixed_in_leftover[1]
@@ -1296,27 +1658,31 @@ class Cube:
                 permutation_state[pi],
             )
 
-        assert edge_perm_parity(permutation_state) == 0, "parity fix failed"
-        assert sorted(permutation_state) == list(range(12)), (
-            "permutation_state is not a valid bijection"
+        assert edge_perm_parity_sub(permutation_state, non_reserved) == 0, (
+            "parity fix failed"
         )
+        assert sorted(permutation_state[p] for p in non_reserved) == sorted(
+            non_reserved
+        ), "permutation_state is not a valid bijection"
 
         # ---- 5. Orientation: solve the MAIN cycle with the chain-aware
         # solver -- this is what actually satisfies the targets. Everything
         # else (pure filler cycles / fixed points, no requirements) gets
         # free random bits. ----
         orientation: list = [None] * 12
+        for r in fully_excluded:
+            orientation[r] = 0  # placeholder; caller overwrites these slots
 
         if main_cycle_exists:
-            chain_positions = [0]
-            cur = permutation_state[0]
-            while cur != 0:
+            chain_positions = [anchor]
+            cur = permutation_state[anchor]
+            while cur != anchor:
                 chain_positions.append(cur)
                 cur = permutation_state[cur]
             ori_map: dict[int, int] = {}
             solve_chain_orientation(
                 chain_positions,
-                start_axis=1,
+                start_axis=anchor_axis,
                 requirements=requirements,
                 ori_out=ori_map,
                 edge_colors=Cube.EDGE_COLORS,
@@ -1328,7 +1694,7 @@ class Cube:
         for pos in remaining:
             orientation[pos] = random.randint(0, 1)
 
-        if sum(orientation) % 2 == 1:
+        if sum(orientation[p] for p in non_reserved) % 2 == 1:
             if remaining:
                 orientation[random.choice(remaining)] ^= 1
             else:
@@ -1336,50 +1702,150 @@ class Cube:
                     "No filler piece available to correct orientation parity."
                 )
 
-        return permutation_state, orientation
+        return permutation_state, orientation, cycles, requirements, target_links
+
+    # ---- Convenience wrapper: corner generation as a Cube method too, for
+    # symmetry with generate_scramble_state (edges). It simply delegates to
+    # the module-level corner generator, which has no dependency on a Cube
+    # instance's settings. ----
+    def generate_corner_scramble_state(
+        self, targets, min_pairs=3, force_parity=None, seed=None
+    ):
+        return generate_corner_scramble_state(
+            targets, min_pairs=min_pairs, force_parity=force_parity, seed=seed
+        )
+
+
+# ---------------------------------------------------------------------------
+# Full-state (edges + corners) combination: builds a single kociemba facelet
+# string directly from the edge/corner permutation+orientation arrays,
+# instead of going through a live Cube object's move simulation.
+# ---------------------------------------------------------------------------
+
+CORNER_FACELETS = {  # (U/D-facelet, F/B-facelet, R/L-facelet) per position
+    0: ("U9", "F3", "R1"),
+    1: ("U7", "F1", "L3"),
+    2: ("U1", "B3", "L1"),
+    3: ("U3", "B1", "R3"),
+    4: ("D3", "F9", "R7"),
+    5: ("D1", "F7", "L9"),
+    6: ("D9", "B7", "R9"),
+    7: ("D7", "B9", "L7"),
+}
+
+EDGE_FACELETS = {
+    0: ("U8", "F2"),
+    1: ("U2", "B2"),
+    2: ("U6", "R2"),
+    3: ("U4", "L2"),
+    4: ("D2", "F8"),
+    5: ("D6", "R8"),
+    6: ("D8", "B8"),
+    7: ("D4", "L8"),
+    8: ("F6", "R4"),
+    9: ("F4", "L6"),
+    10: ("B6", "L4"),
+    11: ("B4", "R6"),
+}
+
+
+def facelet_order():
+    return (
+        [f"U{i}" for i in range(1, 10)]
+        + [f"R{i}" for i in range(1, 10)]
+        + [f"F{i}" for i in range(1, 10)]
+        + [f"D{i}" for i in range(1, 10)]
+        + [f"L{i}" for i in range(1, 10)]
+        + [f"B{i}" for i in range(1, 10)]
+    )
+
+
+def build_facelet_string(edge_perm, edge_ori, corner_perm, corner_ori):
+    facelets = {face + "5": face for face in "URFDLB"}  # centers
+    for pos in range(12):
+        colors = list(Cube.EDGE_COLORS[edge_perm[pos]])
+        if edge_ori[pos]:
+            colors.reverse()
+        f1, f2 = EDGE_FACELETS[pos]
+        facelets[f1], facelets[f2] = colors[0], colors[1]
+    for pos in range(8):
+        sides = build_corner_sides(
+            CORNER_COLORS[corner_perm[pos]], CORNER_COLORS[pos], corner_ori[pos]
+        )
+        ud_key, fb_key, rl_key = CORNER_FACELETS[pos]
+        facelets[ud_key], facelets[fb_key], facelets[rl_key] = (
+            sides[1],
+            sides[2],
+            sides[0],
+        )
+    order = facelet_order()
+    return "".join(facelets[f] for f in order)
+
+
+def generate_cube_state(
+    cube: "Cube",
+    edge_targets,
+    corner_targets,
+    edge_min_pairs=2,
+    corner_min_pairs=3,
+    seed=None,
+):
+    """
+    Generates a full (edges + corners) scramble state, correlating the 50/50
+    edge/corner-parity coin flip between both piece types (a real scramble
+    can only have one or the other, never independently random), and
+    returns the resulting kociemba facelet string plus all the intermediate
+    bookkeeping (cycles/requirements/links) for each piece type.
+
+    `cube` supplies the settings (buffer order etc.) used for edge
+    generation; corner generation is buffer-order-agnostic.
+    """
+    if seed is not None:
+        random.seed(seed)
+
+    has_parity = random.random() < 0.5
+
+    c_perm, c_ori, c_cycles, c_req, c_links = generate_corner_scramble_state(
+        corner_targets,
+        min_pairs=corner_min_pairs,
+        force_parity=(1 if has_parity else 0),
+    )
+
+    fully_excluded = frozenset({0, 2}) if has_parity else frozenset()
+    e_perm, e_ori, e_cycles, e_req, e_links = cube.generate_scramble_state(
+        edge_targets, min_pairs=edge_min_pairs, fully_excluded=fully_excluded
+    )
+
+    e_perm, e_ori = list(e_perm), list(e_ori)
+    if has_parity:
+        e_perm[0], e_perm[2] = 2, 0  # the pseudo-swap
+        e_ori[0], e_ori[2] = 0, 0
+
+    facelet_string = build_facelet_string(e_perm, e_ori, c_perm, c_ori)
+
+    return {
+        "facelet_string": facelet_string,
+        "has_parity": has_parity,
+        "edge_perm": e_perm,
+        "edge_ori": e_ori,
+        "edge_cycles": e_cycles,
+        "edge_requirements": e_req,
+        "edge_target_links": e_links,
+        "corner_perm": c_perm,
+        "corner_ori": c_ori,
+        "corner_cycles": c_cycles,
+        "corner_requirements": c_req,
+        "corner_target_links": c_links,
+    }
 
 
 if __name__ == "__main__":
     beginning = time.time_ns()
 
-    # from pathlib import Path
-    #
-    # # Get the directory containing this file
-    # module_dir = Path(__file__).parent
-    # # Go up one level to root and find settings.json
-    # settings_path = module_dir.parent / "settings.json"
-    #
-    # with open(settings_path) as f:
-    #     settings = json.loads(f.read())
-    #     letter_scheme = settings["letter_scheme"]
-    #     buffers = settings['buffers']
-    # # # s = "F2 D2 R' D2 F2 R2 U2 B2 L2 R B' U' R F' D R U' B' D' L"
-    # # scram = "L' R B U2 B' L2 R2 F2 L' R U' F2 U'"
-    # # # s = "R U' D'  R' U R  D2 R' U' R D2 D U R'"
-    # #
-    # # print(Cube("B R L B' U B2 F2 R F D2 B' R2 U2 D B F D F L' U2 B D' R2").twisted_corners_count)
-    # # scram = "R U R' U' " * 6
-    # # scram += "F4 B4 L4 R4 D4 R4 B4 U4 R4 L4 S4 E4 M4 S4 L4 F4 U4"
-    # scram = "R U R'"
-    # scram = "D"
-    #
-    # cube = Cube(
-    #     scram, ls=letter_scheme, parity_swap_edges="UF-UR",
-    #     can_parity_swap=True
-    # )
-    # print(scram)
-    # # # print(c.adj_corners)
-    # cube.display_cube()
-    # print(cube.get_faces_colors())
-    # # print(cube.solve(invert=False))
-    # # print(cube.solve(invert=True))
-    # # # # TODO:::: adapt for different versions of FDR ie FRD
-    # # # # c.drill_corner_sticker('FDR')
-    # # # # TODO:::: letter scheme for below is a dependency for working
-    # # # c.drill_edge_buffer("DF")
-    #
-
-    targets = {
+    # -- edge targets: 4-char letter-pair codes, e.g. "RURD" links the RU
+    # position to the RD position (see Cube.LOC_TO_PERM_EDGE for the full
+    # code -> position table). --
+    edge_targets = {
         "RURD",
         "LUFD",
         "LBFD",
@@ -1521,7 +1987,18 @@ if __name__ == "__main__":
         "RUUL",
     }
 
-    # targets = {"RUBU", "RUBL"}
+    # -- corner targets: 6-char strings, each two concatenated 3-letter
+    # corner readings (see CORNER_ORI for the valid readings per position). --
+    corner_targets = {
+        "UFLBUR",
+        "UBLDFR",
+        "DFLDBR",
+        "DBLUFL",
+        "BURDFL",
+        "UBLDBR",
+        "DFRDBL",
+        "UFLDBR",
+    }
 
     ui = CLIInterface(
         output_mode=OutputMode.COLORED, log_to_file=True, log_level=logging.DEBUG
@@ -1533,9 +2010,15 @@ if __name__ == "__main__":
         "", ls=settings.letter_scheme, parity_swap_edges="UF-UR", can_parity_swap=True
     )
 
-    state = cube.generate_scramble_state(targets, min_pairs=3)
-    res = cube.edges_to_facelet_string(*state)
+    state = generate_cube_state(
+        cube, edge_targets, corner_targets, edge_min_pairs=3, corner_min_pairs=3
+    )
+
+    res = state["facelet_string"]
     print(res)
+    print(f"has_parity: {state['has_parity']}")
+    print("edge cycles:", state["edge_cycles"])
+    print("corner cycles:", state["corner_cycles"])
 
     kociemba_solved_cube: str = "UUUUUUUUURRRRRRRRRFFFFFFFFFDDDDDDDDDLLLLLLLLLBBBBBBBBB"
     start = time.time_ns()
