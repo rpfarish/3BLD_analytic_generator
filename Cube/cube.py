@@ -4,7 +4,6 @@ from dlin.tracer import rotate_face_precedence
 import random
 from collections import deque, defaultdict
 from typing import Optional
-from Letterscheme.letterscheme import convert_letterpairs
 
 import dlin
 import kociemba
@@ -33,6 +32,22 @@ DEBUG = True
 # ---------------------------------------------------------------------------
 
 AXIS_OF_LETTER = {"U": 1, "D": 1, "F": 2, "B": 2, "R": 0, "L": 0}
+
+
+EDGE_COLORS = {
+    0: ("U", "F"),
+    1: ("U", "B"),
+    2: ("U", "R"),
+    3: ("U", "L"),
+    4: ("D", "F"),
+    5: ("D", "R"),
+    6: ("D", "B"),
+    7: ("D", "L"),
+    8: ("F", "R"),
+    9: ("F", "L"),
+    10: ("B", "L"),
+    11: ("B", "R"),
+}
 
 
 def select_cycles(
@@ -1761,45 +1776,59 @@ def facelet_order():
 
 
 def build_facelet_string(edge_perm, edge_ori, corner_perm, corner_ori):
-    facelets = {face + "5": face for face in "URFDLB"}  # centers
+    facelets = {}
+    for face in "URFDLB":
+        facelets[face + "5"] = face  # centers, always solved
+
     for pos in range(12):
-        colors = list(Cube.EDGE_COLORS[edge_perm[pos]])
+        cubie = edge_perm[pos]
+        colors = list(EDGE_COLORS[cubie])
         if edge_ori[pos]:
             colors.reverse()
         f1, f2 = EDGE_FACELETS[pos]
-        facelets[f1], facelets[f2] = colors[0], colors[1]
+        facelets[f1] = colors[0]
+        facelets[f2] = colors[1]
+
     for pos in range(8):
+        cubie = corner_perm[pos]
         sides = build_corner_sides(
-            CORNER_COLORS[corner_perm[pos]], CORNER_COLORS[pos], corner_ori[pos]
+            CORNER_COLORS[cubie], CORNER_COLORS[pos], corner_ori[pos]
         )
+        # sides is [X(R/L axis), Y(U/D axis), Z(F/B axis)]
+        ud_color, fb_color, rl_color = sides[1], sides[2], sides[0]
         ud_key, fb_key, rl_key = CORNER_FACELETS[pos]
-        facelets[ud_key], facelets[fb_key], facelets[rl_key] = (
-            sides[1],
-            sides[2],
-            sides[0],
-        )
+        facelets[ud_key] = ud_color
+        facelets[fb_key] = fb_color
+        facelets[rl_key] = rl_color
+
     order = facelet_order()
     return "".join(facelets[f] for f in order)
 
 
 def generate_cube_state(
-    cube: "Cube",
-    edge_targets,
-    corner_targets,
-    edge_min_pairs=2,
-    corner_min_pairs=3,
-    seed=None,
+    cube, edge_targets, corner_targets, edge_min_pairs=2, corner_min_pairs=3, seed=None
 ):
     """
-    Generates a full (edges + corners) scramble state, correlating the 50/50
-    edge/corner-parity coin flip between both piece types (a real scramble
-    can only have one or the other, never independently random), and
-    returns the resulting kociemba facelet string plus all the intermediate
-    bookkeeping (cycles/requirements/links) for each piece type.
-
-    `cube` supplies the settings (buffer order etc.) used for edge
-    generation; corner generation is buffer-order-agnostic.
+    edge_targets and corner_targets are two distinct, independent sets --
+    edge_targets holds 4-char strings (two concatenated 2-letter edge
+    readings, e.g. "RURD"), corner_targets holds 6-char strings (two
+    concatenated 3-letter corner readings, e.g. "UFLDFR"). They're expected
+    to be disjoint in content (an edge can't be a corner target and vice
+    versa) but nothing stops you from constructing overlapping sets by
+    mistake, so this checks lengths explicitly rather than silently
+    misinterpreting a string of the wrong kind.
     """
+    bad_edge = [t for t in edge_targets if len(t) != 4]
+    bad_corner = [t for t in corner_targets if len(t) != 6]
+    if bad_edge:
+        raise ValueError(
+            f"edge_targets must all be 4-char strings; got: {bad_edge[:5]}"
+        )
+    if bad_corner:
+        raise ValueError(
+            f"corner_targets must all be 6-char strings; got: {bad_corner[:5]}"
+        )
+
     if seed is not None:
         random.seed(seed)
 
@@ -1811,15 +1840,29 @@ def generate_cube_state(
         force_parity=(1 if has_parity else 0),
     )
 
-    fully_excluded = frozenset({0, 2}) if has_parity else frozenset()
+    # Edges are ALWAYS generated as the standard, always-even-parity case --
+    # no special exclusion for UR. If corners have parity, find wherever
+    # the UF-piece (cubie 0) and UR-piece (cubie 2) actually ended up and
+    # swap THOSE positions' contents -- not positions 0 and 2 themselves.
+    # That single transposition flips the edge permutation from even to odd
+    # (matching corners) while leaving the orientation SUM unchanged (still
+    # even, since swapping which position holds which value doesn't change
+    # the sum) -- the pseudo-swap convention.
     e_perm, e_ori, e_cycles, e_req, e_links = cube.generate_scramble_state(
-        edge_targets, min_pairs=edge_min_pairs, fully_excluded=fully_excluded
+        edge_targets, min_pairs=edge_min_pairs
     )
-
     e_perm, e_ori = list(e_perm), list(e_ori)
     if has_parity:
-        e_perm[0], e_perm[2] = 2, 0  # the pseudo-swap
-        e_ori[0], e_ori[2] = 0, 0
+        pos_of_uf_piece = e_perm.index(0)
+        pos_of_ur_piece = e_perm.index(2)
+        e_perm[pos_of_uf_piece], e_perm[pos_of_ur_piece] = (
+            e_perm[pos_of_ur_piece],
+            e_perm[pos_of_uf_piece],
+        )
+        e_ori[pos_of_uf_piece], e_ori[pos_of_ur_piece] = (
+            e_ori[pos_of_ur_piece],
+            e_ori[pos_of_uf_piece],
+        )
 
     facelet_string = build_facelet_string(e_perm, e_ori, c_perm, c_ori)
 
