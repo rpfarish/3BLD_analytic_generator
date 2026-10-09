@@ -5,9 +5,11 @@ import json
 import random
 import sys
 import time
-from collections.abc import Callable
+from collections import defaultdict
+from collections.abc import Callable, Collection, Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from functools import lru_cache
 from pathlib import Path
 from typing import ClassVar
 
@@ -39,15 +41,10 @@ def input_with_quit(message: str = "") -> str:
 
 
 def generate_combined_scramble(corner_scram, edge_scram):
-    # TODO: REMOVE THIS
-    # print("CORNER SCRAMBLE", corner_scram)
-    # print("EDGE SCRAMBLE", edge_scram)
-    # print()
     corner_cube = Cube(corner_scram)
     edge_cube = Cube(edge_scram)
 
     if corner_cube.has_parity ^ edge_cube.has_parity:
-        print("parity is different")
         edge_cube = Cube(edge_scram, can_parity_swap=False, auto_scramble=False)
         edge_cube.manual_parity_swap()
         edge_cube.scramble_cube()
@@ -55,6 +52,54 @@ def generate_combined_scramble(corner_scram, edge_scram):
     edge_cube.set_corner_state(corner_cube)
 
     return edge_cube.solve(invert=True)
+
+
+def piece_id(sticker: str) -> str:
+    """Canonical piece name: sorted letters, so UF/FU and UFR/FRU/RUF all collapse."""
+    return "".join(sorted(sticker))
+
+
+def _exact_matching(adj: dict[str, set[str]]) -> int:
+    """Exact maximum matching via bitmask DP, O(2^n * n). Fine for n <= ~16."""
+    verts = list(adj)
+    idx = {v: i for i, v in enumerate(verts)}
+    nbr = [sum(1 << idx[w] for w in adj[v]) for v in verts]
+
+    @lru_cache(maxsize=None)
+    def f(mask: int) -> int:
+        if mask == 0:
+            return 0
+        u = (mask & -mask).bit_length() - 1
+        rest = mask & ~(1 << u)
+        best = f(rest)  # leave u unmatched
+        cand = nbr[u] & rest
+        while cand:
+            v = (cand & -cand).bit_length() - 1
+            best = max(best, 1 + f(rest & ~(1 << v)))
+            cand &= cand - 1
+        return best
+
+    return f((1 << len(verts)) - 1)
+
+
+def max_disjoint_pairs(pairs: Iterable[str], exclude: Collection[str] = ()) -> int:
+    """Max number of pairs that can be targeted in one scramble (no shared piece).
+
+    Edge pairs (4 chars) and corner pairs (6 chars) never share pieces,
+    so each type is solved as its own graph and the results are summed.
+    """
+    banned = {piece_id(p) for p in exclude}
+    graphs: dict[int, dict[str, set[str]]] = defaultdict(lambda: defaultdict(set))
+
+    for p in pairs:
+        h = len(p) // 2
+        a, b = piece_id(p[:h]), piece_id(p[h:])
+        if a == b or a in banned or b in banned:
+            continue
+        graphs[len(p)][a].add(b)
+        graphs[len(p)][b].add(a)
+
+    return sum(_exact_matching(g) for g in graphs.values())
 
 
 @dataclass
@@ -1277,8 +1322,14 @@ class Drill:
             raise ValueError("_find_drill_scramble called with nothing to drill")
 
         tries = 0
-        cycle_count = self._compute_cycle_count(len(remaining_algs))
         start = time.perf_counter()
+
+        # Cap the target by what is physically possible: pairs sharing a piece
+        # can't be in the same scramble, so the max matching is a hard ceiling.
+        ceiling = max_disjoint_pairs(remaining_algs, exclude=[buffer] if buffer else ())
+        cycle_count = min(
+            self._compute_cycle_count(len(remaining_algs)), max(ceiling, 1)
+        )
 
         while True:
             scramble = get_scramble.get_scramble_bld()
@@ -1391,23 +1442,30 @@ class Drill:
             memo_times.append(time.perf_counter() - round_start)
             number += 1
 
-            self.ui.result("Scramble", f"{number}/{len_remaining}: {scramble}")
+            head = f"{number}/{len_remaining}: "
+            self.ui.result(
+                "Scramble",
+                f"{head}{scramble}",
+                wrap=True,
+                wrap_indent=len(head),
+            )
 
             if input_with_quit("Press q to exit:\n") == "return":
                 return
+
+            if edges_to_drill:
+                self.ui.result(
+                    "Edge algs used",
+                    self._format_algs_used(
+                        edge_memo, all_edge_algs, remaining_edges, letter_scheme
+                    ),
+                )
 
             if corners_to_drill:
                 self.ui.result(
                     "Corner algs used",
                     self._format_algs_used(
                         corner_memo, all_corner_algs, remaining_corners, letter_scheme
-                    ),
-                )
-            if edges_to_drill:
-                self.ui.result(
-                    "Edge algs used",
-                    self._format_algs_used(
-                        edge_memo, all_edge_algs, remaining_edges, letter_scheme
                     ),
                 )
 

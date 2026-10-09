@@ -184,6 +184,7 @@ class Commands:
 
         if "-b" in args:
             self.drill_both(args, buffers, freq)
+
         elif "-c" in args or "-corner" in args:
             self.drill_corners(args, buffers, freq)
         elif "-e" in args or "-edge" in args:
@@ -407,8 +408,11 @@ class Commands:
 
         """
 
+        # start = time.time()
         corner_algs = self.get_corner_algs(buffers)
         edge_algs = self.get_edge_algs(buffers)
+        # elapsed = time.time() - start
+        # print(f"Elapsed Time to get algs: {elapsed:.6f} seconds")
 
         Drill(self.ui)._run_sticker_drill_loop_both(
             corner_algs_to_drill=corner_algs,

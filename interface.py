@@ -2,8 +2,10 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import sys
+import textwrap
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -154,11 +156,31 @@ class CLIInterface:
         if self.output_mode != OutputMode.MINIMAL:
             print(char * width)  # noqa: T201
 
-    def result(self, label: str, value: object, indent: int = 0) -> None:
+    def result(
+        self,
+        label: str,
+        value: object,
+        indent: int = 0,
+        wrap: bool = False,
+        wrap_indent: int = 0,
+    ) -> None:
         """Display a labeled result."""
         indent_str = " " * indent
         formatted_label = self._format_message(f"{label}:", MessageType.RESULT)
-        print(f"{indent_str}{formatted_label} {value}")  # noqa: T201
+        text = str(value)
+
+        if wrap:
+            prefix_len = indent + len(label) + 2
+            text = textwrap.fill(
+                text,
+                width=shutil.get_terminal_size().columns - 1,
+                initial_indent=" " * prefix_len,
+                subsequent_indent=" " * (prefix_len + wrap_indent),
+                break_long_words=False,
+                break_on_hyphens=False,
+            )[prefix_len:]
+
+        print(f"{indent_str}{formatted_label} {text}")  # noqa: T201
         self.logger.debug("%s: %s", label, value)
 
     def list_items(
