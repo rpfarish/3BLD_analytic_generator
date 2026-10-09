@@ -171,8 +171,63 @@ class Memo(Cube):
 
         return corners
 
+    def memo_edges_weakswap(self):
+        buffer = self.default_edge_buffer
+        avail_moves = {
+            default: current
+            for default, current in zip(self.default_edges, self.all_edges)
+        }
+
+        self.edge_memo_buffers.add(buffer)
+        cur = avail_moves[buffer]
+
+        # we first need to check if UR is already weakswapped / solved
+
+        is_weakswapped = avail_moves["UR"] in ("UF", "UR")
+
+        memo = []
+
+        # Memo until a cycle break
+        while True:
+            if (
+                cur == buffer
+                or cur == self.adj_edges[buffer]
+                or cur == "UR"
+                or cur == self.adj_edges["UR"]
+            ):
+                if is_weakswapped:
+                    break
+
+                cur = "UR" if cur.startswith("U") else "RU"
+
+                memo.append(cur)
+
+                is_weakswapped = True
+
+                cur = avail_moves[cur]
+                continue
+
+            memo.append(cur)
+
+            cur = avail_moves[cur]
+
+        return memo
+
 
 if __name__ == "__main__":
     cube = Cube()
-    scram = "R U r'"
+    scram = "L U L' U' L F L' U' L U L F' L2 U U R' F R"
+    scram = "U R' F R"
+    scram = "D2 L2 D' R2 U2 F2 U2 F2 L2 D2 L U' L2 R' B2 R' B U L'"
+    scram = "B2 L U R' B D2 F B2 U2 L' U R2 B' L' F D' R2 F B2 U R2 Rw Uw"
     memo_cube = Memo(scram)
+
+    memo = memo_cube.memo_edges_weakswap()
+    print(memo)
+
+    # generate edge and corner states
+    # apply pseudo swap depending on the corner and edge parities
+    # to correct if they are different
+
+    # do edge scramble to that cube
+    # then apply the corner state onto the cube

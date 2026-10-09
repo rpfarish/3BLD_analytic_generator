@@ -182,12 +182,15 @@ class Commands:
             index = args.index("-f")
             freq = args[index + 1]
 
-        if "-c" in args or "-corner" in args:
+        if "-b" in args:
+            self.drill_both(args, buffers, freq)
+        elif "-c" in args or "-corner" in args:
             self.drill_corners(args, buffers, freq)
         elif "-e" in args or "-edge" in args:
             self.drill_edges(args, buffers, freq)
 
-    def drill_corners(self, args, buffers, freq):
+    def get_corner_algs(self, buffers):
+
         letter_scheme = LetterScheme()
 
         all_corner_letters = {
@@ -248,7 +251,11 @@ class Commands:
             converted = letter_scheme.convert_pair_to_pos_type(alg, "corner")
             new_algs.add("".join(converted))
 
-        algs = new_algs
+        return new_algs
+
+    def drill_corners(self, args, buffers, freq):
+        algs = self.get_corner_algs(buffers)
+
         if not algs:
             print("Algs to drill is empty")
             return
@@ -285,7 +292,7 @@ class Commands:
             _freq=freq,
         )
 
-    def drill_edges(self, args, buffers, freq):
+    def get_edge_algs(self, buffers):
         letter_scheme = LetterScheme()
 
         all_edge_letters = {
@@ -346,7 +353,10 @@ class Commands:
             converted = letter_scheme.convert_pair_to_pos_type(alg, "edge")
             new_algs.add("".join(converted))
 
-        algs = new_algs
+        return new_algs
+
+    def drill_edges(self, args, buffers, freq):
+        algs = self.get_edge_algs(buffers)
         if not algs:
             print("Algs to drill is empty")
             return
@@ -359,7 +369,6 @@ class Commands:
             buf: i for i, buf in enumerate(self.settings.dlin_buffers["edge"])
         }
 
-        print(algs.pop())
         for pair in algs:
             a, b = pair[: len(pair) // 2], pair[len(pair) // 2 :]
             ra, rb = rotate_face_precedence(a), rotate_face_precedence(b)
@@ -381,4 +390,30 @@ class Commands:
             buffer=buffers["edge_buffer"],
             _random_pairs="-r" in args,
             _freq=freq,
+        )
+
+    def drill_both(self, args, buffers, freq):
+        """
+        def _run_sticker_drill_loop_both(
+            self,
+            corner_algs_to_drill: set[str],
+            edge_algs_to_drill: set[str],
+            letter_scheme: LetterScheme | None,
+            corner_buffer: str | None,
+            edge_buffer: str | None,
+            get_corner_memo_fn: MemoFn,
+            get_edge_memo_fn: MemoFn,
+
+
+        """
+
+        corner_algs = self.get_corner_algs(buffers)
+        edge_algs = self.get_edge_algs(buffers)
+
+        Drill(self.ui)._run_sticker_drill_loop_both(
+            corner_algs_to_drill=corner_algs,
+            edge_algs_to_drill=edge_algs,
+            letter_scheme=LetterScheme(),
+            corner_buffer=buffers["corner_buffer"],
+            edge_buffer=buffers["edge_buffer"],
         )

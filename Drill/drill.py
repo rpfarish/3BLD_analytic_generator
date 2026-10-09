@@ -38,6 +38,25 @@ def input_with_quit(message: str = "") -> str:
         return response
 
 
+def generate_combined_scramble(corner_scram, edge_scram):
+    # TODO: REMOVE THIS
+    # print("CORNER SCRAMBLE", corner_scram)
+    # print("EDGE SCRAMBLE", edge_scram)
+    # print()
+    corner_cube = Cube(corner_scram)
+    edge_cube = Cube(edge_scram)
+
+    if corner_cube.has_parity ^ edge_cube.has_parity:
+        print("parity is different")
+        edge_cube = Cube(edge_scram, can_parity_swap=False, auto_scramble=False)
+        edge_cube.manual_parity_swap()
+        edge_cube.scramble_cube()
+
+    edge_cube.set_corner_state(corner_cube)
+
+    return edge_cube.solve(invert=True)
+
+
 @dataclass
 class DrillConfig:
     """Configuration for a buffer drill session."""
@@ -223,6 +242,31 @@ class Drill:
             if cycle["buffer"] == buffer and cycle["targets"]:
                 edge_targets = cycle["targets"]
                 break
+
+        if not edge_targets:
+            return []
+        if len(edge_targets) % 2 != 0:
+            edge_targets.pop()
+        if not edge_targets:
+            return []
+        if not formatted:
+            return edge_targets
+
+        return " ".join(
+            f"{edge_targets[i]}{edge_targets[i + 1]}"
+            for i in range(0, len(edge_targets) - 1, 2)
+        ).split(" ")
+
+    def get_no_cycle_break_memo_edges_pseudoswap(
+        self,
+        scramble: str,
+        _letter_scheme: LetterScheme | None,
+        buffer: str | None,
+        formatted: bool = True,
+    ) -> list[str]:
+        # FIX: only works for UF-UR swap
+
+        edge_targets: list[str] | None = Memo(scramble).memo_edges_weakswap()
 
         if not edge_targets:
             return []
@@ -1216,8 +1260,194 @@ class Drill:
     def drill_two_flips(self) -> None:
         self.ui.warning("Currently not available")
 
+    MemoFn = Callable[[str, LetterScheme | None, str | None], list[str]]
+
+    def _find_drill_scramble(
+        self,
+        remaining_algs: set[str],
+        letter_scheme: LetterScheme | None,
+        buffer: str | None,
+        get_memo_fn: MemoFn,
+    ) -> tuple[str, list[str], set[str]]:
+        """Generate scrambles until one contains enough of the remaining algs.
+
+        Caller must ensure remaining_algs is non-empty. Never returns None.
+        """
+        if not remaining_algs:
+            raise ValueError("_find_drill_scramble called with nothing to drill")
+
+        tries = 0
+        cycle_count = self._compute_cycle_count(len(remaining_algs))
+        start = time.perf_counter()
+
+        while True:
+            scramble = get_scramble.get_scramble_bld()
+            memo = get_memo_fn(scramble, letter_scheme, buffer)
+            cycles_to_drill = remaining_algs.intersection(memo)
+
+            if tries == self._MAX_TRIES or (
+                (time.perf_counter() - start) > 2
+                and cycle_count > self._CYCLE_COUNT_MEDIUM
+            ):
+                cycle_count -= 1
+                tries = 0
+
+            if len(cycles_to_drill) < cycle_count and tries < self._MAX_TRIES:
+                tries += 1
+                continue
+
+            if not cycles_to_drill:
+                continue
+
+            return scramble, memo, cycles_to_drill
+
+    def _format_algs_used(
+        self,
+        memo: list[str],
+        all_algs: set[str],
+        remaining_algs: set[str],
+        letter_scheme: LetterScheme | None,
+    ) -> str:
+        """Quote algs that were already drilled, leave still-remaining ones bare."""
+        used = list(
+            convert_letterpairs(
+                [c for c in memo if c in all_algs],
+                "loc_to_letter",
+                letter_scheme,
+                return_type="list",
+            )
+        )
+        remaining_ls = list(
+            convert_letterpairs(
+                remaining_algs,
+                "loc_to_letter",
+                letter_scheme,
+                return_type="list",
+            )
+        )
+        return ", ".join(f"'{a}'" if a not in remaining_ls else a for a in used)
+
+    def _run_sticker_drill_loop_both(
+        self,
+        corner_algs_to_drill: set[str],
+        edge_algs_to_drill: set[str],
+        letter_scheme: LetterScheme | None,
+        corner_buffer: str | None,
+        edge_buffer: str | None,
+    ) -> None:
+        """Shared loop body for combined corner + edge sticker drills."""
+        get_corner_memo_fn = self.get_no_cycle_break_memo_corners
+        get_edge_memo_fn = self.get_no_cycle_break_memo_edges_pseudoswap
+
+        self.ui.info("Running...")
+
+        all_corner_algs = corner_algs_to_drill.copy()
+        all_edge_algs = edge_algs_to_drill.copy()
+        remaining_corners = corner_algs_to_drill.copy()
+        remaining_edges = edge_algs_to_drill.copy()
+
+        number = 0
+        len_remaining = len(remaining_corners) + len(remaining_edges)
+        memo_times: list[float] = []
+
+        while remaining_corners or remaining_edges:
+            round_start = time.perf_counter()
+
+            # Corner generation loop (skipped once all corner algs are drilled)
+            corner_scramble: str | None = None
+            corner_memo: list[str] = []
+            corners_to_drill: set[str] = set()
+            if remaining_corners:
+                corner_scramble, corner_memo, corners_to_drill = (
+                    self._find_drill_scramble(
+                        remaining_corners,
+                        letter_scheme,
+                        corner_buffer,
+                        get_corner_memo_fn,
+                    )
+                )
+
+            # Edge generation loop (skipped once all edge algs are drilled)
+            edge_scramble: str | None = None
+            edge_memo: list[str] = []
+            edges_to_drill: set[str] = set()
+            if remaining_edges:
+                edge_scramble, edge_memo, edges_to_drill = self._find_drill_scramble(
+                    remaining_edges,
+                    letter_scheme,
+                    edge_buffer,
+                    get_edge_memo_fn,
+                )
+
+            # The while condition guarantees at least one type is non-empty.
+            if corner_scramble is not None and edge_scramble is not None:
+                scramble = generate_combined_scramble(corner_scramble, edge_scramble)
+            elif corner_scramble is not None:
+                scramble = corner_scramble
+            else:
+                assert edge_scramble is not None
+                scramble = edge_scramble
+
+            memo_times.append(time.perf_counter() - round_start)
+            number += 1
+
+            self.ui.result("Scramble", f"{number}/{len_remaining}: {scramble}")
+
+            if input_with_quit("Press q to exit:\n") == "return":
+                return
+
+            if corners_to_drill:
+                self.ui.result(
+                    "Corner algs used",
+                    self._format_algs_used(
+                        corner_memo, all_corner_algs, remaining_corners, letter_scheme
+                    ),
+                )
+            if edges_to_drill:
+                self.ui.result(
+                    "Edge algs used",
+                    self._format_algs_used(
+                        edge_memo, all_edge_algs, remaining_edges, letter_scheme
+                    ),
+                )
+
+            response = input_with_quit("Enter 'r' to repeat letter pairs: ")
+            if response == "return":
+                return
+            if response == "r":
+                len_remaining += len(corners_to_drill) + len(edges_to_drill)
+                self.ui.blank_line()
+                continue
+
+            remaining_corners -= corners_to_drill
+            remaining_edges -= edges_to_drill
+            for drilled in (corners_to_drill, edges_to_drill):
+                if len(drilled) > 1:
+                    len_remaining -= len(drilled) - 1
+            self.ui.blank_line()
+
+        if memo_times:
+            avg = sum(memo_times) / len(memo_times)
+            self.ui.result(
+                "Memo",
+                f"Avg: {avg:.3f}s, "
+                f"Min: {min(memo_times):.3f}s, "
+                f"Max: {max(memo_times):.3f}s",
+            )
+
+    # TODO: put this somewhere better
+
 
 if __name__ == "__main__":
+    """
     ui = CLIInterface()
     drill = Drill(ui=ui)
     ui.info(drill.drill_edge_buffer_cycle_breaks("UB"))
+
+
+    """
+
+    generate_combined_scramble("R2", "U2")
+    generate_combined_scramble("R'", "U2")
+    generate_combined_scramble("R2", "U'")
+    generate_combined_scramble("R'", "U'")

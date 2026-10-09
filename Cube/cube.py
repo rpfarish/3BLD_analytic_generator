@@ -1003,6 +1003,17 @@ class Cube:
         if self.can_parity_swap:
             self.parity_swap()
 
+    def set_corner_state(self, other: "Cube") -> None:
+        if not isinstance(other, Cube):
+            raise TypeError(f"Expected a Cube, got {type(other).__name__}")
+
+        self.U_corners = other.U_corners.copy()
+        self.L_corners = other.L_corners.copy()
+        self.F_corners = other.F_corners.copy()
+        self.R_corners = other.R_corners.copy()
+        self.B_corners = other.B_corners.copy()
+        self.D_corners = other.D_corners.copy()
+
     def get_piece_map(self, piece) -> tuple[deque[str], EdgeFaceEnum]:
         return {
             "UB": (self.U_edges, Edge.UP),
@@ -1032,6 +1043,16 @@ class Cube:
         }[piece]
 
     # memo
+    def manual_parity_swap(self):
+
+        self.U_edges[Edge.RIGHT], self.U_edges[Edge.DOWN] = (
+            self.U_edges[Edge.DOWN],
+            self.U_edges[Edge.RIGHT],
+        )
+        self.F_edges[Edge.UP], self.R_edges[Edge.UP] = (
+            self.R_edges[Edge.UP],
+            self.F_edges[Edge.UP],
+        )
 
     # TODO: fix this for any swap
     def parity_swap(self, parity_swap_edges="UF-UR"):
